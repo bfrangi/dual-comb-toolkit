@@ -37,7 +37,7 @@ class FFTCalculator:
         return self._fft_y
 
     def calculate_fft(self) -> 'tuple[ndarray, ndarray]':
-        from lib.fft import fft_plot_data
+        from lib.analysis.frequency_domain.fft import fft_plot_data
         self._fft_x, self._fft_y = fft_plot_data(self.t, self.amplitude)
         return self._fft_x, self._fft_y
 
