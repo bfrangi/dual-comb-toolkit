@@ -1,6 +1,8 @@
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
+    from typing import Optional
+
     import numpy as np
 
 
@@ -108,10 +110,10 @@ def get_measurement_transmission(meas_name: str, **specifications: dict[str, flo
 
 
 def fit_measurement_concentration(meas_name: str, center_freq: float, freq_spacing: float,
-                      number_of_teeth: int, laser_wavelength: float, high_freq_modulation: float,
-                      acq_freq: float, molecule: str, pressure: float, temperature: float, 
-                      length: float, wl_min: float, wl_max: float, **kwargs
-                      ) -> tuple[float, 'np.ndarray', 'np.ndarray', 'np.ndarray', 'np.ndarray']:
+                                  number_of_teeth: int, laser_wavelength: float, high_freq_modulation: float,
+                                  acq_freq: float, molecule: str, pressure: float, temperature: float,
+                                  length: float, wl_min: float, wl_max: float, **kwargs
+                                  ) -> tuple[float, 'np.ndarray', 'np.ndarray', 'np.ndarray', 'np.ndarray']:
     """
     Fit the concentration of a measurement to a simulation.
 
@@ -179,3 +181,28 @@ def fit_measurement_concentration(meas_name: str, center_freq: float, freq_spaci
 
     return f.concentration, x_sim, y_sim, x_meas, y_meas
 
+
+def get_measurement_spectrum(meas_name: str, acq_freq: 'Optional[float]' = None) -> None:
+    """
+    Compute the spectrum of a measurement.
+
+    Parameters
+    ----------
+    meas_name : str
+        The name of the measurement.
+    acq_freq : float, optional
+        The acquisition frequency of the measurement. If not provided, it will be read from the
+        measurement file.
+
+    Returns
+    -------
+    tuple[np.ndarray, np.ndarray]
+        The frequency and amplitude of the spectrum.
+    """
+    from lib.analysis.time_domain import FFTCalculator
+    from lib.measurements import read_lvm
+
+    t, a = read_lvm(meas_name, acq_freq=acq_freq)
+    fftc = FFTCalculator(t, a)
+
+    return fftc.fft_x, fftc.fft_y

@@ -48,7 +48,7 @@ def fit_concentration(meas_freq: 'ndarray', meas_amp: 'ndarray', molecule: str, 
             f_sample, a_sample, f_ref, a_ref)
         return sum((a_sample_com - a_ref_com)**2)
 
-    result = minimize(f, initial_guess, args=(meas_freq, meas_amp), bounds=[(0, 1)])
+    result = minimize(f, initial_guess, args=(meas_freq, meas_amp), tol=1e-4, bounds=[(0, 1)])
     concentration = result.x[0]
 
     # Get the simulated curve
