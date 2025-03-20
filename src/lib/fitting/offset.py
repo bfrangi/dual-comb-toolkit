@@ -132,10 +132,12 @@ def overlap_transmission(x_to_fit: 'ndarray', y_to_fit: 'ndarray', x_reference: 
     y_to_fit_mod: 'ndarray' = y_to_fit - y_to_fit.min()
     if y_to_fit_mod.max() == 0:
         return x_to_fit
-    y_to_fit_mod /= y_to_fit_mod.max()
+    if y_to_fit_mod.max() != 0:
+        y_to_fit_mod /= y_to_fit_mod.max()
 
     y_reference_mod: 'ndarray' = y_reference - y_reference.min()
     if y_reference_mod.max() == 0: 
         return x_to_fit
-    y_reference_mod /= y_reference_mod.max()
+    if y_reference_mod.max() != 0:
+        y_reference_mod /= y_reference_mod.max()
     return overlap_data(x_to_fit, y_to_fit_mod, x_reference, y_reference_mod, step=step)

@@ -23,10 +23,15 @@ class CombAnalyser:
         The frequency array of the reference comb teeth in Hz.
     a_reference : ndarray
         The amplitude of the reference comb teeth.
+    mean_sample_threshold : float, optional
+        The threshold for the mean of the sample data. Defaults to 1e-4.
+        Spectra with a mean below this threshold are considered to have no
+        absorption features.
     """
 
     def __init__(self, f_sample: 'ndarray', a_sample: 'ndarray',
-                 f_reference: 'ndarray', a_reference: 'ndarray') -> None:
+                 f_reference: 'ndarray', a_reference: 'ndarray',
+                 mean_sample_threshold: float = 1e-4) -> None:
 
         if not (f_sample == f_reference).all():
             raise ValueError('The frequencies of the sample and reference data must be the same.')
@@ -40,6 +45,7 @@ class CombAnalyser:
         self._absorption_freq: 'Optional[ndarray]' = None
 
         self.scaling_factor: float = 1
+        self.mean_sample_threshold: float = mean_sample_threshold
     
     @property
     def absorption_amp(self) -> 'ndarray':
@@ -62,8 +68,12 @@ class CombAnalyser:
         return self.absorption_freq
 
     def get_absorption_curve(self) -> 'tuple[ndarray, ndarray]':
-        self._absorption_amp = (self.a_reference - self.a_sample) / \
-            self.a_reference * self.scaling_factor
+        if self.a_sample.mean() < self.mean_sample_threshold:
+            from numpy import zeros_like
+            self._absorption_amp = zeros_like(self.a_sample) * self.scaling_factor
+        else:
+            self._absorption_amp = (self.a_reference - self.a_sample) / \
+                self.a_reference * self.scaling_factor
         self._absorption_freq = self.f_sample
         return self._absorption_freq, self._absorption_amp
 

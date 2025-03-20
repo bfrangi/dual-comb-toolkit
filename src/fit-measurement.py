@@ -12,7 +12,7 @@ wl_min = 3427.1  # nm
 wl_max = 3427.8  # nm
 
 # Specify the name and specifications of the measurement.
-meas_name = 'Position-X1-Y1'
+meas_name = 'cell-sweep-1/Position-X7-Y1'
 center_freq = 40000.0  # Hz
 freq_spacing = 200.0  # Hz
 number_of_teeth = 38

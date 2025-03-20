@@ -120,5 +120,9 @@ class RadioFrequencyCombAnalyser(CombAnalyser):
         The frequency array of the reference rf comb teeth in Hz.
     a_reference : ndarray 
         The amplitude of the reference rf comb teeth.
+    mean_sample_threshold : float, optional
+        The threshold for the mean of the sample data. Defaults to 1e-4.
+        Spectra with a mean below this threshold are considered to have no
+        absorption features.
     """
     pass
