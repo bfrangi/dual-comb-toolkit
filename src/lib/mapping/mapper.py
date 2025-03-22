@@ -123,9 +123,9 @@ class Mapper:
         x = array([int(t[0]) for t in self.positions])
         y = array([int(t[1]) for t in self.positions])
 
-        conc_map = full((x.max(), y.max()), nan)
+        conc_map = full((x.max() + 1, y.max() + 1), nan)
 
-        conc_map[x - 1, y - 1] = self.concentrations
+        conc_map[x, y] = self.concentrations
 
         return conc_map
 
@@ -174,15 +174,23 @@ class Mapper:
         """
         Generate a heatmap of the concentration as a function of position.
         """
+        import numpy as np
         import pandas as pd
         import seaborn as sns
         from matplotlib import pyplot as plt
 
-        df = pd.DataFrame(self.concentration_map.T)
+        conc = self.concentration_map.T
+        non_nan_rows = np.where(~np.isnan(conc).all(axis=1))[0]
+        non_nan_cols = np.where(~np.isnan(conc).all(axis=0))[0]
+
+        df = pd.DataFrame(conc)
         ax = sns.heatmap(df, cmap="crest")
+        ax.invert_yaxis()
         ax.set_title("Concentration as a function of position")
         ax.set_xlabel('X')
         ax.set_ylabel('Y')
+        ax.set_xlim(non_nan_cols[0], non_nan_cols[-1] + 1)
+        ax.set_ylim(non_nan_rows[0], non_nan_rows[-1] + 1)
 
         return plt
 
@@ -197,9 +205,14 @@ class Mapper:
         """
         Generate a heatmap of the concentration as a function of position.
         """
+        import numpy as np
+
         rulers = [x, y]
         if all(r is None for r in rulers):
-            y = 0
+            non_nan_rows = np.where(~np.isnan(self.concentration_map.T).all(axis=1))[0]
+            if not non_nan_rows:
+                raise ValueError('No non-NaN values in the concentration map.')
+            y = non_nan_rows[0]
         if all(r is not None for r in rulers):
             raise ValueError('Only one of x or y can be specified.')
 
@@ -210,13 +223,16 @@ class Mapper:
             ruler = 'y'
             other = 'x'
         else:
-            conc = self.concentration_map[y, :]
+            conc = self.concentration_map[x, :]
             ruler = 'x'
             other = 'y'
 
-        positions = range(len(conc))
+        positions = np.arange(len(conc))
+        non_nan_indices = np.where(~np.isnan(conc))[0]
+        
 
         plt.scatter(positions, conc)
+        plt.xlim(non_nan_indices[0] - 1, non_nan_indices[-1] + 1)
         plt.xlabel('Position')
         plt.ylabel('Concentration [VMR]')
         plt.title(f'Concentration as a function of the {other} position ' + 

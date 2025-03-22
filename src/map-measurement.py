@@ -10,7 +10,7 @@ wl_min = 3427.1  # nm
 wl_max = 3427.8  # nm
 
 # Specify the name and specifications of the measurement.
-sweep_name = 'cell-sweep-10-34-17-03-2025'
+sweep_name = 'cell-sweep-10-36-17-03-2025'
 meas_names = get_measurement_names(sweep_name)
 center_freq = 40000.0  # Hz
 freq_spacing = 200.0  # Hz
