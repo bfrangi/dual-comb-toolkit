@@ -1,7 +1,7 @@
 import re
 from typing import TYPE_CHECKING
 
-from lib.datatypes import MeasuredSpectrum, Result, SimulatedSpectrum
+from lib.entities import MeasuredSpectrum, Result, SimulatedSpectrum
 from lib.fitting import ConcentrationFitter
 
 if TYPE_CHECKING:
