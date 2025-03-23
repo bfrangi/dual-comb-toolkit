@@ -7,6 +7,8 @@ if TYPE_CHECKING:
 
     from numpy import ndarray
 
+    from lib.entities import Baseline
+
 
 def fit_concentration(meas_freq: 'ndarray', meas_amp: 'ndarray', molecule: str, wl_min: float,
                       wl_max: float, conditions: dict[str, float],
@@ -105,6 +107,8 @@ class ConcentrationFitter:
     ----------------
     initial_guess : float, optional
         Initial guess for the concentration. Defaults to 0.5.
+    baseline : Baseline, optional
+        Baseline to be subtracted from the measurement.
     """
 
     def __init__(self, meas_name: str, center_freq: float, freq_spacing: float,
@@ -119,6 +123,7 @@ class ConcentrationFitter:
         self.laser_wavelength = laser_wavelength
         self.high_freq_modulation = high_freq_modulation
         self.acq_freq = acq_freq
+        self.baseline: 'Baseline' = kwargs.get('baseline', None)
 
         self._meas_pre_freq: 'Optional[ndarray]' = None
         self._meas_pre_amp: 'Optional[ndarray]' = None
@@ -203,6 +208,7 @@ class ConcentrationFitter:
             laser_wavelength=self.laser_wavelength,
             high_freq_modulation=self.high_freq_modulation,
             acq_freq=self.acq_freq,
+            baseline=self.baseline,
         )
         self._meas_pre_freq, self._meas_pre_amp = m.transmission_freq, m.transmission_amp
 

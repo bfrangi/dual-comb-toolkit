@@ -1,5 +1,6 @@
 from matplotlib import pyplot as plt
 
+from lib.entities import Baseline
 from lib.plots import tight
 from lib.shortcuts import fit_measurement_concentration
 
@@ -12,7 +13,15 @@ wl_min = 3427.1  # nm
 wl_max = 3427.8  # nm
 
 # Specify the name and specifications of the measurement.
-meas_name = 'cell-sweep-10-36-17-03-2025/Position-X7-Y1'
+meas_name = 'cell-sweep-10-36-17-03-2025/Position-X3-Y1'
+baseline_names = [
+    'cell-sweep-10-36-17-03-2025/Position-X11-Y1',
+    'cell-sweep-10-36-17-03-2025/Position-X12-Y1',
+    'cell-sweep-10-36-17-03-2025/Position-X13-Y1',
+    'cell-sweep-10-36-17-03-2025/Position-X14-Y1',
+    'cell-sweep-10-36-17-03-2025/Position-X15-Y1',
+    'cell-sweep-10-36-17-03-2025/Position-X16-Y1',
+]
 center_freq = 40000.0  # Hz
 freq_spacing = 200.0  # Hz
 number_of_teeth = 38
@@ -36,7 +45,8 @@ vmr, x_sim, y_sim, x_meas, y_meas = fit_measurement_concentration(
     length=length,
     wl_min=wl_min,
     wl_max=wl_max,
-    initial_guess=0.5
+    initial_guess=0.5,
+    baseline_names=baseline_names,
 )
 
 # Plot the simulated and measured transmission spectra.

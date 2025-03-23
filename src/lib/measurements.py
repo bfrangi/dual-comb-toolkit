@@ -7,6 +7,8 @@ if TYPE_CHECKING:
     import matplotlib.pyplot as plt
     from numpy import ndarray
 
+    from lib.entities.baseline import Baseline
+
 
 class LVMReader:
     """Reads a LabView Measurement file (.lvm) and extracts the data.
@@ -166,6 +168,11 @@ class Measurement:
         The tag of the sample file.
     reference_tag : str
         The tag of the reference file.
+
+    Other Parameters
+    ----------------
+    baseline: list[str], optional
+        The baseline to correct the measurement.
     """
     time_series_properties = ['t', 'sample_amplitude', 'reference_amplitude']
     transmission_properties = ['transmission_freq', 'transmission_amp']
@@ -205,6 +212,7 @@ class Measurement:
         self.laser_wavelength: float = kwargs.get('laser_wavelength', LASER_WAVELENGTH)
         self.high_freq_modulation: float = kwargs.get('high_freq_modulation', HIGH_FREQ_MODULATION)
         self.normalize: bool = kwargs.get('normalize', True)
+        self.baseline: 'Optional[Baseline]' = kwargs.get('baseline', None)
 
     @property
     def kwargs(self) -> dict:
@@ -264,12 +272,16 @@ class Measurement:
 
         ta = TransmissionAnalyser(self.t, self.sample_amplitude,
                                   self.reference_amplitude, **self.kwargs)
+        tr_freq, tr_amp = ta.transmission_freq, ta.transmission_amp
+
+        if self.baseline:
+            tr_freq, tr_amp = self.baseline.correct_transmission(tr_freq, tr_amp)
+
         if self.normalize:
-            self._transmission_freq, self._transmission_amp = normalise_transmission(
-                ta.transmission_freq, ta.transmission_amp, replace_outliers=False)
-        else:
             self._transmission_freq, self._transmission_amp = \
-                ta.transmission_freq, ta.transmission_amp
+                normalise_transmission(tr_freq, tr_amp, replace_outliers=False)
+        else:
+            self._transmission_freq, self._transmission_amp = tr_freq, tr_amp
 
         return self._transmission_freq, self._transmission_amp
 

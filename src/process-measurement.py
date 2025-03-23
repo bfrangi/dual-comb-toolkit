@@ -13,11 +13,19 @@ wl_min = 3427.1  # nm
 wl_max = 3427.8  # nm
 
 # Specify the name and specifications of the measurement.
-meas_name = 'Position-X1-Y1'
+meas_name = 'cell-sweep-10-36-17-03-2025/Position-X1-Y1'
+baseline_names = [
+    'cell-sweep-10-36-17-03-2025/Position-X11-Y1',
+    'cell-sweep-10-36-17-03-2025/Position-X12-Y1',
+    'cell-sweep-10-36-17-03-2025/Position-X13-Y1',
+    'cell-sweep-10-36-17-03-2025/Position-X14-Y1',
+    'cell-sweep-10-36-17-03-2025/Position-X15-Y1',
+    'cell-sweep-10-36-17-03-2025/Position-X16-Y1',
+]
 center_freq = 40000.0  # Hz
 freq_spacing = 200.0  # Hz
 number_of_teeth = 38
-laser_wavelength = 3427.437e-9  # m
+laser_wavelength = 3427.45e-9  # m
 high_freq_modulation = 500e6  # Hz
 acq_freq = 400000.0  # Hz
 
@@ -32,7 +40,7 @@ x_meas, y_meas = get_measurement_transmission(meas_name=meas_name, center_freq=c
                                               number_of_teeth=number_of_teeth,
                                               laser_wavelength=laser_wavelength,
                                               high_freq_modulation=high_freq_modulation,
-                                              acq_freq=acq_freq)
+                                              acq_freq=acq_freq, baseline_names=baseline_names)
 
 
 # Plot the simulated and measured transmission spectra.
