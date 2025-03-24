@@ -7,7 +7,7 @@ if TYPE_CHECKING:
     import matplotlib.pyplot as plt
     from numpy import ndarray
 
-    from lib.entities.baseline import Baseline
+    from lib.entities import Baseline, MeasuredSpectrum
 
 
 class LVMReader:
@@ -17,6 +17,15 @@ class LVMReader:
     ----------
     filename : str
         The name of the file to read.
+
+    Other Parameters
+    ----------------
+    acq_freq : float, optional
+        The acquisition frequency of the measurement. If given, it will be used instead of the one
+        found in the file.
+    default_acq_freq : float, optional
+        The default acquisition frequency to use if not found in the file and not given as an
+        argument.
     """
 
     def __init__(self, filename: str, **kwargs) -> None:
@@ -160,19 +169,29 @@ class Measurement:
         The wavelength of the laser.
     high_freq_modulation : float, optional
         The high frequency modulation of the comb.
+
+    Other Parameters
+    ----------------
     acq_freq : float, optional
         The acquisition frequency of the measurement.
     normalize : bool, optional
         Whether to normalize or not the transmission spectrum.
-    sample_tag : str
+    sample_tag : str, optional
         The tag of the sample file.
-    reference_tag : str
+    reference_tag : str, optional
         The tag of the reference file.
-
-    Other Parameters
-    ----------------
     baseline: list[str], optional
         The baseline to correct the measurement.
+    molecule : str, optional
+        The molecule measured.
+    pressure : float, optional
+        The pressure in Pa.
+    temperature : float, optional
+        The temperature in K.
+    length : float, optional
+        The length of the absorption path in m.    
+    concentration : float, optional
+        The concentration of the molecule in VMR.
     """
     time_series_properties = ['t', 'sample_amplitude', 'reference_amplitude']
     transmission_properties = ['transmission_freq', 'transmission_amp']
@@ -204,6 +223,7 @@ class Measurement:
         # Transmission data
         self._transmission_freq: 'Optional[ndarray]' = None
         self._transmission_amp: 'Optional[ndarray]' = None
+        self._transmission_spectrum: 'Optional[MeasuredSpectrum]' = None
 
         # Transmission analysis parameters
         self.center_freq: float = kwargs.get('center_freq', CENTER_FREQ)
@@ -213,6 +233,14 @@ class Measurement:
         self.high_freq_modulation: float = kwargs.get('high_freq_modulation', HIGH_FREQ_MODULATION)
         self.normalize: bool = kwargs.get('normalize', True)
         self.baseline: 'Optional[Baseline]' = kwargs.get('baseline', None)
+
+        # Other parameters
+        self.molecule: str = kwargs.get('molecule', None)
+        self.pressure: float = kwargs.get('pressure', None)
+        self.temperature: float = kwargs.get('temperature', None)
+        self.length: float = kwargs.get('length', None)
+        self.concentration: float = kwargs.get('concentration', None)
+
 
     @property
     def kwargs(self) -> dict:
@@ -235,63 +263,71 @@ class Measurement:
                     read_sample_and_reference_lvm(self.sample_filename, self.reference_filename,
                                                   acq_freq=self.acq_freq)
             else:
-                self.compute_transmission()
+                self._compute_transmission()
         return getattr(self, f'_{property_name}')
+
+    # Time series properties
 
     @property
     def t(self) -> 'ndarray':
+        """Time array of the sample and reference signals."""
         return self.get('t')
 
     @property
-    def sample_amplitude(self) -> 'ndarray':
+    def sample_signal(self) -> 'ndarray':
+        """Amplitude of the sample signal."""
         return self.get('sample_amplitude')
 
     @property
-    def reference_amplitude(self) -> 'ndarray':
+    def reference_signal(self) -> 'ndarray':
+        """Amplitude of the reference signal."""
         return self.get('reference_amplitude')
 
-    @property
-    def transmission_freq(self) -> 'ndarray':
-        return self.get('transmission_freq')
+    # Transmission properties
 
     @property
-    def transmission_amp(self) -> 'ndarray':
-        return self.get('transmission_amp')
+    def transmission_spectrum(self) -> 'MeasuredSpectrum':
+        if self._transmission_spectrum is None:
+            self._compute_transmission()
+        return self._transmission_spectrum
 
-    @property
-    def absorption_freq(self) -> 'ndarray':
-        return self.transmission_freq
-
-    @property
-    def absorption_amp(self) -> 'ndarray':
-        return 1 - self.transmission_amp
-
-    def compute_transmission(self) -> 'tuple[ndarray, ndarray]':
+    def _compute_transmission(self) -> None:
         from lib.analysis import TransmissionAnalyser
         from lib.combs import normalise_transmission
+        from lib.entities import MeasuredSpectrum
 
-        ta = TransmissionAnalyser(self.t, self.sample_amplitude,
-                                  self.reference_amplitude, **self.kwargs)
+        ta = TransmissionAnalyser(self.t, self.sample_signal,
+                                  self.reference_signal, **self.kwargs)
         tr_freq, tr_amp = ta.transmission_freq, ta.transmission_amp
+
+        if self.normalize:
+            tr_freq, tr_amp = \
+                normalise_transmission(tr_freq, tr_amp, replace_outliers=False)
 
         if self.baseline:
             tr_freq, tr_amp = self.baseline.correct_transmission(tr_freq, tr_amp)
 
-        if self.normalize:
-            self._transmission_freq, self._transmission_amp = \
-                normalise_transmission(tr_freq, tr_amp, replace_outliers=False)
-        else:
-            self._transmission_freq, self._transmission_amp = tr_freq, tr_amp
-
-        return self._transmission_freq, self._transmission_amp
+        self._transmission_spectrum = MeasuredSpectrum(tr_freq, tr_amp, xu='Hz',
+                                                       meas_name=self.measurement_name,
+                                                       center_freq=self.center_freq,
+                                                       freq_spacing=self.freq_spacing,
+                                                       number_of_teeth=self.number_of_teeth,
+                                                       laser_wavelength=self.laser_wavelength,
+                                                       high_freq_modulation=self.high_freq_modulation,
+                                                       acq_freq=self.acq_freq,
+                                                       molecule=self.molecule,
+                                                       pressure=self.pressure,
+                                                       temperature=self.temperature,
+                                                       length=self.length,
+                                                       concentration=self.concentration)
 
     # Plots
 
     def generate_time_series_plot(self) -> 'plt':
         import matplotlib.pyplot as plt
 
-        plt.plot(self.t, self.sample_amplitude, label='Sample')
-        plt.plot(self.t, self.reference_amplitude, label='Reference')
+        plt.plot(self.t, self.sample_signal, label='Sample')
+        plt.plot(self.t, self.reference_signal, label='Reference')
         plt.xlabel('Time (s)')
         plt.ylabel('Amplitude')
         plt.legend()

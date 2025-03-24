@@ -11,11 +11,12 @@ wl_max = 3427.8  # nm
 
 # Specify the name and specifications of the measurement.
 meas_baseline = [
-    'cell-sweep-10-36-17-03-2025/Position-X12-Y1',
-    'cell-sweep-10-36-17-03-2025/Position-X13-Y1',
-    'cell-sweep-10-36-17-03-2025/Position-X14-Y1',
-    'cell-sweep-10-36-17-03-2025/Position-X15-Y1',
-    'cell-sweep-10-36-17-03-2025/Position-X16-Y1',
+    'cell-sweep-10-34-17-03-2025/Position-X11-Y1',
+    'cell-sweep-10-34-17-03-2025/Position-X12-Y1',
+    'cell-sweep-10-34-17-03-2025/Position-X13-Y1',
+    'cell-sweep-10-34-17-03-2025/Position-X14-Y1',
+    'cell-sweep-10-34-17-03-2025/Position-X15-Y1',
+    'cell-sweep-10-34-17-03-2025/Position-X16-Y1',
 ]
 center_freq = 40000.0  # Hz
 freq_spacing = 200.0  # Hz

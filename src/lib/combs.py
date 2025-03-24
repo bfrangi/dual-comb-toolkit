@@ -149,3 +149,30 @@ def normalise_transmission(f: 'ndarray', a: 'ndarray',
     rolling_avg = rolling_mean(a_without_outliers, window=3)
 
     return f, a / max(rolling_avg)
+
+
+def get_comb_frequencies(center_freq: float, freq_spacing: float, number_of_teeth: int) -> 'ndarray':
+    """
+    Returns an array of the frequencies of the comb teeth.
+
+    Parameters
+    ----------
+    center_freq : float
+        Center frequency of the comb.
+    freq_spacing : float
+        Frequency spacing between teeth.
+    number_of_teeth : int
+        Number of teeth in the comb.
+
+    Returns
+    -------
+    ndarray
+        Array of the frequencies of the comb teeth.
+    """
+    import numpy as np
+
+    n_teeth_left = number_of_teeth // 2
+    n_teeth_right = number_of_teeth - n_teeth_left
+
+    return np.arange(center_freq - n_teeth_left * freq_spacing,
+                     center_freq + n_teeth_right * freq_spacing, freq_spacing)

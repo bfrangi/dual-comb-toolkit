@@ -1,6 +1,6 @@
 from typing import TYPE_CHECKING
 
-from lib.combs import to_wavelength
+from lib.combs import to_wavelength, to_frequency
 
 if TYPE_CHECKING:
     from typing import Optional
@@ -20,26 +20,71 @@ class Spectrum:
     y : ndarray
         Transmission values.
     xu : str, optional
-        Unit of the x values. Defaults to 'nm'. Can be 'nm' or 'Hz'.
+        Unit of the given values. Defaults to 'nm'. Can be 'nm' or 'Hz'.
+    
+    Other Parameters
+    ----------------
+    molecule : Optional[str]
+        Name of the molecule.
+    pressure : Optional[float]
+        Pressure in Pa.
+    temperature : Optional[float]
+        Temperature in K.
+    concentration : Optional[float]
+        Concentration of the molecule.
+    length : Optional[float]
+        Length of the absorption path in m.
     """
 
-    def __init__(self, x: 'ndarray', y: 'ndarray', xu: str = 'nm') -> None:
+    def __init__(self, x: 'ndarray', y: 'ndarray', xu: str = 'nm', **kwargs) -> None:
+
+        # Properties
+
+        self.molecule: 'Optional[str]' = kwargs.get('molecule', None)
+        self.pressure: 'Optional[float]' = kwargs.get('pressure', None)
+        self.temperature: 'Optional[float]' = kwargs.get('temperature', None)
+        self.concentration: 'Optional[float]' = kwargs.get('concentration', None)
+        self.length: 'Optional[float]' = kwargs.get('length', None)
+
+        # Spectrum values
+
         if xu not in ['nm', 'Hz']:
             raise ValueError(f'Waveunit {xu} not recognized. Use "nm" or "Hz".')
 
-        if xu == 'Hz':
-            x, y = to_wavelength(x, y)
+        self.x_nm = x
+        self.y_nm = y
+        self.x_hz = x.copy()
+        self.y_hz = y.copy()
 
-        self.x = x
-        self.y = y
+        if xu == 'Hz':
+            self.x_nm, self.y_nm = to_wavelength(self.x_nm, self.y_nm)
+        else:
+            self.x_hz, self.y_hz = to_frequency(self.x_hz, self.y_hz)
+
         self.xu = xu
 
-    def plot(self):
+    def plot(self, xu: str = 'nm') -> None:
         """
-        Plot the spectrum.
+        Plot the spectrum in the specified units.
+
+        Parameters
+        ----------
+        xu : str, optional
+            Units of the x values. Defaults to 'nm'. Can be 'nm' or 'Hz'.
         """
+        if xu not in ['nm', 'Hz']:
+            raise ValueError(f'Waveunit {xu} not recognized. Use "nm" or "Hz.')
+        
         from lib.plots import spectrum_plot
-        spectrum_plot(self.x, self.y, 'Spectrum', xlabel='Wavelength [nm]').show()
+
+        if xu == 'Hz':
+            x, y = self.x_hz, self.y_hz
+            xlabel = 'Frequency [Hz]'
+        else:
+            x, y = self.x_nm, self.y_nm
+            xlabel = 'Wavelength [nm]'
+        
+        spectrum_plot(x, y, 'Spectrum', xlabel=xlabel).show()
 
 
 class MeasuredSpectrum(Spectrum):
@@ -70,25 +115,16 @@ class MeasuredSpectrum(Spectrum):
     acq_freq : Optional[float]  
         Acquisition frequency used in the measurement in Hz.
     """
-    def __init__(self,
-                 x: 'ndarray',
-                 y: 'ndarray',
-                 xu: 'str' = 'nm',
-                 meas_name: 'Optional[str]' = None,
-                 center_freq: 'Optional[float]' = None,
-                 freq_spacing: 'Optional[float]' = None,
-                 number_of_teeth: 'Optional[int]' = None,
-                 laser_wavelength: 'Optional[float]' = None,
-                 high_freq_modulation: 'Optional[float]' = None,
-                 acq_freq: 'Optional[float]' = None) -> None:
-        super().__init__(x, y, xu)
-        self.meas_name = meas_name
-        self.center_freq = center_freq
-        self.freq_spacing = freq_spacing
-        self.number_of_teeth = number_of_teeth
-        self.laser_wavelength = laser_wavelength
-        self.high_freq_modulation = high_freq_modulation
-        self.acq_freq = acq_freq
+    def __init__(self, x: 'ndarray', y: 'ndarray', xu: 'str' = 'nm',
+                 **kwargs: dict[str, str | float | int]) -> None:
+        super().__init__(x, y, xu, **kwargs)
+        self.meas_name: 'Optional[str]' = kwargs.get('meas_name', None)
+        self.center_freq: 'Optional[float]' = kwargs.get('center_freq', None)
+        self.freq_spacing: 'Optional[float]' = kwargs.get('freq_spacing', None)
+        self.number_of_teeth: 'Optional[int]' = kwargs.get('number_of_teeth', None)
+        self.laser_wavelength: 'Optional[float]' = kwargs.get('laser_wavelength', None)
+        self.high_freq_modulation: 'Optional[float]' = kwargs.get('high_freq_modulation', None)
+        self.acq_freq: 'Optional[float]' = kwargs.get('acq_freq', None)
 
 
 class SimulatedSpectrum(Spectrum):
@@ -103,7 +139,10 @@ class SimulatedSpectrum(Spectrum):
     y : ndarray
         Transmission values.
     xu : str, optional
-        Unit of the x values. Defaults to 'nm'. Can be 'nm' or 'Hz'.
+        Unit of the given values. Defaults to 'nm'. Can be 'nm' or 'Hz'.
+    
+    Other Parameters
+    ----------------
     molecule : Optional[str]
         Name of the molecule.
     pressure : Optional[float]
@@ -119,22 +158,8 @@ class SimulatedSpectrum(Spectrum):
     wl_max : Optional[float]
         Maximum wavelength for the simulation in nm.
     """
-    def __init__(self,
-                 x: 'ndarray',
-                 y: 'ndarray',
-                 xu: 'str' = 'nm',
-                 molecule: 'Optional[str]' = None,
-                 pressure: 'Optional[float]' = None,
-                 temperature: 'Optional[float]' = None,
-                 concentration: 'Optional[float]' = None,
-                 length: 'Optional[float]' = None,
-                 wl_min: 'Optional[float]' = None,
-                 wl_max: 'Optional[float]' = None) -> None:
-        super().__init__(x, y, xu)
-        self.molecule = molecule
-        self.pressure = pressure
-        self.temperature = temperature
-        self.concentration = concentration
-        self.length = length
-        self.wl_min = wl_min
-        self.wl_max = wl_max
+    def __init__(self, x: 'ndarray', y: 'ndarray', xu: 'str' = 'nm',
+                 **kwargs: dict[str, str | float]) -> None:
+        super().__init__(x, y, xu, **kwargs)
+        self.wl_min: 'Optional[float]' = kwargs.get('wl_min', None)
+        self.wl_max: 'Optional[float]' = kwargs.get('wl_max', None)

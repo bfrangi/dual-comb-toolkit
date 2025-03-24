@@ -5,6 +5,9 @@ if TYPE_CHECKING:
 
     import numpy as np
 
+    from lib.mapping import Mapper
+    from lib.entities import Measurement
+
 
 def simulate_line(molecule: str, wl_min: float, wl_max: float,
                   **conditions: dict[str, float]) -> 'tuple[np.ndarray, np.ndarray]':
@@ -30,6 +33,8 @@ def simulate_line(molecule: str, wl_min: float, wl_max: float,
         The temperature in K.
     length : float
         The length of the absorption path in m.
+    database : str, optional
+        The database to use. Either 'hitran' or 'hitemp'. Defaults to 'hitran'.
 
     Returns
     -------
@@ -44,10 +49,8 @@ def simulate_line(molecule: str, wl_min: float, wl_max: float,
 
     s = Simulator(
         molecule=molecule,
-        vmr=conditions['vmr'],
-        pressure=conditions['pressure'],
-        temperature=conditions['temperature'],
-        length=conditions['length'],
+        **conditions,
+        database=conditions.get('database', 'hitran')
     )
     s.compute_transmission_spectrum(wl_min=wl_min, wl_max=wl_max)
     wl, transmission = s.get_transmission_spectrum(wl_min, wl_max)
@@ -55,7 +58,77 @@ def simulate_line(molecule: str, wl_min: float, wl_max: float,
     return wl, transmission
 
 
-def get_measurement_transmission(meas_name: str, **specifications: dict[str, float | int]) -> 'tuple[np.ndarray, np.ndarray]':
+def get_measurement(
+        meas_name: str, **specifications: dict[str, float | int]
+) -> 'Measurement':
+    """
+    Get a measurement object.
+
+    Parameters
+    ----------
+    meas_name : str
+        The name of the measurement.
+
+    Keyword Arguments
+    -----------------
+    center_freq : float
+        The center frequency of the measurement.
+    freq_spacing : float
+        The frequency spacing of the measurement.
+    number_of_teeth : int
+        The number of teeth in the measurement.
+    laser_wavelength : float
+        The laser wavelength of the measurement.
+    high_freq_modulation : float
+        The high frequency modulation of the measurement.
+    acq_freq : float
+        The acquisition frequency of the measurement.
+
+    Other Parameters
+    ----------------
+    baseline_names: list[str], optional
+        The name of the measurements used to obtain the baseline.
+    baseline : Baseline, optional
+        The baseline object.
+    molecule : str, optional
+        The molecule measured.
+    pressure : float, optional
+        The pressure in Pa.
+    temperature : float, optional
+        The temperature in K.
+    length : float, optional
+        The length of the absorption path in m.
+    concentration : float, optional
+        The concentration of the molecule in VMR.
+
+    Returns
+    -------
+    Measurement
+        The measurement object.
+    """
+    from lib.measurements import Measurement
+
+    required_specs = ['center_freq', 'freq_spacing', 'number_of_teeth', 'laser_wavelength',
+                      'high_freq_modulation', 'acq_freq']
+
+    for key in required_specs:
+        if key not in specifications:
+            raise ValueError(f"Missing specification: {key}.")
+
+    baseline_names = specifications.pop('baseline_names', None)
+    baseline = specifications.pop('baseline', None)
+
+    if not baseline and baseline_names:
+        from lib.entities import Baseline
+
+        baseline = Baseline(measurement_names=baseline_names, **specifications)
+
+    return Measurement(meas_name, **specifications, baseline=baseline)
+
+
+def get_measurement_transmission(
+    meas_name: str, **specifications: dict[str, float | int]
+) -> 'tuple[np.ndarray, np.ndarray]':
     """
     Get the transmission spectrum of a measurement.
 
@@ -83,43 +156,29 @@ def get_measurement_transmission(meas_name: str, **specifications: dict[str, flo
     ----------------
     baseline_names: list[str], optional
         The name of the measurements used to obtain the baseline.
+    molecule : str, optional
+        The molecule measured.
+    pressure : float, optional
+        The pressure in Pa.
+    temperature : float, optional
+        The temperature in K.
+    length : float, optional
+        The length of the absorption path in m.
+    concentration : float, optional
+        The concentration of the molecule in VMR.
 
     Returns
     -------
     tuple[np.ndarray, np.ndarray]
         The wavelength and transmission spectrum.
     """
-    from lib.combs import to_wavelength
-    from lib.measurements import Measurement
+    m = get_measurement(meas_name, **specifications)
 
-    required_specs = ['center_freq', 'freq_spacing', 'number_of_teeth', 'laser_wavelength',
-                      'high_freq_modulation', 'acq_freq']
-
-    for key in required_specs:
-        if key not in specifications:
-            raise ValueError(f"Missing specification: {key}.")
-
-    baseline_names = specifications.pop('baseline_names', None)
-    baseline = None
-
-    if baseline_names:
-        from lib.entities import Baseline
-
-        baseline = Baseline(measurement_names=baseline_names, **specifications)
-
-    m = Measurement(
-        meas_name,
-        **specifications,
-        baseline=baseline,
-    )
-    x_meas, y_meas = m.transmission_freq, m.transmission_amp
-    x_meas, y_meas = to_wavelength(x_meas, y_meas)
-
-    return x_meas, y_meas
+    return m.transmission_spectrum.x_nm, m.transmission_spectrum.y_nm
 
 
 def fit_measurement_concentration(
-    meas_name: str, **kwargs
+    meas_name: str, **specifications
 ) -> tuple[float, 'np.ndarray', 'np.ndarray', 'np.ndarray', 'np.ndarray']:
     """
     Fit the concentration of a measurement to a simulation.
@@ -127,11 +186,83 @@ def fit_measurement_concentration(
     Parameters
     ----------
     meas_name : str
-        Name of the measurement.
+        The name of the measurement.
 
     Keyword Arguments
     -----------------
-    center_freq : float, optional
+    center_freq : float
+        The center frequency of the measurement.
+    freq_spacing : float
+        The frequency spacing of the measurement.
+    number_of_teeth : int
+        The number of teeth in the measurement.
+    laser_wavelength : float
+        The laser wavelength of the measurement.
+    high_freq_modulation : float
+        The high frequency modulation of the measurement.
+    acq_freq : float
+        The acquisition frequency of the measurement.
+    wl_min : float
+        The minimum wavelength for the simulation in nm.
+    wl_max : float
+        The maximum wavelength for the simulation in nm.
+    molecule : str
+        The molecule measured.
+    pressure : float
+        The pressure in Pa.
+    temperature : float
+        The temperature in K.
+    length : float
+        The length of the absorption path in m.
+
+    Other Parameters
+    ----------------
+    baseline_names: list[str], optional
+        The name of the measurements used to obtain the baseline.
+
+    Returns
+    -------
+    tuple[float, np.ndarray, np.ndarray, np.ndarray, np.ndarray]
+        The concentration, the wavelength and transmission spectrum of the simulation, and the
+        wavelength and transmission spectrum of the measurement.
+    """
+    required_kwargs = ['wl_min', 'wl_max', 'molecule', 'pressure', 'temperature', 'length']
+
+    for key in required_kwargs:
+        if key not in specifications:
+            raise ValueError(f"Missing specification: {key}.")
+
+    from lib.fitting import ConcentrationFitter
+
+    meas = get_measurement(meas_name, **specifications)
+    meas_transmission = meas.transmission_spectrum
+
+    wl_min: float = specifications.pop('wl_min')
+    wl_max: float = specifications.pop('wl_max')
+
+    f = ConcentrationFitter(meas_transmission=meas_transmission, wl_min=wl_min,
+                            wl_max=wl_max, **specifications)
+
+    meas = f.measured_transmission
+    sim = f.simulated_transmission
+
+    return f.concentration, sim.x_nm, sim.y_nm, meas.x_nm, meas.y_nm
+
+
+def map_measurement_concentration(
+        meas_names: list[str], **specifications
+) -> 'Mapper':
+    """
+    Map the concentration of a set of measurements.
+
+    Parameters
+    ----------
+    meas_names : list[str]
+        List of measurement names.
+
+    Keyword Arguments
+    -----------------
+    center_freq : float
         Center frequency of the radio frequency comb in Hz.
     freq_spacing : float
         Modulation frequency of the radio frequency comb in Hz.
@@ -158,57 +289,36 @@ def fit_measurement_concentration(
 
     Other Parameters
     ----------------
-    initial_guess : float, optional
-        Initial guess for the concentration. Defaults to 0.5.
+    initial_guess : dict[str, float], optional
+        Initial guess for the fitting. Defaults to {'concentration': 0.5}.
+    verbose : bool, optional
+        Print the fitting results. Defaults to False.
     baseline_names : list[str], optional
         Names of the measurements used to obtain the baseline.
 
     Returns
     -------
-    tuple[float, np.ndarray, np.ndarray]
-        The concentration of the molecule (in VMR) and the wavelength and transmission spectrum
-        for both the measurement and the simulation.
+    Mapper
+        The mapper object.
     """
-    from lib.combs import to_wavelength
-    from lib.fitting import ConcentrationFitter
+    from lib.mapping import Mapper
 
-    required_kwargs = ['center_freq', 'freq_spacing', 'number_of_teeth', 'laser_wavelength',
-                       'high_freq_modulation', 'acq_freq', 'molecule', 'pressure', 'temperature',
-                       'length', 'wl_min', 'wl_max']
+    baseline_names = specifications.pop('baseline_names', None)
+    baseline = specifications.pop('baseline', None)
 
-    for key in required_kwargs:
-        if key not in kwargs:
-            raise ValueError(f"Missing specification for {key}.")
-
-    baseline_names = kwargs.pop('baseline_names', None)
-    baseline = None
-
-    if baseline_names:
+    if not baseline and baseline_names:
         from lib.entities import Baseline
 
-        baseline = Baseline(measurement_names=baseline_names, **kwargs)
+        baseline = Baseline(measurement_names=baseline_names, **specifications)
+        specifications['baseline'] = baseline
 
-    f = ConcentrationFitter(
-        meas_name=meas_name,
-        center_freq=kwargs.pop('center_freq'),
-        freq_spacing=kwargs.pop('freq_spacing'),
-        number_of_teeth=kwargs.pop('number_of_teeth'),
-        laser_wavelength=kwargs.pop('laser_wavelength'),
-        high_freq_modulation=kwargs.pop('high_freq_modulation'),
-        acq_freq=kwargs.pop('acq_freq'),
-        molecule=kwargs.pop('molecule'),
-        pressure=kwargs.pop('pressure'),
-        temperature=kwargs.pop('temperature'),
-        length=kwargs.pop('length'),
-        wl_min=kwargs.pop('wl_min'),
-        wl_max=kwargs.pop('wl_max'),
-        baseline=baseline,
-        **kwargs,
-    )
-    x_meas, y_meas = to_wavelength(f.meas_freq, f.meas_amp)
-    x_sim, y_sim = to_wavelength(f.sim_freq, f.sim_amp)
+    meas_transmissions = []
 
-    return f.concentration, x_sim, y_sim, x_meas, y_meas
+    for meas_name in meas_names:
+        meas = get_measurement(meas_name, **specifications)
+        meas_transmissions.append(meas.transmission_spectrum)
+
+    return Mapper(meas_transmissions, **specifications)
 
 
 def get_measurement_spectrum(meas_name: str, acq_freq: 'Optional[float]' = None) -> None:

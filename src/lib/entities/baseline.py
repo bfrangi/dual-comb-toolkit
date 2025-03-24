@@ -47,7 +47,7 @@ class Baseline:
         self._baseline_amp: 'Optional[ndarray]' = None
         self._std_dev: 'Optional[ndarray]' = None
 
-        self.kwargs['normalize'] = False
+        self.kwargs['normalize'] = True
 
     @property
     def baseline_amps(self) -> 'list[ndarray]':
@@ -97,10 +97,10 @@ class Baseline:
 
         for measurment in self.measurement_names:
             m = Measurement(measurment, **self.kwargs)
-            self._baseline_amps.append(m.transmission_amp)
-            baseline_amp += m.transmission_amp
+            self._baseline_amps.append(m.transmission_spectrum.y_hz)
+            baseline_amp += m.transmission_spectrum.y_hz
 
-        self._baseline_freq = m.transmission_freq
+        self._baseline_freq = m.transmission_spectrum.x_hz
         self._baseline_amp = baseline_amp / len(self.measurement_names)
 
     def compute_standard_deviation(self) -> 'ndarray':
@@ -132,7 +132,11 @@ class Baseline:
             raise ValueError("The frequency array of the transmission spectrum " +
                              "must have the same length as the baseline frequency array.")
         
-        return fr, tr - self.baseline_amp + self.baseline_amp.mean()
+        scale = tr.max()
+        tr = tr / self.baseline_amp
+        tr = tr / tr.max() * scale
+
+        return fr, tr
 
     def generate_baseline_plot(self) -> 'plt':
         from lib.combs import to_wavelength

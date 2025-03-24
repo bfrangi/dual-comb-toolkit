@@ -15,7 +15,6 @@ wl_max = 3427.8  # nm
 # Specify the name and specifications of the measurement.
 meas_name = 'cell-sweep-10-36-17-03-2025/Position-X1-Y1'
 baseline_names = [
-    'cell-sweep-10-36-17-03-2025/Position-X11-Y1',
     'cell-sweep-10-36-17-03-2025/Position-X12-Y1',
     'cell-sweep-10-36-17-03-2025/Position-X13-Y1',
     'cell-sweep-10-36-17-03-2025/Position-X14-Y1',
