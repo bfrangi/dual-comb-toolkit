@@ -12,17 +12,18 @@ wl_min = 3427.1  # nm
 wl_max = 3427.8  # nm
 
 # Specify the name and specifications of the measurement.
-meas_name = 'cell-sweep-10-36-17-03-2025/Position-X5-Y1'
+meas_name = 'cell-sweep-10-34-17-03-2025/Position-X8-Y1'
 baseline_names = [
-    'cell-sweep-10-36-17-03-2025/Position-X12-Y1',
-    'cell-sweep-10-36-17-03-2025/Position-X13-Y1',
-    'cell-sweep-10-36-17-03-2025/Position-X14-Y1',
-    'cell-sweep-10-36-17-03-2025/Position-X15-Y1',
-    'cell-sweep-10-36-17-03-2025/Position-X16-Y1',
+    'cell-sweep-10-34-17-03-2025/Position-X12-Y1',
+    'cell-sweep-10-34-17-03-2025/Position-X13-Y1',
+    'cell-sweep-10-34-17-03-2025/Position-X14-Y1',
+    'cell-sweep-10-34-17-03-2025/Position-X15-Y1',
+    'cell-sweep-10-34-17-03-2025/Position-X16-Y1',
 ]
+# baseline_names = None
 center_freq = 40000.0  # Hz
 freq_spacing = 200.0  # Hz
-number_of_teeth = 38
+number_of_teeth = 35
 laser_wavelength = 3427.437e-9  # m
 high_freq_modulation = 500e6  # Hz
 acq_freq = 400000.0  # Hz

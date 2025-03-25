@@ -17,7 +17,7 @@ database = 'hitran'
 number_of_teeth = 38
 laser_wavelength = 3427.45  # nm
 high_freq_modulation = 500e6  # Hz
-std_dev = 0.001
+std_dev = 0.005
 
 # Simulate the transmission spectrum.
 x_sim, y_sim = simulate_measurement(molecule=molecule, wl_min=wl_min,

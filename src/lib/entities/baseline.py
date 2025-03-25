@@ -132,6 +132,10 @@ class Baseline:
             raise ValueError("The frequency array of the transmission spectrum " +
                              "must have the same length as the baseline frequency array.")
         
+        # If all the transmission values are 1, do not correct
+        if all(tr == 1):
+            return fr, tr
+        
         scale = tr.max()
         tr = tr / self.baseline_amp
         tr = tr / tr.max() * scale
