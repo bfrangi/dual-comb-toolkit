@@ -104,10 +104,10 @@ def nan_shift(a: 'ndarray', n: int) -> 'ndarray':
     return np.concatenate([np.full(n, np.nan), a[:-n]])
 
 
-def normalise_transmission(f: 'ndarray', a: 'ndarray',
+def normalize_transmission(f: 'ndarray', a: 'ndarray',
                            replace_outliers: bool = False) -> 'tuple[ndarray, ndarray]':
     """
-    Normalises the transmission spectrum by dividing it by the maximum value of its rolling mean
+    Normalizes the transmission spectrum by dividing it by the maximum value of its rolling mean
     Optionally replaces any outliers with the rolling mean.
 
     Parameters
@@ -122,7 +122,7 @@ def normalise_transmission(f: 'ndarray', a: 'ndarray',
     Returns
     -------
     tuple[ndarray, ndarray]
-        A tuple containing the normalised frequency and amplitude arrays.
+        A tuple containing the normalized frequency and amplitude arrays.
 
     Note
     ----

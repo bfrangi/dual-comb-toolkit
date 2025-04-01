@@ -5,8 +5,9 @@ if TYPE_CHECKING:
 
     import numpy as np
 
-    from lib.mapping import Mapper
     from lib.entities import Measurement
+    from lib.fitting.concentration import ConcentrationFitter
+    from lib.mapping import Mapper
 
 
 def simulate_line(molecule: str, wl_min: float, wl_max: float,
@@ -345,3 +346,89 @@ def get_measurement_spectrum(meas_name: str, acq_freq: 'Optional[float]' = None)
     fftc = FFTCalculator(t, a)
 
     return fftc.fft_x, fftc.fft_y
+
+
+def fit_simulated_measurement_concentration(
+        molecule: str, wl_min: float, wl_max: float, **kwargs: dict[str, float]
+    ) -> 'tuple[np.ndarray, np.ndarray, ConcentrationFitter]':
+    """
+    Fit a simulated spectrum to a simulation of a measured spectrum.
+
+    Parameters
+    ----------
+    molecule : str
+        The name of the molecule.
+    wl_min : float
+        The minimum wavelength in nm.
+    wl_max : float
+        The maximum wavelength in nm.
+    vmr : float
+        The volume mixing ratio of the molecule in air.
+    pressure : float
+        The pressure in Pa.
+    temperature : float
+        The temperature in K.
+    length : float
+        The length of the absorption path in m.
+    laser_wavelength : float
+        The laser wavelength in nm.
+    high_freq_modulation : float
+        The high frequency modulation in Hz.
+    number_of_teeth : int
+        The number of teeth in the measurement.
+
+    Other Parameters
+    ----------------
+    database : str, optional
+        The database to use. Either 'hitran' or 'hitemp'. Defaults to 'hitran'.
+    std_dev : float, optional
+        The standard deviation of the noise. Defaults to 0.005.
+    x_shift_std_dev : float, optional
+        The standard deviation of the wavelength shift. Defaults to 0.1.
+    scaling_std_dev : float, optional
+        The standard deviation of the scaling. Defaults to 1.
+    laser_wavelength_std_dev : float, optional
+        The standard deviation of the laser wavelength. Defaults to 0.1.
+    normalize : bool, optional
+        Normalize the transmission spectrum. Defaults to False.
+    initial_guess : float, optional
+        Initial guess for the fitting. Defaults to 0.5.
+
+    Returns
+    -------
+    tuple[np.ndarray, np.ndarray, ConcentrationFitter]
+        The wavelength and transmission spectrum of the measurement, and the concentration fitter.
+    """
+    required_kwargs = ['vmr', 'pressure', 'temperature', 'length', 'laser_wavelength', 
+                       'high_freq_modulation', 'number_of_teeth']
+    
+    for key in required_kwargs:
+        if key not in kwargs:
+            raise ValueError(f"Missing specification: {key}.")
+    
+    kwargs['concetration'] = kwargs['vmr']
+
+    from lib.entities import MeasuredSpectrum
+    from lib.fitting.concentration import ConcentrationFitter
+    from lib.simulations import simulate_measurement
+
+    x_meas, y_meas = simulate_measurement(molecule=molecule, wl_min=wl_min, wl_max=wl_max, **kwargs)
+
+    x_meas_fitted = x_meas.copy()
+    y_meas_fitted = y_meas.copy()
+
+    if kwargs.get('normalize', False):
+        from lib.combs import normalize_transmission
+
+        x_meas_fitted, y_meas_fitted = normalize_transmission(x_meas_fitted, y_meas_fitted,
+                                                              replace_outliers=False)
+
+    # Create a MeasuredSpectrum object.
+    meas_transmission = MeasuredSpectrum(x_meas_fitted, y_meas_fitted, xu='nm', molecule=molecule,
+                                         **kwargs)
+
+    # Fit the concentration.
+    f = ConcentrationFitter(meas_transmission=meas_transmission, wl_min=wl_min,
+                            wl_max=wl_max, **kwargs)
+
+    return x_meas, y_meas, f

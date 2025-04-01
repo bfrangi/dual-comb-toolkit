@@ -1,4 +1,8 @@
+from lib.constants import c
+
+
 # Pressure conversions
+
 
 def pa_to_bar(p: float) -> float:
     """
@@ -74,3 +78,24 @@ def delta_wavelength_to_delta_wavenumber(delta_wl, central_wl):
         The wavenumber range in cm^-1.
     """
     return (delta_wl * 1e-9) / (central_wl * 1e-9) ** 2 * 1e-2
+
+
+def delta_frequency_to_delta_wavelength(delta_fr, central_fr):
+    """
+    Convert a small frequency range around a central frequency to a wavelength
+    range. This is done by using the formula:
+    `delta_wl = delta_fr * c / central_fr^2`. 
+
+    Parameters
+    ----------
+    delta_fr : float
+        The frequency range in Hz.
+    central_wl : float
+        The central frequency in Hz.
+
+    Returns
+    -------
+    float
+        The wavelength range in nm.
+    """
+    return delta_fr * c / central_fr ** 2 * 1e9

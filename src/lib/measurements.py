@@ -293,7 +293,7 @@ class Measurement:
 
     def _compute_transmission(self) -> None:
         from lib.analysis import TransmissionAnalyser
-        from lib.combs import normalise_transmission
+        from lib.combs import normalize_transmission
         from lib.entities import MeasuredSpectrum
 
         ta = TransmissionAnalyser(self.t, self.sample_signal,
@@ -302,7 +302,7 @@ class Measurement:
 
         if self.normalize:
             tr_freq, tr_amp = \
-                normalise_transmission(tr_freq, tr_amp, replace_outliers=False)
+                normalize_transmission(tr_freq, tr_amp, replace_outliers=False)
 
         if self.baseline:
             tr_freq, tr_amp = self.baseline.correct_transmission(tr_freq, tr_amp)

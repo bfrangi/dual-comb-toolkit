@@ -341,6 +341,14 @@ def simulate_measurement(molecule: str, wl_min: float, wl_max: float,
         The frequency spacing of the high-frequency comb in Hz.
     number_of_teeth : int
         The number of teeth in the high-frequency comb.
+    vmr : float
+        The concentration of the molecule in VMR.
+    pressure : float
+        The pressure in Pa.
+    temperature : float
+        The temperature in K.
+    length : float
+        The length of the absorption path in m.
 
     Other Parameters
     ----------------
@@ -353,6 +361,12 @@ def simulate_measurement(molecule: str, wl_min: float, wl_max: float,
         limits the resolution of the simulation.
     std_dev : float, optional
         The standard deviation of the noise added to the simulated spectrum.
+    scaling_std_dev : float, optional
+        The standard deviation of the scaling factor applied to the simulated spectrum.
+    x_shift_std_dev : float, optional
+        The standard deviation of the wavelength shift applied to the simulated spectrum.
+    laser_wavelength_std_dev : float, optional
+        The standard deviation of the laser wavelength.
     """
     from lib.combs import get_comb_frequencies, to_frequency, to_wavelength
     from lib.constants import c
@@ -365,42 +379,59 @@ def simulate_measurement(molecule: str, wl_min: float, wl_max: float,
         if key not in kwargs:
             raise ValueError(f"Missing specification for: {key}.")
 
-    # Validate parameters.
+    # Obtain comb frequencies.
 
     laser_wl = kwargs.get('laser_wavelength')
-    if wl_min > laser_wl or wl_max < laser_wl:
-        raise ValueError("The laser wavelength must be within the specified wavelength range.")
+    laser_wl_std_dev = kwargs.get('laser_wavelength_std_dev', 0.1)
+    laser_wl = np.random.normal(laser_wl, laser_wl_std_dev, 1)[0]
+    laser_freq = c / laser_wl * 1e9
+
+    min_fr = c / wl_max * 1e9
+    max_fr = c / wl_min * 1e9
+
+    fr_sam = get_comb_frequencies(
+        center_freq=laser_freq,
+        freq_spacing=kwargs.get('high_freq_modulation'),
+        number_of_teeth=kwargs.get('number_of_teeth')
+    )
+    if fr_sam[-1] - fr_sam[0] > max_fr - min_fr:
+        raise ValueError("The comb is too wide for the simulated frequency range.")
+
+    left_overflow = np.abs(min(fr_sam[0] - min_fr, 0))
+    right_overflow = np.abs(min(max_fr - fr_sam[-1], 0))
+    fr_sam = fr_sam + left_overflow - right_overflow
 
     # Simulate the transmission spectrum.
 
     database = kwargs.pop('database', 'hitran')
-    s = Simulator(
-        molecule=molecule,
-        **kwargs,
-        database=database,
-    )
+    s = Simulator(molecule=molecule, **kwargs, database=database)
     s.compute_transmission_spectrum(wl_min=wl_min, wl_max=wl_max)
     wl_sim, tr_sim = s.get_transmission_spectrum(wl_min, wl_max)
     fr_sim, tr_sim = to_frequency(wl_sim, tr_sim)
 
     # Sample the simulated spectrum with a comb.
 
-    laser_freq = c / laser_wl * 1e9
-    fr_sam = get_comb_frequencies(
-        center_freq=laser_freq,
-        freq_spacing=kwargs.get('high_freq_modulation'),
-        number_of_teeth=kwargs.get('number_of_teeth')
-    )
     indices = closest_value_indices(fr_sim, fr_sam)
     tr_sam = tr_sim[indices]
 
     # Add noise to the sampled spectrum.
-    noise_mean = 0
     std_dev = kwargs.get('std_dev', 0.01)
-    noise = np.random.normal(noise_mean, std_dev, len(tr_sam))
+    noise = np.random.normal(0, std_dev, len(tr_sam))
     tr_sam += noise
 
-    return to_wavelength(fr_sam, tr_sam)
+    scaling_std_dev = kwargs.get('scaling_std_dev', 0.01)
+    scaling_factor = max(np.abs(np.random.normal(1, scaling_std_dev, 1)[0]), 0.001)
+    tr_sam *= scaling_factor
+
+    wl_sam, tr_sam = to_wavelength(fr_sam, tr_sam)
+
+    left_slack = wl_sam[0] - wl_sim[0]
+    right_slack = wl_sim[-1] - wl_sam[-1]
+    x_shift_std_dev = kwargs.get('x_shift_std_dev', 0.01)
+    x_shift = min(max(np.random.normal(0, x_shift_std_dev, 1)[0], -left_slack), right_slack)
+    wl_sam += x_shift
+
+    return wl_sam, tr_sam
 
     # import numpy as np
 

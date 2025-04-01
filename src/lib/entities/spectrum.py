@@ -114,6 +114,19 @@ class MeasuredSpectrum(Spectrum):
         Modulation frequency of the optical comb in Hz.
     acq_freq : Optional[float]  
         Acquisition frequency used in the measurement in Hz.
+
+    Other Parameters
+    ----------------
+    molecule : Optional[str]
+        Name of the molecule.
+    pressure : Optional[float]
+        Pressure in Pa.
+    temperature : Optional[float]
+        Temperature in K.
+    concentration : Optional[float]
+        Concentration of the molecule.
+    length : Optional[float]
+        Length of the absorption path in m.
     """
     def __init__(self, x: 'ndarray', y: 'ndarray', xu: 'str' = 'nm',
                  **kwargs: dict[str, str | float | int]) -> None:
@@ -140,6 +153,10 @@ class SimulatedSpectrum(Spectrum):
         Transmission values.
     xu : str, optional
         Unit of the given values. Defaults to 'nm'. Can be 'nm' or 'Hz'.
+    wl_min : Optional[float]
+        Minimum wavelength for the simulation in nm.
+    wl_max : Optional[float]
+        Maximum wavelength for the simulation in nm.
     
     Other Parameters
     ----------------
@@ -153,10 +170,6 @@ class SimulatedSpectrum(Spectrum):
         Concentration of the molecule.
     length : Optional[float]
         Length of the absorption path in m.
-    wl_min : Optional[float]
-        Minimum wavelength for the simulation in nm.
-    wl_max : Optional[float]
-        Maximum wavelength for the simulation in nm.
     """
     def __init__(self, x: 'ndarray', y: 'ndarray', xu: 'str' = 'nm',
                  **kwargs: dict[str, str | float]) -> None:
