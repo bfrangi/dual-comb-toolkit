@@ -23,7 +23,7 @@ baseline_names = [
 ]
 center_freq = 40000.0  # Hz
 freq_spacing = 200.0  # Hz
-number_of_teeth = 38
+number_of_teeth = 30
 laser_wavelength = 3427.45e-9  # m
 high_freq_modulation = 500e6  # Hz
 acq_freq = 400000.0  # Hz
