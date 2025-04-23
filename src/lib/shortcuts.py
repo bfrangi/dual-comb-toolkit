@@ -220,6 +220,11 @@ def fit_measurement_concentration(
     ----------------
     baseline_names: list[str], optional
         The name of the measurements used to obtain the baseline.
+    initial_guess : float, optional
+        Initial guess for the fitting. Defaults to 0.5.
+    fitter : str, optional
+        Fitter to use. Defaults to 'normal'. Possible values are 'normal', 'interp' and
+        'normal_gpu'.
 
     Returns
     -------
@@ -393,6 +398,9 @@ def fit_simulated_measurement_concentration(
         Normalize the transmission spectrum. Defaults to False.
     initial_guess : float, optional
         Initial guess for the fitting. Defaults to 0.5.
+    fitter : str, optional
+        Fitter to use. Defaults to 'normal'. Possible values are 'normal', 'interp' and
+        'normal_gpu'.
 
     Returns
     -------

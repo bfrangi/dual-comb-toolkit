@@ -12,7 +12,7 @@ wl_min = 3427.1  # nm
 wl_max = 3427.8  # nm
 
 # Specify the name and specifications of the measurement.
-meas_name = 'cell-sweep-10-34-17-03-2025/Position-X8-Y1'
+meas_name = 'cell-sweep-10-34-17-03-2025/Position-X4-Y1'
 baseline_names = [
     'cell-sweep-10-34-17-03-2025/Position-X12-Y1',
     'cell-sweep-10-34-17-03-2025/Position-X13-Y1',
@@ -46,6 +46,7 @@ vmr, x_sim, y_sim, x_meas, y_meas = fit_measurement_concentration(
     length=length,
     initial_guess=0.5,
     baseline_names=baseline_names,
+    fitter='interp',
 )
 
 # Plot the simulated and measured transmission spectra.
