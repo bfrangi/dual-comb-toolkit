@@ -13,10 +13,10 @@ import numpy as np
 
 
 def absorption_spectrum(
-        wl_min: float, wl_max: float, molecule: str, vmr: float, pressure: float,
-        temperature: float, length: float, isotopes: str = '1', wavelength_step: float = 0.001,
-        database: str = 'hitran', return_spectrum: bool = False
-    ) -> tuple[np.ndarray, np.ndarray] | tuple[np.ndarray, np.ndarray, 'Simulator']:
+    wl_min: float, wl_max: float, molecule: str, vmr: float, pressure: float,
+    temperature: float, length: float, isotopes: str = '1', wavelength_step: float = 0.001,
+    database: str = 'hitran', return_spectrum: bool = False
+) -> tuple[np.ndarray, np.ndarray] | tuple[np.ndarray, np.ndarray, 'Simulator']:
     """
     Calculate the absorption spectrum of a molecule in air.
 
@@ -59,19 +59,19 @@ def absorption_spectrum(
     if return_spectrum:
         wl, tr, simulator = results
         return wl, 1 - tr, simulator
-    
+
     wl, tr = results
     return wl, 1 - tr
 
 
 def absorption_spectrum_gpu(
-        wl_min: float, wl_max: float, molecule: str, vmr: float, pressure: float,
-        temperature: float, length: float, isotopes: str = '1', wavelength_step: float = 0.001,
-        database: str = 'hitran', spectrum: 'Optional[Spectrum]' = None, exit_gpu: bool = True
-    ) -> tuple[np.ndarray, np.ndarray, 'Optional[Spectrum]']:
+    wl_min: float, wl_max: float, molecule: str, vmr: float, pressure: float,
+    temperature: float, length: float, isotopes: str = '1', wavelength_step: float = 0.001,
+    database: str = 'hitran', spectrum: 'Optional[Spectrum]' = None, exit_gpu: bool = True
+) -> tuple[np.ndarray, np.ndarray, 'Optional[Spectrum]']:
     """
     Calculate the absorption spectrum of a molecule in air using GPU.
-    
+
     Parameters
     ----------
     wl_min : float
@@ -116,10 +116,10 @@ def absorption_spectrum_gpu(
 
 
 def transmission_spectrum(
-        wl_min: float, wl_max: float, molecule: str, vmr: float, pressure: float,
-        temperature: float, length: float, isotopes: str = '1', wavelength_step: float = 0.001,
-        database: str = 'hitran', return_spectrum: bool = False
-    ) -> tuple[np.ndarray, np.ndarray] | tuple[np.ndarray, np.ndarray, 'Spectrum']:
+    wl_min: float, wl_max: float, molecule: str, vmr: float, pressure: float,
+    temperature: float, length: float, isotopes: str = '1', wavelength_step: float = 0.001,
+    database: str = 'hitran', return_spectrum: bool = False
+) -> tuple[np.ndarray, np.ndarray] | tuple[np.ndarray, np.ndarray, 'Spectrum']:
     """
     Calculate the transmission spectrum of a molecule in air.
 
@@ -185,10 +185,10 @@ def transmission_spectrum(
 
 
 def transmission_spectrum_gpu(
-        wl_min: float, wl_max: float, molecule: str, vmr: float, pressure: float,
-        temperature: float, length: float, isotopes: str = '1', wavelength_step: float = 0.001,
-        database: str = 'hitran', spectrum: 'Optional[Spectrum]' = None, exit_gpu: bool = True
-    ) -> tuple[np.ndarray, np.ndarray, 'Optional[Spectrum]']:
+    wl_min: float, wl_max: float, molecule: str, vmr: float, pressure: float,
+    temperature: float, length: float, isotopes: str = '1', wavelength_step: float = 0.001,
+    database: str = 'hitran', spectrum: 'Optional[Spectrum]' = None, exit_gpu: bool = True
+) -> tuple[np.ndarray, np.ndarray, 'Optional[Spectrum]']:
     """
     Calculate the transmission spectrum of a molecule in air using GPU.
 
@@ -601,6 +601,10 @@ class Simulator:
         self._wl_max: 'Optional[float]' = None
         self._wavelength: 'Optional[ndarray]' = None
         self._transmission: 'Optional[ndarray]' = None
+        self._computed_vmr = None
+        self._computed_pressure = None
+        self._computed_temperature = None
+        self._computed_length = None
         self._isotopes: str = kwargs.get('isotopes', '1')
         self._database: str = kwargs.get('database', 'hitran')
         self._wavelength_step: float = kwargs.get('wavelength_step', 0.01)
@@ -640,23 +644,37 @@ class Simulator:
         exit_gpu : bool, optional
             Whether to exit the GPU after calculation. Only applies if using GPU. Default is True.
         """
-        if wl_min == self._wl_min and wl_max == self._wl_max:
+        sim_params = [
+            self.vmr, self.pressure, self.temperature, self.length, wl_min, wl_max
+        ]
+        sim_params_computed = [
+            self._computed_vmr, self._computed_pressure, self._computed_temperature,
+            self._computed_length, self._wl_min, self._wl_max
+        ]
+
+        if all(param == computed_param for param, computed_param in zip(sim_params, sim_params_computed)):
             if self._wavelength is not None and self._transmission is not None:
                 return self._wavelength, self._transmission
 
-        self._wl_min = wl_min
-        self._wl_max = wl_max
-
         if self._use_gpu:
+            spectrum = self._spectrum if self._wl_min == wl_min and self._wl_max == wl_max else None
+
             self._wavelength, self._transmission, self._spectrum = transmission_spectrum_gpu(
-                self._wl_min, self._wl_max, self._molecule, self.vmr, self.pressure,
-                self.temperature, self.length, self._isotopes, self._wavelength_step, self._database,
-                self._spectrum, exit_gpu=exit_gpu)
+                wl_min, wl_max, self._molecule, self.vmr, self.pressure, self.temperature, 
+                self.length, self._isotopes, self._wavelength_step, self._database, spectrum, 
+                exit_gpu=exit_gpu)
         else:
             self._wavelength, self._transmission, self._spectrum = transmission_spectrum(
-                self._wl_min, self._wl_max, self._molecule, self.vmr, self.pressure,
+                wl_min, wl_max, self._molecule, self.vmr, self.pressure,
                 self.temperature, self.length, self._isotopes, self._wavelength_step, self._database,
                 return_spectrum=True)
+
+        self._wl_min = wl_min
+        self._wl_max = wl_max
+        self._computed_vmr = self.vmr
+        self._computed_pressure = self.pressure
+        self._computed_temperature = self.temperature
+        self._computed_length = self.length
 
     def get_transmission_spectrum(self, wl_min: 'Optional[float]' = None,
                                   wl_max: 'Optional[float]' = None) -> tuple[np.ndarray, np.ndarray]:
@@ -778,12 +796,22 @@ def simulate_measurement(molecule: str, wl_min: float, wl_max: float,
         limits the resolution of the simulation.
     std_dev : float, optional
         The standard deviation of the noise added to the simulated spectrum.
+    number_of_teeth_for_std_dev : int, optional
+        The number of teeth in the high-frequency comb used to calculate the standard deviation
+        of the noise added to the simulated spectrum. If not specified, std_dev is used
+        directly. If specified, the standard deviation is calculated as:
+            std_dev = std_dev · number_of_teeth_for_std_dev / number_of_teeth
     scaling_std_dev : float, optional
         The standard deviation of the scaling factor applied to the simulated spectrum.
     x_shift_std_dev : float, optional
         The standard deviation of the wavelength shift applied to the simulated spectrum.
     laser_wavelength_std_dev : float, optional
         The standard deviation of the laser wavelength.
+
+    References
+    ----------
+    Coddington, I., Newbury, N., & Swann, W. (2016). Dual-comb spectroscopy. Optica, 3(4), 414–426.
+    https://doi.org/10.1364/OPTICA.3.000414
     """
     from lib.combs import get_comb_frequencies, to_frequency, to_wavelength
     from lib.constants import c
@@ -837,7 +865,12 @@ def simulate_measurement(molecule: str, wl_min: float, wl_max: float,
 
     # Add noise to the sampled spectrum.
 
-    std_dev = kwargs.get('std_dev', 0.01)
+    number_of_teeth_for_std_dev = kwargs.get('number_of_teeth_for_std_dev', None)
+    if number_of_teeth_for_std_dev is not None:
+        std_dev = kwargs.get('std_dev', 0.01) / number_of_teeth_for_std_dev * \
+            kwargs.get('number_of_teeth')
+    else:
+        std_dev = kwargs.get('std_dev', 0.01)
     noise = np.random.normal(0, std_dev, len(tr_sam))
     tr_sam += noise
 

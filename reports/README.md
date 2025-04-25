@@ -27,6 +27,7 @@ wl_max = 3427.9  # nm
 min_comb_span = 0.15  # nm
 
 std_dev = 0.014  # unitless
+number_of_teeth_for_std_dev = None  # teeth
 x_shift_std_dev = 0.02  # nm
 scaling_std_dev = 1  # unitless
 laser_wavelength_std_dev = 0.01  # nm
@@ -41,6 +42,7 @@ normalize = True
 initial_guess = 0.5
 fitter = 'normal'
 ```
+
 **`report-exploratory-simulations-100-per-conf.csv`**
 
 These were a set of simulations performed for the 3427.4 nm methane (CH4) line, at 298 K, 
@@ -65,6 +67,7 @@ wl_max = 3427.9  # nm
 min_comb_span = 0.15  # nm
 
 std_dev = 0.014  # unitless
+number_of_teeth_for_std_dev = None  # teeth
 x_shift_std_dev = 0.02  # nm
 scaling_std_dev = 1  # unitless
 laser_wavelength_std_dev = 0.01  # nm
@@ -127,4 +130,43 @@ numbers_of_teeth = [
 normalize = True
 initial_guess = 0.5
 fitter = 'interp'
+```
+
+**`report-10-per-conf.csv`**
+
+These were a set of simulations performed for the 3427.4 nm methane (CH4) line, at 298 K, 
+and 53328.95 Pa (400 Torr), with a volume mixing ratio of 0.01. These simulations take
+into account that the SNR varies with the number of teeth. The parameters used were:
+
+```python
+# Define the parameters for simulating the measurement.
+
+molecule = 'CH4'
+database = 'hitran'
+
+vmr = 0.01  # volume mixing ratio
+pressure = 53328.94736842  # Pa
+temperature = 298  # K
+length = 0.055  # m
+laser_wavelength = 3427.41  # nm
+
+wl_min = 3427.0  # nm
+wl_max = 3427.9  # nm
+min_comb_span = 0.15  # nm
+
+std_dev = 0.014  # unitless
+number_of_teeth_for_std_dev = None  # teeth
+x_shift_std_dev = 0.02  # nm
+scaling_std_dev = 1  # unitless
+laser_wavelength_std_dev = 0.01  # nm
+
+n_simulations_per_config = 10
+comb_spacings = [(i+1)*100e6 for i in range(30)] # Hz
+numbers_of_teeth = [i for i in range(5, 31) for _ in range(30)] # teeth
+
+# Define the fitting parameters.
+
+normalize = True
+initial_guess = 0.001
+fitter = 'normal_gpu'
 ```
