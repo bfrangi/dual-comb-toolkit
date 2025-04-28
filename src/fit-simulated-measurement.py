@@ -38,7 +38,7 @@ laser_wavelength_std_dev = 0.01  # nm
 
 n_simulations_per_config = 10
 
-comb_spacings = [(i+1)*100e6 for i in range(30)] # Hz
+comb_spacings = [(i+1)*100e6 for i in range(30)] * 26 # Hz
 numbers_of_teeth = [i for i in range(5, 31) for _ in range(30)] # teeth
 
 # Define the fitting parameters.

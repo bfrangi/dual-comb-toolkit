@@ -7,7 +7,7 @@ from matplotlib.pyplot import figure
 from lib.files import get_figures_path, get_reports_path
 from lib.plots import tight
 
-report_name = 'report-exploratory-simulations-100-per-conf'
+report_name = 'report-10-per-conf'
 
 report_path = f"{get_reports_path()}{report_name}.csv"
 
