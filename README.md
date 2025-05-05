@@ -1,6 +1,3 @@
-install pipenv
-python3 -m venv .venv
-
 # Dual Comb Processing
 
 Useful scripts for processing dual comb data.
