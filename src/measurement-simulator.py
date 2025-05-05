@@ -14,7 +14,7 @@ wl_max = 3427.8  # nm
 database = 'hitran'
 
 # Specify the name and specifications of the measurement.
-number_of_teeth = 38
+number_of_teeth = 30
 laser_wavelength = 3427.45  # nm
 high_freq_modulation = 500e6  # Hz
 std_dev = 0.005
