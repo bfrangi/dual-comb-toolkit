@@ -392,8 +392,8 @@ def fit_simulated_measurement_concentration(
         The standard deviation of the wavelength shift. Defaults to 0.1.
     scaling_std_dev : float, optional
         The standard deviation of the scaling. Defaults to 1.
-    laser_wavelength_std_dev : float, optional
-        The standard deviation of the laser wavelength. Defaults to 0.1.
+    laser_wavelength_slack : tuple(float), optional
+        Range of the laser wavelength's random variation. Defaults to (-0.05, 0.05).
     normalize : bool, optional
         Normalize the transmission spectrum. Defaults to False.
     initial_guess : float, optional
