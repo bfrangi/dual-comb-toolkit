@@ -29,8 +29,8 @@ class OpticalFrequencyCombExtractor:
         The frequency spacing of the comb in Hz.
     laser_wavelength : float, optional
         The wavelength of the laser in meters.
-    high_freq_modulation : float, optional
-        The high frequency modulation in Hz.
+    optical_comb_spacing : float, optional
+        Spacing of the optical optical comb in Hz.
     """
 
     def __init__(self, rf_domain_frequency: 'ndarray', rf_domain_amplitude: 'ndarray',
@@ -38,7 +38,7 @@ class OpticalFrequencyCombExtractor:
         from lib.defaults import (
             CENTER_FREQ,
             FREQ_SPACING,
-            HIGH_FREQ_MODULATION,
+            OPTICAL_COMB_SPACING,
             LASER_WAVELENGTH,
         )
 
@@ -51,7 +51,7 @@ class OpticalFrequencyCombExtractor:
         self.center_freq: float = kwargs.get('center_freq', CENTER_FREQ)
         self.freq_spacing: float = kwargs.get('freq_spacing', FREQ_SPACING)
         self.laser_wavelength: float = kwargs.get('laser_wavelength', LASER_WAVELENGTH)
-        self.high_freq_modulation: float = kwargs.get('high_freq_modulation', HIGH_FREQ_MODULATION)
+        self.optical_comb_spacing: float = kwargs.get('optical_comb_spacing', OPTICAL_COMB_SPACING)
 
     @property
     def comb_freq(self) -> 'ndarray':
@@ -71,7 +71,7 @@ class OpticalFrequencyCombExtractor:
         # Transform the rf comb spectrum to the optical domain
         self._optical_domain_frequency, self._optical_domain_amplitude = approximate_high_frequency_spectrum(
             self.rf_domain_frequency, self.rf_domain_amplitude, f0=self.center_freq,
-            fs=self.freq_spacing, fS=self.high_freq_modulation, laser_wl=self.laser_wavelength)
+            fs=self.freq_spacing, fS=self.optical_comb_spacing, laser_wl=self.laser_wavelength)
 
         return self._optical_domain_frequency, self._optical_domain_amplitude
 
@@ -80,7 +80,7 @@ class OpticalFrequencyCombExtractor:
     def generate_spectrum_plot(self) -> 'plt':
         from lib.plots import stem_plot
 
-        rep = self.high_freq_modulation
+        rep = self.optical_comb_spacing
         laser_wl = self.laser_wavelength
         title = 'Comb Spectrum showing extracted optical teeth and their amplitudes.\n' + \
                 f'Central wavelength ${laser_wl*1e9}$ nm and repetition rate ${rep}$ Hz.'

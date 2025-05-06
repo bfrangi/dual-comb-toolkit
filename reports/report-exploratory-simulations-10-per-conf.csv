@@ -1,4 +1,4 @@
-Number of teeth,High frequency modulation (Hz),Mean concentration (VMR),Standard deviation (VMR)
+Number of teeth,Comb spacing (Hz),Mean concentration (VMR),Standard deviation (VMR)
 5,1000000000.0,0.00621798270599029,0.0012864158315541445
 5,1100000000.0,0.006337040267264578,0.0010173425309538604
 5,1200000000.0,0.007526960729264493,0.0008497586347584012

@@ -118,8 +118,8 @@ for n_teeth, spacing in zip(numbers_of_teeth, comb_spacings):
     # Print the simulation parameters
 
     print(
-        f"Number of teeth: {n_teeth}, High frequency "
-        + f"modulation: {spacing / 1e9:.2f} GHz"
+        f"Number of teeth: {n_teeth}, Optical comb "
+        + f"spacing: {spacing / 1e9:.2f} GHz"
     )
 
     # Create a folder in `figures` with name like `8 x 1.0 GHz` to store the plots.
@@ -150,7 +150,7 @@ for n_teeth, spacing in zip(numbers_of_teeth, comb_spacings):
                 temperature=temperature,
                 length=length,
                 laser_wavelength=laser_wavelength,
-                high_freq_modulation=spacing,
+                optical_comb_spacing=spacing,
                 number_of_teeth=n_teeth,
                 database=database,
                 std_dev=std_dev,

@@ -167,8 +167,8 @@ class Measurement:
         The number of teeth in the comb.
     laser_wavelength : float, optional
         The wavelength of the laser.
-    high_freq_modulation : float, optional
-        The high frequency modulation of the comb.
+    optical_comb_spacing : float, optional
+        Spacing between optical comb teeth.
 
     Other Parameters
     ----------------
@@ -200,7 +200,7 @@ class Measurement:
         from lib.defaults import (
             CENTER_FREQ,
             FREQ_SPACING,
-            HIGH_FREQ_MODULATION,
+            OPTICAL_COMB_SPACING,
             LASER_WAVELENGTH,
             NUMBER_OF_TEETH,
             REFERENCE_TAG,
@@ -230,7 +230,7 @@ class Measurement:
         self.freq_spacing: float = kwargs.get('freq_spacing', FREQ_SPACING)
         self.number_of_teeth: int = kwargs.get('number_of_teeth', NUMBER_OF_TEETH)
         self.laser_wavelength: float = kwargs.get('laser_wavelength', LASER_WAVELENGTH)
-        self.high_freq_modulation: float = kwargs.get('high_freq_modulation', HIGH_FREQ_MODULATION)
+        self.optical_comb_spacing: float = kwargs.get('optical_comb_spacing', OPTICAL_COMB_SPACING)
         self.normalize: bool = kwargs.get('normalize', True)
         self.baseline: 'Optional[Baseline]' = kwargs.get('baseline', None)
 
@@ -249,7 +249,7 @@ class Measurement:
             'freq_spacing': self.freq_spacing,
             'number_of_teeth': self.number_of_teeth,
             'laser_wavelength': self.laser_wavelength,
-            'high_freq_modulation': self.high_freq_modulation
+            'optical_comb_spacing': self.optical_comb_spacing
         }
 
     def get(self, property_name: str) -> 'ndarray':
@@ -313,7 +313,7 @@ class Measurement:
                                                        freq_spacing=self.freq_spacing,
                                                        number_of_teeth=self.number_of_teeth,
                                                        laser_wavelength=self.laser_wavelength,
-                                                       high_freq_modulation=self.high_freq_modulation,
+                                                       optical_comb_spacing=self.optical_comb_spacing,
                                                        acq_freq=self.acq_freq,
                                                        molecule=self.molecule,
                                                        pressure=self.pressure,

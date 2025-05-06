@@ -22,13 +22,13 @@ center_freq = 40000.0  # Hz
 freq_spacing = 200.0  # Hz
 number_of_teeth = 38
 laser_wavelength = 3427.45e-9  # m
-high_freq_modulation = 500e6  # Hz
+optical_comb_spacing = 500e6  # Hz
 acq_freq = 400000.0  # Hz
 
 # Compute the baseline.
 bl = Baseline(measurement_names=meas_baseline, center_freq=center_freq,
               freq_spacing=freq_spacing, number_of_teeth=number_of_teeth,
-              laser_wavelength=laser_wavelength, high_freq_modulation=high_freq_modulation,
+              laser_wavelength=laser_wavelength, optical_comb_spacing=optical_comb_spacing,
               acq_freq=acq_freq)
 
 bl.show_baseline_plot()

@@ -24,14 +24,14 @@ center_freq = 40000.0  # Hz
 freq_spacing = 200.0  # Hz
 number_of_teeth = 35
 laser_wavelength = 3427.437e-9  # m
-high_freq_modulation = 500e6  # Hz
+optical_comb_spacing = 500e6  # Hz
 acq_freq = 400000.0  # Hz
 
 # Map the measurements.
 mapper = map_measurement_concentration(
     meas_names=meas_names, center_freq=center_freq, freq_spacing=freq_spacing,
     number_of_teeth=number_of_teeth, laser_wavelength=laser_wavelength,
-    high_freq_modulation=high_freq_modulation, acq_freq=acq_freq, molecule=molecule,
+    optical_comb_spacing=optical_comb_spacing, acq_freq=acq_freq, molecule=molecule,
     pressure=pressure, temperature=temperature, length=length, wl_min=wl_min, wl_max=wl_max,
     baseline_names=baseline_names)
 

@@ -31,14 +31,14 @@ class TransmissionAnalyser:
         The number of teeth to extract.
     laser_wavelength : float, optional
         The wavelength of the laser in meters.
-    high_freq_modulation : float, optional
-        The high frequency modulation in Hz.
+    optical_comb_spacing : float, optional
+        Spacing of the optical optical comb in Hz.
     """
 
     def __init__(self, t: 'ndarray', sample_amplitude: 'ndarray', reference_amplitude: 'ndarray',
                  **kwargs) -> None:
         from lib.defaults import (CENTER_FREQ, FREQ_SPACING,
-                                  HIGH_FREQ_MODULATION, LASER_WAVELENGTH,
+                                  OPTICAL_COMB_SPACING, LASER_WAVELENGTH,
                                   NUMBER_OF_TEETH)
 
         # Time series data
@@ -51,7 +51,7 @@ class TransmissionAnalyser:
         self.freq_spacing: float = kwargs.get('freq_spacing', FREQ_SPACING)
         self.number_of_teeth: int = kwargs.get('number_of_teeth', NUMBER_OF_TEETH)
         self.laser_wavelength: float = kwargs.get('laser_wavelength', LASER_WAVELENGTH)
-        self.high_freq_modulation: float = kwargs.get('high_freq_modulation', HIGH_FREQ_MODULATION)
+        self.optical_comb_spacing: float = kwargs.get('optical_comb_spacing', OPTICAL_COMB_SPACING)
 
         # Transmission data
         self._transmission_freq: 'Optional[ndarray]' = None
@@ -64,7 +64,7 @@ class TransmissionAnalyser:
             'freq_spacing': self.freq_spacing,
             'number_of_teeth': self.number_of_teeth,
             'laser_wavelength': self.laser_wavelength,
-            'high_freq_modulation': self.high_freq_modulation
+            'optical_comb_spacing': self.optical_comb_spacing
         }
 
     @property

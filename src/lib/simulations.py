@@ -936,7 +936,7 @@ def simulate_measurement(
         The maximum wavelength in nm.
     laser_wavelength : float
         The wavelength of the laser in nm.
-    high_freq_modulation : float
+    optical_comb_spacing : float
         The frequency spacing of the high-frequency comb in Hz.
     number_of_teeth : int
         The number of teeth in the high-frequency comb.
@@ -988,7 +988,7 @@ def simulate_measurement(
             "temperature",
             "length",
             "laser_wavelength",
-            "high_freq_modulation",
+            "optical_comb_spacing",
             "number_of_teeth",
         ]
 
@@ -1010,7 +1010,7 @@ def simulate_measurement(
 
         fr_sam = get_comb_frequencies(
             center_freq=laser_freq,
-            freq_spacing=kwargs.get("high_freq_modulation"),
+            freq_spacing=kwargs.get("optical_comb_spacing"),
             number_of_teeth=kwargs.get("number_of_teeth"),
         )
         if fr_sam[-1] - fr_sam[0] > max_fr - min_fr:

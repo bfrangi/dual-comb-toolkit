@@ -80,8 +80,8 @@ def get_measurement(
         The number of teeth in the measurement.
     laser_wavelength : float
         The laser wavelength of the measurement.
-    high_freq_modulation : float
-        The high frequency modulation of the measurement.
+    optical_comb_spacing : float
+        Spacing between teeth of the measured optical comb in Hz.
     acq_freq : float
         The acquisition frequency of the measurement.
 
@@ -110,7 +110,7 @@ def get_measurement(
     from lib.measurements import Measurement
 
     required_specs = ['center_freq', 'freq_spacing', 'number_of_teeth', 'laser_wavelength',
-                      'high_freq_modulation', 'acq_freq']
+                      'optical_comb_spacing', 'acq_freq']
 
     for key in required_specs:
         if key not in specifications:
@@ -148,8 +148,8 @@ def get_measurement_transmission(
         The number of teeth in the measurement.
     laser_wavelength : float
         The laser wavelength of the measurement.
-    high_freq_modulation : float
-        The high frequency modulation of the measurement.
+    optical_comb_spacing : float
+        Spacing between teeth of the measured optical comb.
     acq_freq : float
         The acquisition frequency of the measurement.
 
@@ -199,8 +199,8 @@ def fit_measurement_concentration(
         The number of teeth in the measurement.
     laser_wavelength : float
         The laser wavelength of the measurement.
-    high_freq_modulation : float
-        The high frequency modulation of the measurement.
+    optical_comb_spacing : float
+        Spacing between teeth of the measured optical comb.
     acq_freq : float
         The acquisition frequency of the measurement.
     wl_min : float
@@ -271,13 +271,13 @@ def map_measurement_concentration(
     center_freq : float
         Center frequency of the radio frequency comb in Hz.
     freq_spacing : float
-        Modulation frequency of the radio frequency comb in Hz.
+        Spacing of the radio frequency comb in Hz.
     number_of_teeth : int
         Number of teeth to consider.
     laser_wavelength : float
         Approximate value of the laser wavelength in nm.
-    high_freq_modulation : float
-        Modulation frequency of the optical comb in Hz.
+    optical_comb_spacing : float
+        Spacing of the optical optical comb in Hz.
     acq_freq : float
         Acquisition frequency used in the measurement in Hz.
     molecule : str
@@ -377,8 +377,8 @@ def fit_simulated_measurement_concentration(
         The length of the absorption path in m.
     laser_wavelength : float
         The laser wavelength in nm.
-    high_freq_modulation : float
-        The high frequency modulation in Hz.
+    optical_comb_spacing : float
+        Spacing of the optical optical comb in Hz.
     number_of_teeth : int
         The number of teeth in the measurement.
 
@@ -408,7 +408,7 @@ def fit_simulated_measurement_concentration(
         The wavelength and transmission spectrum of the measurement, and the concentration fitter.
     """
     required_kwargs = ['vmr', 'pressure', 'temperature', 'length', 'laser_wavelength', 
-                       'high_freq_modulation', 'number_of_teeth']
+                       'optical_comb_spacing', 'number_of_teeth']
     
     for key in required_kwargs:
         if key not in kwargs:

@@ -322,6 +322,6 @@ class ConcentrationFitter:
             freq_spacing=self._pre_meas_trasmission.freq_spacing,
             number_of_teeth=self._pre_meas_trasmission.number_of_teeth,
             laser_wavelength=self._pre_meas_trasmission.laser_wavelength,
-            high_freq_modulation=self._pre_meas_trasmission.high_freq_modulation,
+            optical_comb_spacing=self._pre_meas_trasmission.optical_comb_spacing,
             acq_freq=self._pre_meas_trasmission.acq_freq,
         )

@@ -18,7 +18,7 @@ length = 0.055  # m
 laser_wavelength = 3427.41  # nm
 
 number_of_teeth = 30
-high_freq_modulation = 500e6  # Hz
+optical_comb_spacing = 500e6  # Hz
 
 std_dev = 0.014  # unitless
 number_of_teeth_for_std_dev = 30  # teeth
@@ -38,7 +38,7 @@ x_sim, y_sim = simulate_measurement(
     length=length,
     laser_wavelength=laser_wavelength,
     number_of_teeth=number_of_teeth,
-    high_freq_modulation=high_freq_modulation,
+    optical_comb_spacing=optical_comb_spacing,
     std_dev=std_dev,
     number_of_teeth_for_std_dev=number_of_teeth_for_std_dev,
     x_shift_std_dev=x_shift_std_dev,

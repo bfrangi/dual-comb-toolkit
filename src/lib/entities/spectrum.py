@@ -105,13 +105,13 @@ class MeasuredSpectrum(Spectrum):
     center_freq : Optional[float]
         Center frequency of the radio frequency comb in Hz.
     freq_spacing : Optional[float]
-        Modulation frequency of the radio frequency comb in Hz.
+        Spacing of the radio frequency comb in Hz.
     number_of_teeth : Optional[int]
         Number of teeth to consider.
     laser_wavelength : Optional[float]
         Approximate value of the laser wavelength in m.
-    high_freq_modulation : Optional[float]
-        Modulation frequency of the optical comb in Hz.
+    optical_comb_spacing : Optional[float]
+        Spacing of the optical optical comb in Hz.
     acq_freq : Optional[float]  
         Acquisition frequency used in the measurement in Hz.
 
@@ -136,7 +136,7 @@ class MeasuredSpectrum(Spectrum):
         self.freq_spacing: 'Optional[float]' = kwargs.get('freq_spacing', None)
         self.number_of_teeth: 'Optional[int]' = kwargs.get('number_of_teeth', None)
         self.laser_wavelength: 'Optional[float]' = kwargs.get('laser_wavelength', None)
-        self.high_freq_modulation: 'Optional[float]' = kwargs.get('high_freq_modulation', None)
+        self.optical_comb_spacing: 'Optional[float]' = kwargs.get('optical_comb_spacing', None)
         self.acq_freq: 'Optional[float]' = kwargs.get('acq_freq', None)
 
 

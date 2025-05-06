@@ -25,7 +25,7 @@ center_freq = 40000.0  # Hz
 freq_spacing = 200.0  # Hz
 number_of_teeth = 35
 laser_wavelength = 3427.437e-9  # m
-high_freq_modulation = 500e6  # Hz
+optical_comb_spacing = 500e6  # Hz
 acq_freq = 400000.0  # Hz
 
 # Fit the concentration.
@@ -36,7 +36,7 @@ vmr, x_sim, y_sim, x_meas, y_meas = fit_measurement_concentration(
     freq_spacing=freq_spacing,
     number_of_teeth=number_of_teeth,
     laser_wavelength=laser_wavelength,
-    high_freq_modulation=high_freq_modulation,
+    optical_comb_spacing=optical_comb_spacing,
     acq_freq=acq_freq,
     wl_min=wl_min,
     wl_max=wl_max,

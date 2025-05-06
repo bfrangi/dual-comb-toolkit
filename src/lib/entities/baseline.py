@@ -29,8 +29,8 @@ class Baseline:
         The number of teeth in the comb.
     laser_wavelength : float, optional
         The wavelength of the laser.
-    high_freq_modulation : float, optional
-        The high frequency modulation of the comb.
+    optical_comb_spacing : float, optional
+        Spacing of the optical optical comb in Hz.
     acq_freq : float, optional
         The acquisition frequency of the measurement.
     sample_tag : str
