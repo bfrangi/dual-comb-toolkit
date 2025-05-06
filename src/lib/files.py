@@ -55,7 +55,7 @@ def get_measurement_paths(directory: str) -> list[str]:
         The measurement paths.
     """
     root_path = get_root_path()
-    directory = os.path.join(root_path, f'/measurements/{directory}/')
+    directory = os.path.join(root_path, f'measurements/{directory}/')
     return [f for f in os.listdir(directory) if f.endswith('.lvm')]
 
 
@@ -73,5 +73,5 @@ def get_measurement_names(directory: str) -> list[str]:
     list[str]
         The names of the measurements.
     """
-    paths = get_measurement_paths(directory)
-    return [f'{directory}/{f[:-14]}' for f in paths if f.endswith('-reference.lvm')]
+    measurement_paths = get_measurement_paths(directory)
+    return [f'{directory}/{f[:-14]}' for f in measurement_paths if f.endswith('-reference.lvm')]
