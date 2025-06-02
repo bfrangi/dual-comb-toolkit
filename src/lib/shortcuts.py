@@ -8,10 +8,12 @@ if TYPE_CHECKING:
     from lib.entities import Measurement
     from lib.fitting.concentration import ConcentrationFitter
     from lib.mapping import Mapper
+    from lib.simulations import Simulator
 
 
-def simulate_line(molecule: str, wl_min: float, wl_max: float,
-                  **conditions: dict[str, float]) -> 'tuple[np.ndarray, np.ndarray]':
+def simulate_line(
+    molecule: str, wl_min: float, wl_max: float, **conditions: dict[str, float]
+) -> "tuple[np.ndarray, np.ndarray]":
     """
     Simulate a line spectrum.
 
@@ -44,14 +46,12 @@ def simulate_line(molecule: str, wl_min: float, wl_max: float,
     """
     from lib.simulations import Simulator
 
-    for key in ['vmr', 'pressure', 'temperature', 'length']:
+    for key in ["vmr", "pressure", "temperature", "length"]:
         if key not in conditions:
             raise ValueError(f"Missing condition: {key}.")
 
     s = Simulator(
-        molecule=molecule,
-        **conditions,
-        database=conditions.get('database', 'hitran')
+        molecule=molecule, **conditions, database=conditions.get("database", "hitran")
     )
     s.compute_transmission_spectrum(wl_min=wl_min, wl_max=wl_max)
     wl, transmission = s.get_transmission_spectrum(wl_min, wl_max)
@@ -60,8 +60,8 @@ def simulate_line(molecule: str, wl_min: float, wl_max: float,
 
 
 def get_measurement(
-        meas_name: str, **specifications: dict[str, float | int]
-) -> 'Measurement':
+    meas_name: str, **specifications: dict[str, float | int]
+) -> "Measurement":
     """
     Get a measurement object.
 
@@ -109,15 +109,21 @@ def get_measurement(
     """
     from lib.measurements import Measurement
 
-    required_specs = ['center_freq', 'freq_spacing', 'number_of_teeth', 'laser_wavelength',
-                      'optical_comb_spacing', 'acq_freq']
+    required_specs = [
+        "center_freq",
+        "freq_spacing",
+        "number_of_teeth",
+        "laser_wavelength",
+        "optical_comb_spacing",
+        "acq_freq",
+    ]
 
     for key in required_specs:
         if key not in specifications:
             raise ValueError(f"Missing specification: {key}.")
 
-    baseline_names = specifications.pop('baseline_names', None)
-    baseline = specifications.pop('baseline', None)
+    baseline_names = specifications.pop("baseline_names", None)
+    baseline = specifications.pop("baseline", None)
 
     if not baseline and baseline_names:
         from lib.entities import Baseline
@@ -129,7 +135,7 @@ def get_measurement(
 
 def get_measurement_transmission(
     meas_name: str, **specifications: dict[str, float | int]
-) -> 'tuple[np.ndarray, np.ndarray]':
+) -> "tuple[np.ndarray, np.ndarray]":
     """
     Get the transmission spectrum of a measurement.
 
@@ -180,7 +186,7 @@ def get_measurement_transmission(
 
 def fit_measurement_concentration(
     meas_name: str, **specifications
-) -> tuple[float, 'np.ndarray', 'np.ndarray', 'np.ndarray', 'np.ndarray']:
+) -> tuple[float, "np.ndarray", "np.ndarray", "np.ndarray", "np.ndarray"]:
     """
     Fit the concentration of a measurement to a simulation.
 
@@ -232,7 +238,14 @@ def fit_measurement_concentration(
         The concentration, the wavelength and transmission spectrum of the simulation, and the
         wavelength and transmission spectrum of the measurement.
     """
-    required_kwargs = ['wl_min', 'wl_max', 'molecule', 'pressure', 'temperature', 'length']
+    required_kwargs = [
+        "wl_min",
+        "wl_max",
+        "molecule",
+        "pressure",
+        "temperature",
+        "length",
+    ]
 
     for key in required_kwargs:
         if key not in specifications:
@@ -243,11 +256,15 @@ def fit_measurement_concentration(
     meas = get_measurement(meas_name, **specifications)
     meas_transmission = meas.transmission_spectrum
 
-    wl_min: float = specifications.pop('wl_min')
-    wl_max: float = specifications.pop('wl_max')
+    wl_min: float = specifications.pop("wl_min")
+    wl_max: float = specifications.pop("wl_max")
 
-    f = ConcentrationFitter(meas_transmission=meas_transmission, wl_min=wl_min,
-                            wl_max=wl_max, **specifications)
+    f = ConcentrationFitter(
+        meas_transmission=meas_transmission,
+        wl_min=wl_min,
+        wl_max=wl_max,
+        **specifications,
+    )
 
     meas = f.measured_transmission
     sim = f.simulated_transmission
@@ -255,9 +272,7 @@ def fit_measurement_concentration(
     return f.concentration, sim.x_nm, sim.y_nm, meas.x_nm, meas.y_nm
 
 
-def map_measurement_concentration(
-        meas_names: list[str], **specifications
-) -> 'Mapper':
+def map_measurement_concentration(meas_names: list[str], **specifications) -> "Mapper":
     """
     Map the concentration of a set of measurements.
 
@@ -309,14 +324,14 @@ def map_measurement_concentration(
     """
     from lib.mapping import Mapper
 
-    baseline_names = specifications.pop('baseline_names', None)
-    baseline = specifications.pop('baseline', None)
+    baseline_names = specifications.pop("baseline_names", None)
+    baseline = specifications.pop("baseline", None)
 
     if not baseline and baseline_names:
         from lib.entities import Baseline
 
         baseline = Baseline(measurement_names=baseline_names, **specifications)
-        specifications['baseline'] = baseline
+        specifications["baseline"] = baseline
 
     meas_transmissions = []
 
@@ -327,7 +342,9 @@ def map_measurement_concentration(
     return Mapper(meas_transmissions, **specifications)
 
 
-def get_measurement_spectrum(meas_name: str, acq_freq: 'Optional[float]' = None) -> None:
+def get_measurement_spectrum(
+    meas_name: str, acq_freq: "Optional[float]" = None
+) -> None:
     """
     Compute the spectrum of a measurement.
 
@@ -354,8 +371,8 @@ def get_measurement_spectrum(meas_name: str, acq_freq: 'Optional[float]' = None)
 
 
 def fit_simulated_measurement_concentration(
-        molecule: str, wl_min: float, wl_max: float, **kwargs: dict[str, float]
-    ) -> 'tuple[np.ndarray, np.ndarray, ConcentrationFitter]':
+    molecule: str, wl_min: float, wl_max: float, **kwargs: dict[str, float]
+) -> "tuple[np.ndarray, np.ndarray, ConcentrationFitter] | tuple[np.ndarray, np.ndarray, ConcentrationFitter, Simulator]":
     """
     Fit a simulated spectrum to a simulation of a measured spectrum.
 
@@ -386,12 +403,12 @@ def fit_simulated_measurement_concentration(
     ----------------
     database : str, optional
         The database to use. Either 'hitran' or 'hitemp'. Defaults to 'hitran'.
-    std_dev : float, optional
+    transmission_std : float, optional
         The standard deviation of the noise. Defaults to 0.005.
-    x_shift_std_dev : float, optional
-        The standard deviation of the wavelength shift. Defaults to 0.1.
-    scaling_std_dev : float, optional
-        The standard deviation of the scaling. Defaults to 1.
+    spectrum_shift_range : float, optional
+        The range of the horizontal spectrum shift. Defaults to (0, 0).
+    scaling_range : float, optional
+        The range of the scaling factor applied to the simulated spectrum. Defaults to (1, 1).
     laser_wavelength_slack : tuple(float), optional
         Range of the laser wavelength's random variation. Defaults to (-0.05, 0.05).
     normalize : bool, optional
@@ -401,42 +418,76 @@ def fit_simulated_measurement_concentration(
     fitter : str, optional
         Fitter to use. Defaults to 'normal'. Possible values are 'normal', 'interp' and
         'normal_gpu'.
+    simulator : Simulator, optional
+        A pre-initialized simulator object to use for the simulation. If not provided,
+        a new simulator object will be created with the specified parameters.
+    use_gpu : bool, optional
+        Whether to use GPU for the simulation. Default is False. Only applies if
+        `simulator` is not provided.
+    exit_gpu : bool, optional
+        Whether to exit the GPU after the simulation. Default is True. Only applies if
+        `use_gpu` is set to True in the simulator.
+    return_simulator : bool, optional
+        Whether to return the simulator object after the simulation. Default is False.
 
     Returns
     -------
-    tuple[np.ndarray, np.ndarray, ConcentrationFitter]
+    tuple[np.ndarray, np.ndarray, ConcentrationFitter] | tuple[np.ndarray, np.ndarray, ConcentrationFitter, Simulator]
         The wavelength and transmission spectrum of the measurement, and the concentration fitter.
+        Also returns the simulator object if `return_simulator` is True.
     """
-    required_kwargs = ['vmr', 'pressure', 'temperature', 'length', 'laser_wavelength', 
-                       'optical_comb_spacing', 'number_of_teeth']
-    
+    required_kwargs = [
+        "vmr",
+        "pressure",
+        "temperature",
+        "length",
+        "laser_wavelength",
+        "optical_comb_spacing",
+        "number_of_teeth",
+    ]
+
     for key in required_kwargs:
         if key not in kwargs:
             raise ValueError(f"Missing specification: {key}.")
-    
-    kwargs['concetration'] = kwargs['vmr']
+
+    kwargs["concetration"] = kwargs["vmr"]
 
     from lib.entities import MeasuredSpectrum
     from lib.fitting.concentration import ConcentrationFitter
     from lib.simulations import simulate_measurement
 
-    x_meas, y_meas = simulate_measurement(molecule=molecule, wl_min=wl_min, wl_max=wl_max, **kwargs)
+    return_simulator = kwargs.get("return_simulator", False)
+    kwargs["return_simulator"] = True
+    exit_gpu = kwargs.get("exit_gpu", True)
+    kwargs["exit_gpu"] = False
+
+    x_meas, y_meas, simulator = simulate_measurement(
+        molecule=molecule, wl_min=wl_min, wl_max=wl_max, **kwargs
+    )
+    kwargs["simulator"] = simulator
 
     x_meas_fitted = x_meas.copy()
     y_meas_fitted = y_meas.copy()
 
-    if kwargs.get('normalize', False):
+    if kwargs.get("normalize", False):
         from lib.combs import normalize_transmission
 
-        x_meas_fitted, y_meas_fitted = normalize_transmission(x_meas_fitted, y_meas_fitted,
-                                                              replace_outliers=False)
+        x_meas_fitted, y_meas_fitted = normalize_transmission(
+            x_meas_fitted, y_meas_fitted, replace_outliers=False
+        )
 
     # Create a MeasuredSpectrum object.
-    meas_transmission = MeasuredSpectrum(x_meas_fitted, y_meas_fitted, xu='nm', molecule=molecule,
-                                         **kwargs)
+    meas_transmission = MeasuredSpectrum(
+        x_meas_fitted, y_meas_fitted, xu="nm", molecule=molecule, **kwargs
+    )
 
     # Fit the concentration.
-    f = ConcentrationFitter(meas_transmission=meas_transmission, wl_min=wl_min,
-                            wl_max=wl_max, **kwargs)
+    kwargs["exit_gpu"] = exit_gpu
+    f = ConcentrationFitter(
+        meas_transmission=meas_transmission, wl_min=wl_min, wl_max=wl_max, **kwargs
+    )
+
+    if return_simulator:
+        return x_meas, y_meas, f, simulator
 
     return x_meas, y_meas, f

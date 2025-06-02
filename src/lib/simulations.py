@@ -317,8 +317,11 @@ def transmission_spectrum_gpu(
             wstep=wavelength_step,
         )
 
-        with contextlib.redirect_stdout(None):
-            sf.fetch_databank(database)
+        with contextlib.redirect_stdout(None): # Remove to see what GPU is being used
+            sf.fetch_databank(
+                database, 
+                memory_mapping_engine='pytables' # TODO: remove when vaex supports numpy 2
+            )
 
             spectrum = sf.eq_spectrum_gpu(
                 Tgas=temperature,
@@ -326,6 +329,7 @@ def transmission_spectrum_gpu(
                 mole_fraction=vmr,
                 path_length=length_cm,
                 exit_gpu=False,
+                device_id = 1 # TODO: choose device_id based on available GPUs
             )
     else:
         spectrum.recalc_gpu(
@@ -338,9 +342,7 @@ def transmission_spectrum_gpu(
     wn, transmittance = spectrum.get("transmittance_noslit")
 
     if exit_gpu:
-        from radis.gpu.gpu import gpu_exit
-
-        gpu_exit()
+        spectrum.exit_gpu()
 
     return wavenumber_to_wavelength(wn)[::-1], transmittance[::-1], spectrum
 
@@ -746,6 +748,11 @@ class Simulator:
     def transmission(self) -> "Optional[list]":
         """The transmission spectrum."""
         return self._transmission
+    
+    @property
+    def use_gpu(self) -> bool:
+        """Whether to use GPU for the calculation."""
+        return self._use_gpu
 
     def compute_transmission_spectrum(
         self, wl_min: float, wl_max: float, exit_gpu: bool = True
@@ -832,6 +839,13 @@ class Simulator:
         self._computed_pressure = self.pressure
         self._computed_temperature = self.temperature
         self._computed_length = self.length
+
+    def exit_gpu(self) -> None:
+        """
+        Exit the GPU if it was used for the calculation.
+        """
+        if self._use_gpu and self._spectrum is not None:
+            self._spectrum.exit_gpu()
 
     def get_transmission_spectrum(
         self, wl_min: "Optional[float]" = None, wl_max: "Optional[float]" = None
@@ -920,9 +934,47 @@ def closest_value_indices(array: "ndarray", values: "ndarray") -> "ndarray":
     return np.abs(array - values[:, np.newaxis]).argmin(axis=1)
 
 
+def bessel_sideband_amplitudes(
+        nr_teeth: int,
+        Ω: float,
+) -> np.ndarray:
+    """
+    Calculate the Bessel sideband amplitudes for a dual comb spectrum.
+    The Bessel sidebands are calculated using the Bessel function of the first kind.
+
+    Parameters
+    ----------
+    nr_teeth : int
+        The number of teeth in the high-frequency comb.
+    Ω : float
+        The modulation intensity of the comb in rad.
+
+    Returns
+    -------
+    np.ndarray
+        The Bessel sideband amplitudes for the dual comb spectrum.
+    """
+    from scipy.special import jv
+
+    is_even = nr_teeth % 2 == 0
+    if is_even:
+        nr_teeth += 1
+    amps = []
+
+    for k in range(0, nr_teeth//2 + 1):
+        amps.append(jv(k, Ω))
+
+    amps = amps[::-1] + amps[1:]
+
+    if is_even:
+        amps = amps[:-1]
+
+    return np.array(amps)
+
+
 def simulate_measurement(
     molecule: str, wl_min: float, wl_max: float, **kwargs: dict[str, float]
-) -> "tuple[np.ndarray, np.ndarray]":
+) -> "tuple[np.ndarray, np.ndarray] | tuple[np.ndarray, np.ndarray, Simulator]":
     """
     Simulate a measurement.
 
@@ -956,21 +1008,46 @@ def simulate_measurement(
     database : str, optional
         The database to use. Either 'hitran' or 'hitemp'.
     wavelength_step : float, optional
-        The wavelength step in nm used for the simulation. This
-        limits the resolution of the simulation.
-    std_dev : float, optional
+        The wavelength step in nm used for the simulation. This limits the resolution of the 
+        simulation.
+    transmission_std : float, optional
         The standard deviation of the noise added to the simulated spectrum.
-    number_of_teeth_for_std_dev : int, optional
+    nr_teeth_for_transmission_std : int, optional
         The number of teeth in the high-frequency comb used to calculate the standard deviation
-        of the noise added to the simulated spectrum. If not specified, std_dev is used
+        of the noise added to the simulated spectrum. If not specified, transmission_std is used
         directly. If specified, the standard deviation is calculated as:
-            std_dev = std_dev · number_of_teeth_for_std_dev / number_of_teeth
-    scaling_std_dev : float, optional
-        The standard deviation of the scaling factor applied to the simulated spectrum.
-    x_shift_std_dev : float, optional
-        The standard deviation of the wavelength shift applied to the simulated spectrum.
+            transmission_std = transmission_std · nr_teeth_for_transmission_std / number_of_teeth
+    scaling_range : float, optional
+        The range of the scaling factor applied to the simulated spectrum. Defaults to (1, 1).
+    spectrum_shift_range : float, optional
+        The range of the horizontal spectrum shift. Defaults to (0, 0).
     laser_wavelength_slack : tuple(float), optional
         Range of the laser wavelength's random variation. Defaults to (-0.05, 0.05).
+    noise_distribution : str, optional
+        The way that noise is distributed among the teeth in the comb.
+        Options are 'uniform' (all teeth have the same amount of noise) or 'bessel', which 
+        simulates the real distribution of noise in a dual comb.
+    modulation_intensity: float, optional
+        The intensity of the modulation applied to the comb. This is used to simulate the
+        Bessel sidebands in the dual comb spectrum and it is required if 
+        `noise_distribution` is set to 'bessel'.
+    simulator : Simulator, optional
+        A pre-initialized simulator object to use for the simulation. If not provided,
+        a new simulator object will be created with the specified parameters.
+    use_gpu : bool, optional
+        Whether to use GPU for the simulation. Default is False. Only applies if
+        `simulator` is not provided.
+    exit_gpu : bool, optional
+        Whether to exit the GPU after the simulation. Default is True. Only applies if
+        `use_gpu` is set to True in the simulator.
+    return_simulator : bool, optional
+        Whether to return the simulator object after the simulation. Default is False.
+
+    Returns
+    -------
+    tuple[np.ndarray, np.ndarray] | tuple[np.ndarray, np.ndarray, Simulator]
+        The sampled wavelength array in nm and the sampled transmission spectrum.
+        If `return_simulator` is True, the simulator object is also returned.
 
     References
     ----------
@@ -981,93 +1058,153 @@ def simulate_measurement(
     from lib.constants import c
     from lib.simulations import Simulator
 
-    if "simulator" not in kwargs:
-        required_kwargs = [
-            "vmr",
-            "pressure",
-            "temperature",
-            "length",
-            "laser_wavelength",
-            "optical_comb_spacing",
-            "number_of_teeth",
-        ]
+    # Common required kwargs
 
-        for key in required_kwargs:
-            if key not in kwargs:
-                raise ValueError(f"Missing specification for: {key}.")
+    required_kwargs = [
+        "vmr",
+        "pressure",
+        "temperature",
+        "length",
+        "laser_wavelength",
+        "optical_comb_spacing",
+        "number_of_teeth",
+    ]
 
-        # Obtain comb frequencies.
+    for key in required_kwargs:
+        if key not in kwargs:
+            raise ValueError(f"Missing specification for: {key}.")
 
-        laser_wl = kwargs.get("laser_wavelength")
-        laser_wl_shift_range = kwargs.get("laser_wavelength_slack", (-0.05, 0.05))
-        laser_wl = np.random.uniform(
-            laser_wl + laser_wl_shift_range[0], laser_wl + laser_wl_shift_range[1]
-        )
-        laser_freq = c / laser_wl * 1e9
+    vmr: float = kwargs.get("vmr")
+    pressure: float = kwargs.get("pressure")
+    temperature: float = kwargs.get("temperature")
+    length: float = kwargs.get("length")
 
-        min_fr = c / wl_max * 1e9
-        max_fr = c / wl_min * 1e9
+    laser_wl: float = kwargs.get("laser_wavelength")
+    optical_comb_spacing: float = kwargs.get("optical_comb_spacing")
+    number_of_teeth: int = kwargs.get("number_of_teeth")
 
-        fr_sam = get_comb_frequencies(
-            center_freq=laser_freq,
-            freq_spacing=kwargs.get("optical_comb_spacing"),
-            number_of_teeth=kwargs.get("number_of_teeth"),
-        )
-        if fr_sam[-1] - fr_sam[0] > max_fr - min_fr:
-            raise ValueError("The comb is too wide for the simulated frequency range.")
+    # Simulator object
 
-        left_overflow = np.abs(min(fr_sam[0] - min_fr, 0))
-        right_overflow = np.abs(min(max_fr - fr_sam[-1], 0))
-        if left_overflow + right_overflow > 0:
-            warnings.warn(
-                "Warning: The laser wavelength shift is too large and will be reduced "
-                "to fit the range. If you require a larger range, please adjust `wl_min` and "
-                "`wl_max`."
-            )
-        fr_sam = fr_sam + left_overflow - right_overflow
-
-        # Simulate the transmission spectrum.
-
-        database = kwargs.pop("database", "hitran")
-        s = Simulator(molecule=molecule, **kwargs, database=database)
-    else:
+    if 'simulator' in kwargs and isinstance(kwargs['simulator'], Simulator):
         s: Simulator = kwargs.get("simulator")
+    else:
+        s = Simulator(**dict(**kwargs, molecule=molecule))
+    
+    s.vmr = vmr
+    s.pressure = pressure
+    s.temperature = temperature
+    s.length = length
 
-    s.compute_transmission_spectrum(wl_min=wl_min, wl_max=wl_max)
+    # Laser wavelength and frequency
+
+    laser_wl_slack: float = kwargs.get("laser_wavelength_slack", (-0.05, 0.05))
+    laser_wl = np.random.uniform(
+        laser_wl + laser_wl_slack[0], laser_wl + laser_wl_slack[1]
+    )
+    laser_freq = c / laser_wl * 1e9
+
+    # Generate comb frequencies
+
+    min_fr = c / wl_max * 1e9
+    max_fr = c / wl_min * 1e9
+
+    fr_sam = get_comb_frequencies(
+        center_freq=laser_freq,
+        freq_spacing=optical_comb_spacing,
+        number_of_teeth=number_of_teeth,
+    )
+
+    # Check width of the comb
+
+    if fr_sam[-1] - fr_sam[0] > max_fr - min_fr:
+        raise ValueError("The comb is too wide for the simulated frequency range.")
+
+    # Force the comb to fall fully inside the available range
+
+    left_overflow = np.abs(min(fr_sam[0] - min_fr, 0))
+    right_overflow = np.abs(min(max_fr - fr_sam[-1], 0))
+
+    if left_overflow + right_overflow > 0:
+        warnings.warn(
+            "Warning: The laser wavelength shift is too large and will be reduced "
+            "to fit the range. If you require a larger range, please adjust `wl_min` and "
+            "`wl_max`."
+        )
+
+    fr_sam = fr_sam + left_overflow - right_overflow
+
+    # Simulate the transmission spectrum of the molecule  
+
+    exit_gpu: bool = kwargs.get("exit_gpu", True)
+
+    s.compute_transmission_spectrum(wl_min=wl_min, wl_max=wl_max, exit_gpu=exit_gpu)
     wl_sim, tr_sim = s.get_transmission_spectrum(wl_min, wl_max)
     fr_sim, tr_sim = to_frequency(wl_sim, tr_sim)
 
-    # Sample the simulated spectrum with a comb.
+    # Sample the simulated spectrum with the comb frequencies
 
     indices = closest_value_indices(fr_sim, fr_sam)
     tr_sam = tr_sim[indices]
 
     # Add noise to the sampled spectrum.
 
-    number_of_teeth_for_std_dev = kwargs.get("number_of_teeth_for_std_dev", None)
-    if number_of_teeth_for_std_dev is not None:
-        std_dev = (
-            kwargs.get("std_dev", 0.01)
-            / number_of_teeth_for_std_dev
-            * kwargs.get("number_of_teeth")
+    nr_teeth_for_transmission_std: int = kwargs.get("nr_teeth_for_transmission_std", None)
+    if nr_teeth_for_transmission_std is not None:
+        transmission_std = (
+            kwargs.get("transmission_std", 0.01)
+            / nr_teeth_for_transmission_std
+            * number_of_teeth
         )
     else:
-        std_dev = kwargs.get("std_dev", 0.01)
-    noise = np.random.normal(0, std_dev, len(tr_sam))
+        transmission_std = kwargs.get("transmission_std", 0.01)
+    
+    noise_distribution = kwargs.get("noise_distribution", "uniform")
+
+    if noise_distribution not in ['bessel', 'uniform']:
+        raise ValueError(
+            "Invalid `noise_distribution` specified. "
+            "Options are 'uniform' or 'bessel'."
+        )
+    
+    if noise_distribution == 'bessel':
+        if 'modulation_intensity' not in kwargs:
+            raise ValueError(
+                "If `noise_distribution` is set to 'bessel', "
+                "`modulation_intensity` must be specified."
+            )
+        modulation_intensity: float = kwargs.get("modulation_intensity")
+
+        J2_inv = 1 / bessel_sideband_amplitudes(number_of_teeth, modulation_intensity)**2
+        J2_inv_avg = np.mean(J2_inv)
+
+        transmission_std_k = transmission_std * J2_inv / J2_inv_avg
+
+        noise = np.array([np.random.normal(0, transmission_std_k[k], 1)[0] for k in range(len(tr_sam))])
+    else:
+        noise = np.random.normal(0, transmission_std, len(tr_sam))
+    
     tr_sam += noise
 
-    scaling_std_dev = kwargs.get("scaling_std_dev", 0.01)
-    scaling_factor = max(np.abs(np.random.normal(1, scaling_std_dev, 1)[0]), 0.001)
+    # Apply random scaling
+
+    scaling_range = kwargs.get("scaling_range", (1, 1))
+    scaling_factor = np.random.uniform(scaling_range[0], scaling_range[1])
+
     tr_sam *= scaling_factor
+
+    # Apply random wavelength shift
 
     wl_sam, tr_sam = to_wavelength(fr_sam, tr_sam)
 
     left_slack = wl_sam[0] - wl_sim[0]
     right_slack = wl_sim[-1] - wl_sam[-1]
-    x_shift_std_dev = kwargs.get("x_shift_std_dev", 0.01)
-    x_shift = min(
-        max(np.random.normal(0, x_shift_std_dev, 1)[0], -left_slack), right_slack
-    )
-    wl_sam += x_shift
+
+    spectrum_shift_range = kwargs.get("spectrum_shift_range", (0, 0))
+    spectrum_shift = min(max(np.random.uniform(spectrum_shift_range[0], spectrum_shift_range[1]), -left_slack), right_slack)
+    
+    wl_sam += spectrum_shift
+
+    if kwargs.get("return_simulator", False):
+        return wl_sam, tr_sam, s
 
     return wl_sam, tr_sam

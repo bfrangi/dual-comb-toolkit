@@ -20,10 +20,10 @@ laser_wavelength = 3427.41  # nm
 number_of_teeth = 30
 optical_comb_spacing = 500e6  # Hz
 
-std_dev = 0.014  # unitless
-number_of_teeth_for_std_dev = 30  # teeth
-x_shift_std_dev = 0.02  # nm
-scaling_std_dev = 1  # unitless
+transmission_std = 0.014  # unitless
+nr_teeth_for_transmission_std = 30  # teeth
+spectrum_shift_range = (-0.02, 0.02)  # nm
+scaling_range = (0.2, 1.5)  # unitless
 laser_wavelength_slack = (-0.05, 0.05)  # nm
 
 # Simulate the transmission spectrum.
@@ -31,19 +31,21 @@ x_sim, y_sim = simulate_measurement(
     molecule=molecule,
     wl_min=wl_min,
     wl_max=wl_max,
-    database=database,
+    laser_wavelength=laser_wavelength,
+    optical_comb_spacing=optical_comb_spacing,
+    number_of_teeth=number_of_teeth,
     vmr=vmr,
     pressure=pressure,
     temperature=temperature,
     length=length,
-    laser_wavelength=laser_wavelength,
-    number_of_teeth=number_of_teeth,
-    optical_comb_spacing=optical_comb_spacing,
-    std_dev=std_dev,
-    number_of_teeth_for_std_dev=number_of_teeth_for_std_dev,
-    x_shift_std_dev=x_shift_std_dev,
-    scaling_std_dev=scaling_std_dev,
+    database=database,
+    transmission_std=transmission_std,
+    nr_teeth_for_transmission_std=nr_teeth_for_transmission_std,
+    scaling_range=scaling_range,
+    spectrum_shift_range=spectrum_shift_range,
     laser_wavelength_slack=laser_wavelength_slack,
+    noise_distribution="bessel",
+    modulation_intensity=13.7
 )
 
 

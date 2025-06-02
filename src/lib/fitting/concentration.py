@@ -8,15 +8,23 @@ if TYPE_CHECKING:
     from numpy import ndarray
 
     from lib.entities import MeasuredSpectrum, Result, SimulatedSpectrum
+    from lib.simulations import Simulator
 
 
-def fit_interpolated_concentration(meas_freq: 'ndarray', meas_amp: 'ndarray', molecule: str, 
-                                   wl_min: float, wl_max: float, conditions: dict[str, float],
-                                   initial_guess: float = 0.001) -> 'tuple[float, ndarray, ndarray]':
-    condition_names = ['pressure', 'temperature', 'length']
+def fit_interpolated_concentration(
+    meas_freq: "ndarray",
+    meas_amp: "ndarray",
+    molecule: str,
+    wl_min: float,
+    wl_max: float,
+    conditions: dict[str, float],
+    initial_guess: float = 0.001,
+    **kwargs,
+) -> "tuple[float, ndarray, ndarray]":
+    condition_names = ["pressure", "temperature", "length"]
     for name in condition_names:
         if name not in conditions:
-            raise ValueError(f'Missing condition: {name}.')
+            raise ValueError(f"Missing condition: {name}.")
 
     from numpy import sum
     from scipy.optimize import minimize
@@ -26,7 +34,8 @@ def fit_interpolated_concentration(meas_freq: 'ndarray', meas_amp: 'ndarray', mo
     from lib.simulations import curry_interpolated_transmission_curve
 
     transmission_curve = curry_interpolated_transmission_curve(
-        wl_min, wl_max, molecule, **conditions)
+        wl_min, wl_max, molecule, **conditions
+    )
 
     # Fit concentration
 
@@ -42,10 +51,13 @@ def fit_interpolated_concentration(meas_freq: 'ndarray', meas_amp: 'ndarray', mo
 
         # Interpolate the sample data onto the common grid
         f_sample_com, a_sample_com, f_ref_com, a_ref_com = intersect_onto_common_grid(
-            f_sample, a_sample, f_ref, a_ref)
-        return sum((a_sample_com - a_ref_com)**2)
-    
-    result = minimize(f, initial_guess, args=(meas_freq, meas_amp), tol=1e-4, bounds=[(0, 1)])
+            f_sample, a_sample, f_ref, a_ref
+        )
+        return sum((a_sample_com - a_ref_com) ** 2)
+
+    result = minimize(
+        f, initial_guess, args=(meas_freq, meas_amp), tol=1e-4, bounds=[(0, 1)]
+    )
     concentration = result.x[0]
 
     # Get the simulated curve
@@ -57,13 +69,57 @@ def fit_interpolated_concentration(meas_freq: 'ndarray', meas_amp: 'ndarray', mo
     return concentration, f_ref, a_ref
 
 
-def fit_concentration_gpu(meas_freq: 'ndarray', meas_amp: 'ndarray', molecule: str, wl_min: float,
-                          wl_max: float, conditions: dict[str, float],
-                          initial_guess: float = 0.001) -> 'tuple[float, ndarray, ndarray]':
-    condition_names = ['pressure', 'temperature', 'length']
+def fit_concentration_gpu(
+    meas_freq: "ndarray",
+    meas_amp: "ndarray",
+    molecule: str,
+    wl_min: float,
+    wl_max: float,
+    conditions: dict[str, float],
+    initial_guess: float = 0.001,
+    **kwargs,
+) -> "tuple[float, ndarray, ndarray]":
+    """
+    Fit the concentration of a measured spectrum to a simulated spectrum using a GPU-accelerated
+    simulator.
+
+    Parameters
+    ----------
+    meas_freq : ndarray
+        Measured frequency data in Hz.
+    meas_amp : ndarray
+        Measured amplitude data.
+    molecule : str
+        Molecule name for the simulation.
+    wl_min : float
+        Minimum wavelength for the simulation in nm.
+    wl_max : float
+        Maximum wavelength for the simulation in nm.
+    conditions : dict[str, float]
+        Conditions for the simulation, must include 'pressure', 'temperature', and 'length'.
+    initial_guess : float, optional
+        Initial guess for the concentration. Defaults to 0.001.
+
+    Other Parameters
+    ----------------
+    simulator : Optional[Simulator], optional
+        Pre-initialized simulator to use. If not provided, a new simulator will be created.
+    exit_gpu : bool, optional
+        Whether to exit the GPU after the fitting. Defaults to True.
+
+    Returns
+    -------
+    concentration : float
+        Fitted concentration.
+    f_ref : ndarray
+        Frequency data of the simulated spectrum in Hz.
+    a_ref : ndarray
+        Amplitude data of the simulated spectrum.
+    """
+    condition_names = ["pressure", "temperature", "length"]
     for name in condition_names:
         if name not in conditions:
-            raise ValueError(f'Missing condition: {name}.')
+            raise ValueError(f"Missing condition: {name}.")
 
     from numpy import sum
     from scipy.optimize import minimize
@@ -72,16 +128,30 @@ def fit_concentration_gpu(meas_freq: 'ndarray', meas_amp: 'ndarray', molecule: s
     from lib.fitting import intersect_onto_common_grid
     from lib.simulations import Simulator
 
+    # Kwargs
+
+    simulator: "Optional[Simulator]" = kwargs.get("simulator", None)
+    exit_gpu: bool = kwargs.get("exit_gpu", True)
+
     # Fit concentration
 
-    s = Simulator(
-        molecule=molecule,
-        vmr=initial_guess,
-        pressure=conditions['pressure'],
-        temperature=conditions['temperature'],
-        length=conditions['length'],
-        use_gpu=True,
-    )
+    if not isinstance(simulator, Simulator) or any(
+        v is False for v in [simulator.use_gpu, simulator.molecule == molecule]
+    ):
+        s = Simulator(
+            molecule=molecule,
+            vmr=initial_guess,
+            pressure=conditions["pressure"],
+            temperature=conditions["temperature"],
+            length=conditions["length"],
+            use_gpu=True,
+        )
+    else:
+        s = simulator
+        s.vmr = initial_guess
+        s.pressure = conditions["pressure"]
+        s.temperature = conditions["temperature"]
+        s.length = conditions["length"]
 
     def f(conc, f_sample, a_sample):
         # Get the simulated curve
@@ -97,15 +167,18 @@ def fit_concentration_gpu(meas_freq: 'ndarray', meas_amp: 'ndarray', molecule: s
 
         # Interpolate the sample data onto the common grid
         f_sample_com, a_sample_com, f_ref_com, a_ref_com = intersect_onto_common_grid(
-            f_sample, a_sample, f_ref, a_ref)
-        return sum((a_sample_com - a_ref_com)**2)
-    
-    result = minimize(f, initial_guess, args=(meas_freq, meas_amp), tol=1e-4, bounds=[(0, 1)])
+            f_sample, a_sample, f_ref, a_ref
+        )
+        return sum((a_sample_com - a_ref_com) ** 2)
+
+    result = minimize(
+        f, initial_guess, args=(meas_freq, meas_amp), tol=1e-4, bounds=[(0, 1)]
+    )
     concentration = result.x[0]
 
     # Get the simulated curve
     s.vmr = concentration
-    s.compute_transmission_spectrum(wl_min=wl_min, wl_max=wl_max, exit_gpu=True)
+    s.compute_transmission_spectrum(wl_min=wl_min, wl_max=wl_max, exit_gpu=exit_gpu)
     wl_ref, a_ref = s.get_transmission_spectrum(wl_min, wl_max)
 
     # Transform simulation data to frequency
@@ -114,13 +187,20 @@ def fit_concentration_gpu(meas_freq: 'ndarray', meas_amp: 'ndarray', molecule: s
     return concentration, f_ref, a_ref
 
 
-def fit_concentration(meas_freq: 'ndarray', meas_amp: 'ndarray', molecule: str, wl_min: float,
-                      wl_max: float, conditions: dict[str, float],
-                      initial_guess: float = 0.001) -> 'tuple[float, ndarray, ndarray]':
-    condition_names = ['pressure', 'temperature', 'length']
+def fit_concentration(
+    meas_freq: "ndarray",
+    meas_amp: "ndarray",
+    molecule: str,
+    wl_min: float,
+    wl_max: float,
+    conditions: dict[str, float],
+    initial_guess: float = 0.001,
+    **kwargs,
+) -> "tuple[float, ndarray, ndarray]":
+    condition_names = ["pressure", "temperature", "length"]
     for name in condition_names:
         if name not in conditions:
-            raise ValueError(f'Missing condition: {name}.')
+            raise ValueError(f"Missing condition: {name}.")
 
     from numpy import sum
     from scipy.optimize import minimize
@@ -136,9 +216,9 @@ def fit_concentration(meas_freq: 'ndarray', meas_amp: 'ndarray', molecule: str, 
         s = Simulator(
             molecule=molecule,
             vmr=conc,
-            pressure=conditions['pressure'],
-            temperature=conditions['temperature'],
-            length=conditions['length'],
+            pressure=conditions["pressure"],
+            temperature=conditions["temperature"],
+            length=conditions["length"],
         )
         s.compute_transmission_spectrum(wl_min=wl_min, wl_max=wl_max)
         wl_ref, a_ref = s.get_transmission_spectrum(wl_min, wl_max)
@@ -151,19 +231,22 @@ def fit_concentration(meas_freq: 'ndarray', meas_amp: 'ndarray', molecule: str, 
 
         # Interpolate the sample data onto the common grid
         f_sample_com, a_sample_com, f_ref_com, a_ref_com = intersect_onto_common_grid(
-            f_sample, a_sample, f_ref, a_ref)
-        return sum((a_sample_com - a_ref_com)**2)
-    
-    result = minimize(f, initial_guess, args=(meas_freq, meas_amp), tol=1e-4, bounds=[(0, 1)])
+            f_sample, a_sample, f_ref, a_ref
+        )
+        return sum((a_sample_com - a_ref_com) ** 2)
+
+    result = minimize(
+        f, initial_guess, args=(meas_freq, meas_amp), tol=1e-4, bounds=[(0, 1)]
+    )
     concentration = result.x[0]
 
     # Get the simulated curve
     s = Simulator(
         molecule=molecule,
         vmr=concentration,
-        pressure=conditions['pressure'],
-        temperature=conditions['temperature'],
-        length=conditions['length'],
+        pressure=conditions["pressure"],
+        temperature=conditions["temperature"],
+        length=conditions["length"],
     )
     s.compute_transmission_spectrum(wl_min=wl_min, wl_max=wl_max)
     wl_ref, a_ref = s.get_transmission_spectrum(wl_min, wl_max)
@@ -196,36 +279,53 @@ class ConcentrationFitter:
     fitter : str, optional
         Fitter to use. Defaults to 'normal'. Possible values are 'normal', 'interp' and
         'normal_gpu'.
+    simulator : Optional[Simulator], optional
+        Pre-initialized simulator to use. If not provided, a new simulator will be created.
+        Defaults to None. Only used if `fitter` is 'normal_gpu'.
+    exit_gpu : bool, optional
+        Whether to exit the GPU after the fitting. Defaults to True. Only used if `fitter` is
+        'normal_gpu'.
     """
 
-    def __init__(self, meas_transmission: 'MeasuredSpectrum', wl_min: float,
-                 wl_max: float, **kwargs: dict[str, float]) -> None:
-
+    def __init__(
+        self,
+        meas_transmission: "MeasuredSpectrum",
+        wl_min: float,
+        wl_max: float,
+        **kwargs: dict[str, float],
+    ) -> None:
         # Measurement parameters
 
         self._pre_meas_trasmission = meas_transmission
 
-        self._meas_transmission: 'Optional[MeasuredSpectrum]' = None
+        self._meas_transmission: "Optional[MeasuredSpectrum]" = None
 
         # Simulation parameters
 
         self.wl_min = wl_min
         self.wl_max = wl_max
-        self.initial_guess: float = kwargs.get('initial_guess', 0.5)
-        self.fitter: str = kwargs.get('fitter', 'normal')
+        self.initial_guess: float = kwargs.get("initial_guess", 0.5)
+        self.fitter: str = kwargs.get("fitter", "normal")
 
         self._check_fitter()
 
-        self._sim_transmission: 'Optional[SimulatedSpectrum]' = None
+        self._sim_transmission: "Optional[SimulatedSpectrum]" = None
+
+        # Simulator
+
+        self.simulator: "Optional[Simulator]" = kwargs.get("simulator", None)
+        self._exit_gpu: bool = kwargs.get("exit_gpu", True)
 
         # Conditions
 
-        required_conditions = ['molecule', 'pressure', 'temperature', 'length']
+        required_conditions = ["molecule", "pressure", "temperature", "length"]
 
         for condition in required_conditions:
             if getattr(meas_transmission, condition) is None:
-                raise ValueError(f'Missing property: {condition}. This property must be set' +
-                                 ' in the measured spectrum `meas_transmission`.')
+                raise ValueError(
+                    f"Missing property: {condition}. This property must be set"
+                    + " in the measured spectrum `meas_transmission`."
+                )
 
         self.molecule = meas_transmission.molecule
         self.pressure = meas_transmission.pressure
@@ -235,19 +335,19 @@ class ConcentrationFitter:
     # Properties
 
     @property
-    def result(self) -> 'Result':
+    def result(self) -> "Result":
         from lib.entities import Result
 
         return Result(self.measured_transmission, self.simulated_transmission)
 
     @property
-    def measured_transmission(self) -> 'MeasuredSpectrum':
+    def measured_transmission(self) -> "MeasuredSpectrum":
         if self._meas_transmission is None:
             self._process_measurement()
         return self._meas_transmission
 
     @property
-    def simulated_transmission(self) -> 'SimulatedSpectrum':
+    def simulated_transmission(self) -> "SimulatedSpectrum":
         if self._sim_transmission is None:
             self._process_simulation()
         return self._sim_transmission
@@ -259,15 +359,17 @@ class ConcentrationFitter:
     @property
     def conditions(self) -> dict[str, float]:
         return {
-            'pressure': self.pressure,
-            'temperature': self.temperature,
-            'length': self.length,
+            "pressure": self.pressure,
+            "temperature": self.temperature,
+            "length": self.length,
         }
 
     def _check_fitter(self) -> None:
-        if self.fitter not in ['normal', 'interp', 'normal_gpu']:
-            raise ValueError(f'Invalid fitter: {self.fitter}. Possible values are "normal", ' +
-                             '"interp" and "normal_gpu".')
+        if self.fitter not in ["normal", "interp", "normal_gpu"]:
+            raise ValueError(
+                f'Invalid fitter: {self.fitter}. Possible values are "normal", '
+                + '"interp" and "normal_gpu".'
+            )
 
     def _process_simulation(self) -> None:
         from lib.entities import SimulatedSpectrum
@@ -276,9 +378,9 @@ class ConcentrationFitter:
 
         fitter = fit_concentration
 
-        if self.fitter == 'normal_gpu':
+        if self.fitter == "normal_gpu":
             fitter = fit_concentration_gpu
-        elif self.fitter == 'interp':
+        elif self.fitter == "interp":
             fitter = fit_interpolated_concentration
 
         concentration, sim_freq, sim_amp = fitter(
@@ -289,11 +391,13 @@ class ConcentrationFitter:
             self.wl_max,
             self.conditions,
             self.initial_guess,
+            simulator=self.simulator,
+            exit_gpu=self._exit_gpu,
         )
         self._sim_transmission = SimulatedSpectrum(
             sim_freq,
             sim_amp,
-            xu='Hz',
+            xu="Hz",
             molecule=self.molecule,
             pressure=self.pressure,
             temperature=self.temperature,
@@ -306,7 +410,10 @@ class ConcentrationFitter:
     def _process_measurement(self) -> None:
         from lib.entities import MeasuredSpectrum
 
-        meas_freq, meas_amp = self._pre_meas_trasmission.x_hz, self._pre_meas_trasmission.y_hz
+        meas_freq, meas_amp = (
+            self._pre_meas_trasmission.x_hz,
+            self._pre_meas_trasmission.y_hz,
+        )
         meas_freq = overlap_transmission(
             meas_freq,
             meas_amp,
@@ -316,7 +423,7 @@ class ConcentrationFitter:
         self._meas_transmission = MeasuredSpectrum(
             meas_freq,
             meas_amp,
-            xu='Hz',
+            xu="Hz",
             meas_name=self._pre_meas_trasmission.meas_name,
             center_freq=self._pre_meas_trasmission.center_freq,
             freq_spacing=self._pre_meas_trasmission.freq_spacing,

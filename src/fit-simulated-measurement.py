@@ -1,24 +1,26 @@
-import csv
-import os
 import time
-import warnings
+from time import perf_counter
 
-from matplotlib import pyplot as plt
+import matplotlib.pyplot as plt
 from numpy import array
 
 from lib.benchmarking import Time
 from lib.constants import c
 from lib.conversions import delta_frequency_to_delta_wavelength
-from lib.files import get_figures_path, get_reports_path
+from lib.files import append_to_csv_report, create_figures_folder, initialize_csv_report
 from lib.plots import tight
 from lib.shortcuts import fit_simulated_measurement_concentration
 
-warnings.filterwarnings("ignore", category=FutureWarning)
+####################################################################################################
+#  Simulation parameters                                                                           #
+####################################################################################################
 
-# Define the parameters for simulating the measurement.
+# Molecule and database
 
 molecule = "CH4"
 database = "hitran"
+
+# Physical conditions
 
 vmr = 0.01  # volume mixing ratio
 pressure = 53328.94736842  # Pa
@@ -26,122 +28,203 @@ temperature = 298  # K
 length = 0.055  # m
 laser_wavelength = 3427.41  # nm
 
+# Simulation range
+
 wl_min = 3427.0  # nm
 wl_max = 3427.9  # nm
 min_comb_span = 0.15  # nm
 
-std_dev = 0.014  # unitless
-number_of_teeth_for_std_dev = 30  # teeth
-x_shift_std_dev = 0.02  # nm
-scaling_std_dev = 1  # unitless
+# Noise and error parameters
 
+noise_distribution = "bessel"
+transmission_std = 0.014  # unitless
+nr_teeth_for_transmission_std = 30  # teeth
+spectrum_shift_range = (-0.02, 0.02)  # nm
+scaling_range = (0.2, 1.5)  # unitless
+modulation_intensities = {
+    5: 0.93,
+    6: 1.81,
+    7: 1.81,
+    8: 2.75,
+    9: 2.75,
+    10: 3.71,
+    11: 3.71,
+    12: 4.69,
+    13: 4.69,
+    14: 5.67,
+    15: 5.67,
+    16: 6.67,
+    17: 6.67,
+    18: 7.66,
+    19: 7.66,
+    20: 8.66,
+    21: 8.66,
+    22: 9.67,
+    23: 9.67,
+    24: 10.67,
+    25: 10.67,
+    26: 11.68,
+    27: 11.68,
+    28: 12.69,
+    29: 12.69,
+    30: 13.7,
+}
 
-n_simulations_per_config = 100
+# Plots
 
-comb_spacings = [
-    2.6, 2.7, 2.8, 2.9, 2.2, 2.3, 2.4, 2.5, 2.6, 2.7,
-    2.8, 2.9, 1.7, 1.8, 1.9, 2.0, 2.1, 2.2, 2.3, 2.4,
-    2.5, 2.6, 2.7, 2.8, 2.9, 1.3, 1.4, 1.5, 1.6, 1.7,
-    1.8, 1.9, 2.0, 2.1, 2.2, 2.3, 2.4, 2.5, 2.6, 1.2,
-    1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9, 2.0, 2.1, 2.2,
-    2.3, 2.4, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9,
-    2.0, 2.1, 2.2, 2.3, 2.4, 1.0, 1.1, 1.2, 1.3, 1.4,
-    1.5, 1.6, 1.7, 1.8, 1.9, 2.0, 2.1, 2.2, 1.0, 1.1,
-    1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9, 0.9, 1.0,
-    1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 0.6, 0.7, 0.8,
-    0.9, 1.0, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 0.6, 0.7,
-    0.8, 0.9, 1.0, 1.1, 1.2, 1.3, 1.4, 1.5, 0.6, 0.7,
-    0.8, 0.9, 1.0, 1.1, 1.2, 1.3, 1.4, 0.5, 0.6, 0.7,
-    0.8, 0.9, 1.0, 1.1, 1.2, 1.3, 0.5, 0.6, 0.7, 0.8,
-    0.9, 1.0, 1.1, 1.2, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0,
-    1.1, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 1.1, 0.4,
-    0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 0.4, 0.5, 0.6, 0.7,
-    0.8, 0.9, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 0.4, 0.5,
-    0.6, 0.7, 0.8, 0.4, 0.5, 0.6, 0.7, 0.8, 0.4, 0.5,
-    0.6, 0.7, 0.8, 0.3, 0.4, 0.5, 0.6, 0.7, 0.3, 0.4,
-    0.5, 0.6, 0.7, 0.3, 0.4, 0.5, 0.6, 0.7, 0.3, 0.4,
-    0.5, 0.6
-]  # GHz
-comb_spacings = [i * 1e9 for i in comb_spacings]  # Hz
-numbers_of_teeth = [
-    5, 5, 5, 5, 6, 6, 6, 6, 6, 6,
-    6, 6, 7, 7, 7, 7, 7, 7, 7, 7,
-    7, 7, 7, 7, 7, 8, 8, 8, 8, 8,
-    8, 8, 8, 8, 8, 8, 8, 8, 8, 9,
-    9, 9, 9, 9, 9, 9, 9, 9, 9, 9,
-    9, 9, 10, 10, 10, 10, 10, 10, 10, 10,
-    10, 10, 10, 10, 10, 11, 11, 11, 11, 11,
-    11, 11, 11, 11, 11, 11, 11, 11, 12, 12,
-    12, 12, 12, 12, 12, 12, 12, 12, 13, 13,
-    13, 13, 13, 13, 13, 13, 13, 14, 14, 14,
-    14, 14, 14, 14, 14, 14, 14, 14, 15, 15,
-    15, 15, 15, 15, 15, 15, 15, 15, 16, 16,
-    16, 16, 16, 16, 16, 16, 16, 17, 17, 17,
-    17, 17, 17, 17, 17, 17, 18, 18, 18, 18,
-    18, 18, 18, 18, 19, 19, 19, 19, 19, 19,
-    19, 20, 20, 20, 20, 20, 20, 20, 20, 21,
-    21, 21, 21, 21, 21, 21, 22, 22, 22, 22,
-    22, 22, 23, 23, 23, 23, 23, 23, 24, 24,
-    24, 24, 24, 25, 25, 25, 25, 25, 26, 26,
-    26, 26, 26, 27, 27, 27, 27, 27, 28, 28,
-    28, 28, 28, 29, 29, 29, 29, 29, 30, 30,
-    30, 30
-]  # teeth
+generate_plots = True
+use_latex = False
 
-# Define the fitting parameters.
+####################################################################################################
+#  Fitting parameters                                                                              #
+####################################################################################################
 
 normalize = True
 initial_guess = 0.001
 fitter = "normal_gpu"
 
-# Info
+####################################################################################################
+#  Simulation cases                                                                                #
+####################################################################################################
 
-print(f"Simulating {min(len(numbers_of_teeth), len(comb_spacings))} configurations.")
+nr_simulations_per_config = 100
+comb_spacings = [(i + 1) * 100e6 for i in range(30)] * 26  # Hz
+numbers_of_teeth = [i for i in range(5, 31) for _ in range(30)]  # teeth
 
-# Simulate for every combination of number of teeth and comb spacing.
 
-results = []
+####################################################################################################
+# Info and console output                                                                          #
+####################################################################################################
 
-for n_teeth, spacing in zip(numbers_of_teeth, comb_spacings):
-    # Make sure the comb span is within the limits
-    comb_span = delta_frequency_to_delta_wavelength(
-        spacing * (n_teeth - 1), c / laser_wavelength * 1e9
+total_nr_configs = min(len(numbers_of_teeth), len(comb_spacings))
+
+print(f"Simulating {total_nr_configs} configurations.")
+
+
+def indentation(i: int) -> str:
+    return " " * len(f"{i + 1}. ")
+
+
+def print_config_params(nr_teeth: int, spacing: float) -> None:
+    print(f"Number of teeth: {nr_teeth}, Comb spacing: {spacing / 1e9:.2f} GHz.")
+
+
+def print_fitting_result(i: int, vmr: float) -> None:
+    print(f"{indentation(i)}The fitted concentration is {vmr:.6f} VMR.")
+
+
+def print_config_result(nr_teeth: int, spacing: float, mean: float, std: float) -> None:
+    print(
+        f"Number of teeth: {nr_teeth}, Comb spacing: {spacing / 1e9:.2f} GHz, "
+        + f"Mean concentration: {mean:.6f} VMR, Standard deviation: {std:.6f} VMR"
     )
-    comb_spacing = comb_span / (n_teeth - 1)  # nm
 
-    # Calculate the laser wavelength slack range
-    laser_wavelength_slack = (-comb_spacing, comb_spacing)  # nm
+
+def print_progress(
+    nr_config: int, nr_configs_performed: int, time_start: float
+) -> None:
+    progress = int(nr_config / total_nr_configs * 100)  # %
+
+    time_now = perf_counter()
+    time_left = (
+        (time_now - time_start)
+        / nr_configs_performed
+        * (total_nr_configs - nr_config)
+        / 60
+    )  # min
+
+    simulations_finished = nr_config * nr_simulations_per_config
+    simulations_total = total_nr_configs * nr_simulations_per_config
+
+    print(
+        f"Progress: [{'#' * progress}{'.' * (100 - progress)}] {simulations_finished} "
+        f"of {simulations_total} fittings performed (estimated time left: {time_left:.2f} min).",
+        end="\n\n",
+    )
+
+
+####################################################################################################
+# Prepare output file                                                                              #
+####################################################################################################
+
+timestr = time.strftime("%Y%m%d-%H%M%S")
+csv_filename = f"report-{timestr}.csv"
+initialize_csv_report(
+    csv_filename,
+    (
+        "Number of teeth",
+        "Comb spacing (Hz)",
+        "Mean concentration (VMR)",
+        "Standard deviation (VMR)",
+    ),
+)
+
+####################################################################################################
+# Initialize variables                                                                             #
+####################################################################################################
+
+# Counters
+
+nr_config = 0
+"""Number of the current configuration being simulated."""
+nr_configs_performed = 0
+"""Number of configurations that have been performed, excluding those that are skipped."""
+
+# Other variables
+
+time_start = perf_counter()
+simulator = None
+
+if use_latex:
+    plt.rcParams.update({"text.usetex": True, "font.family": "Computer Modern"})
+
+####################################################################################################
+# Simulate for every combination of number of teeth and comb spacing                               #
+####################################################################################################
+
+
+for nr_teeth, spacing in zip(numbers_of_teeth, comb_spacings):
+    # Update iteration variables ###################################################################
+
+    nr_config += 1
+
+    # Update simulation parameters #################################################################
+
+    modulation_intensity = modulation_intensities.get(nr_teeth)
+
+    # Make sure the comb span is within the limits
+
+    comb_span = delta_frequency_to_delta_wavelength(
+        spacing * (nr_teeth - 1), c / laser_wavelength * 1e9
+    )
+    comb_spacing = comb_span / (nr_teeth - 1)  # nm
 
     if comb_span + 2 * comb_spacing > wl_max - wl_min or comb_span < min_comb_span:
         continue
 
-    # Print the simulation parameters
+    # Laser wavelength slack range
 
-    print(
-        f"Number of teeth: {n_teeth}, Optical comb "
-        + f"spacing: {spacing / 1e9:.2f} GHz"
-    )
+    laser_wavelength_slack = (-comb_spacing, comb_spacing)  # nm
 
-    # Create a folder in `figures` with name like `8 x 1.0 GHz` to store the plots.
+    # Show config parameters #######################################################################
 
-    folder_name = f"{n_teeth} x {spacing / 1e9:.1f} GHz"
-    folder_path = os.path.join(get_figures_path(), folder_name)
-    if not os.path.exists(folder_path):
-        os.makedirs(folder_path)
+    nr_configs_performed += 1
 
-    # Simulate the measurement and fit the concentration `n_simulations_per_config` times
+    print_config_params(nr_teeth, spacing)
 
-    config_results = []
+    # Simulate and fit `nr_simulations_per_config` times ###########################################
 
-    for i in range(n_simulations_per_config):
-        indent = " " * len(f"{i + 1}. ")
+    fitting_results = []
 
-        # Simulate the transmission spectrum
+    from time import time
+
+    for i in range(nr_simulations_per_config):
+        # Perform the simulation and fitting ###################################################
 
         with Time(
-            f"{i + 1}. Simulating for {n_teeth} teeth and {spacing / 1e9:.2f} GHz"
+            f"{i + 1}. Simulating for {nr_teeth} teeth and {spacing / 1e9:.2f} GHz"
         ):
-            x_meas, y_meas, f = fit_simulated_measurement_concentration(
+            x_meas, y_meas, f, simulator = fit_simulated_measurement_concentration(
                 molecule=molecule,
                 wl_min=wl_min,
                 wl_max=wl_max,
@@ -151,34 +234,48 @@ for n_teeth, spacing in zip(numbers_of_teeth, comb_spacings):
                 length=length,
                 laser_wavelength=laser_wavelength,
                 optical_comb_spacing=spacing,
-                number_of_teeth=n_teeth,
+                number_of_teeth=nr_teeth,
                 database=database,
-                std_dev=std_dev,
-                number_of_teeth_for_std_dev=number_of_teeth_for_std_dev,
-                x_shift_std_dev=x_shift_std_dev,
-                scaling_std_dev=scaling_std_dev,
+                transmission_std=transmission_std,
+                nr_teeth_for_transmission_std=nr_teeth_for_transmission_std,
+                spectrum_shift_range=spectrum_shift_range,
+                scaling_range=scaling_range,
                 laser_wavelength_slack=laser_wavelength_slack,
                 normalize=normalize,
                 initial_guess=initial_guess,
                 fitter=fitter,
+                noise_distribution=noise_distribution,
+                modulation_intensity=modulation_intensity,
+                simulator=simulator,
+                exit_gpu=False,
+                return_simulator=True,
             )
 
-            meas = f.measured_transmission
-            sim = f.simulated_transmission
+            fitting_results.append(f.concentration)
 
-            x_sim, y_sim, x_meas_fitted, y_meas_fitted = (
-                sim.x_nm,
-                sim.y_nm,
-                meas.x_nm,
-                meas.y_nm,
-            )
+        print_fitting_result(i, f.concentration)
 
-        config_results.append(f.concentration)
-        print(f"{indent}The fitted concentration is {f.concentration:.6f} VMR.")
+        # Plot the simulated and measured transmission spectra #####################################
 
-        # Plot the simulated and measured transmission spectra
+        if not generate_plots:
+            continue
 
-        with Time(f"{indent}Plotting"):
+        # Create a folder in `figures` with name like `8 x 1.0 GHz` to store the plots
+
+        folder_name = f"{nr_teeth} x {spacing / 1e9:.1f} GHz"
+        folder_path = create_figures_folder(folder_name)
+
+        meas = f.measured_transmission
+        sim = f.simulated_transmission
+
+        x_sim, y_sim, x_meas_fitted, y_meas_fitted = (
+            sim.x_nm,
+            sim.y_nm,
+            meas.x_nm,
+            meas.y_nm,
+        )
+
+        with Time(f"{indentation(i)}Plotting"):
             plt.plot(
                 x_sim,
                 y_sim,
@@ -212,28 +309,22 @@ for n_teeth, spacing in zip(numbers_of_teeth, comb_spacings):
             plt.savefig(f"{folder_path}/fit-simulated-measurement-{i}.svg")
             plt.clf()
 
-    config_results = array(config_results)
-    result = (n_teeth, spacing, config_results.mean(), config_results.std())
+    # Aggregate results from all iterations ########################################################
 
-    results.append(result)
+    fitting_results = array(fitting_results)
+    result = (nr_teeth, spacing, fitting_results.mean(), fitting_results.std())
 
-    # Print the result
-    print(
-        f"Number of teeth: {n_teeth}, Comb spacing: {spacing / 1e9:.2f} GHz, "
-        + f"Mean concentration: {result[2]:.6f} VMR, Standard deviation: {result[3]:.6f} VMR"
-    )
-    print("--------------------")
+    print_config_result(*result)
 
+    # Append the result to the CSV report ##########################################################
 
-timestr = time.strftime("%Y%m%d-%H%M%S")
-with open(f"{get_reports_path()}report-{timestr}.csv", "w", newline="") as csvfile:
-    writer = csv.writer(csvfile, delimiter=",")
-    writer.writerow(
-        (
-            "Number of teeth",
-            "Comb spacing (Hz)",
-            "Mean concentration (VMR)",
-            "Standard deviation (VMR)",
-        )
-    )
-    writer.writerows(results)
+    append_to_csv_report(csv_filename, result)
+
+    # Print progress and time left #################################################################
+
+    print_progress(nr_config, nr_configs_performed, time_start)
+
+# Exit the GPU simulator if it was initialized #####################################################
+
+if simulator is not None and simulator.use_gpu:
+    simulator.exit_gpu()

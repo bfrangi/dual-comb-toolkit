@@ -43,10 +43,10 @@ class FFTCalculator:
 
     # Plot
 
-    def generate_fft_plot(self) -> 'plt':
+    def generate_fft_plot(self, yscale='linear') -> 'plt':
         from lib.plots import spectrum_plot
         return spectrum_plot(self.fft_x, self.fft_y, 'Spectrum of the Signal', 
-                             'Frequency (Hz)', 'Amplitude')
+                             'Frequency (Hz)', 'Amplitude', yscale=yscale)
 
-    def show_fft_plot(self) -> None:
-        self.generate_fft_plot().show()
+    def show_fft_plot(self, yscale='linear') -> None:
+        self.generate_fft_plot(yscale=yscale).show()

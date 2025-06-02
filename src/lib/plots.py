@@ -11,7 +11,7 @@ tight = {
 }
 
 
-def spectrum_plot(wu, transmission, title, xlabel='Waveunit [wu]', ylabel='Transmittance [-]') -> plt:
+def spectrum_plot(wu, transmission, title, xlabel='Waveunit [wu]', ylabel='Transmittance [-]', **kwargs) -> plt:
     """
     Plot the given transmission spectrum.
 
@@ -28,6 +28,11 @@ def spectrum_plot(wu, transmission, title, xlabel='Waveunit [wu]', ylabel='Trans
     ylabel : str
         The y-axis label.
 
+    Other Parameters
+    ----------------
+    yscale : str, optional
+        The scale of the y-axis. Default is 'linear'.
+
     Returns
     -------
     plt
@@ -38,6 +43,7 @@ def spectrum_plot(wu, transmission, title, xlabel='Waveunit [wu]', ylabel='Trans
     plt.ylabel(ylabel)
     plt.title(title)
     plt.tight_layout(**tight)
+    plt.yscale(kwargs.get('yscale', 'linear'))
     return plt
 
 
