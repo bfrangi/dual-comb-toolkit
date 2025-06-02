@@ -78,7 +78,7 @@ modulation_intensities = {
 
 # Plots
 
-generate_plots = True
+generate_plots = False
 use_latex = False
 
 ####################################################################################################
