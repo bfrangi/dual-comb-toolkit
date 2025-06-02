@@ -41,6 +41,19 @@ def get_reports_path() -> str:
     return os.path.join(root_path, "reports/")
 
 
+def get_configurations_path() -> str:
+    """
+    Get the configurations folder path.
+
+    Returns
+    -------
+    str
+        The configurations folder path.
+    """
+    root_path = get_root_path()
+    return os.path.join(root_path, "configurations/")
+
+
 def get_measurement_paths(directory: str) -> list[str]:
     """
     Get the measurement paths from the directory.
@@ -127,3 +140,50 @@ def create_figures_folder(foldername) -> str:
         os.makedirs(folder_path)
 
     return folder_path
+
+
+def read_configurations(filename: str) -> tuple[list[float], list[int]]:
+    """
+    Read configurations from a file.
+
+    Parameters
+    ----------
+    filename : str
+        The name of the file containing configurations.
+
+    Returns
+    -------
+    tuple[list[float], list[int]]
+        A tuple containing two lists: comb spacings and numbers of teeth.
+    """
+    frequencies = []
+    numbers_of_teeth = []
+
+    with open(f"{get_configurations_path()}{filename}", "r") as file:
+        for line in file:
+            if line.strip():  # Skip empty lines
+                freq, teeth = map(float, line.split())
+                frequencies.append(freq)
+                numbers_of_teeth.append(int(teeth))
+
+    return frequencies, numbers_of_teeth
+
+
+def save_configurations(
+    filename: str, comb_spacings: list[float], numbers_of_teeth: list[int]
+) -> None:
+    """
+    Save configurations to a file.
+
+    Parameters
+    ----------
+    filename : str
+        The name of the file to save configurations.
+    comb_spacings : list[float]
+        List of comb spacings.
+    numbers_of_teeth : list[int]
+        List of numbers of teeth.
+    """
+    with open(f"{get_configurations_path()}{filename}", "w") as file:
+        for freq, teeth in zip(comb_spacings, numbers_of_teeth):
+            file.write(f"{freq} {teeth}\n")

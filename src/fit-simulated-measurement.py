@@ -1,3 +1,4 @@
+import argparse
 import time
 from time import perf_counter
 
@@ -7,7 +8,12 @@ from numpy import array
 from lib.benchmarking import Time
 from lib.constants import c
 from lib.conversions import delta_frequency_to_delta_wavelength
-from lib.files import append_to_csv_report, create_figures_folder, initialize_csv_report
+from lib.files import (
+    append_to_csv_report,
+    create_figures_folder,
+    initialize_csv_report,
+    read_configurations,
+)
 from lib.plots import tight
 from lib.shortcuts import fit_simulated_measurement_concentration
 
@@ -90,6 +96,28 @@ fitter = "normal_gpu"
 nr_simulations_per_config = 100
 comb_spacings = [(i + 1) * 100e6 for i in range(30)] * 26  # Hz
 numbers_of_teeth = [i for i in range(5, 31) for _ in range(30)]  # teeth
+
+####################################################################################################
+#  Command line arguments                                                                          #
+####################################################################################################
+
+# If the command line argument `-c` or `--config` is provided, read the configurations from the
+# specified file
+
+parser = argparse.ArgumentParser(
+    description="Simulate and fit a measurement of a molecule's concentration using an optical comb."
+)
+parser.add_argument(
+    "-c",
+    "--config",
+    type=str,
+    default="",
+    help="Path to the file with configurations to simulate.",
+)
+args = parser.parse_args()
+
+if getattr(args, "config"):
+    comb_spacings, numbers_of_teeth = read_configurations(args.config)
 
 
 ####################################################################################################
