@@ -45,6 +45,7 @@ min_comb_span = 0.15  # nm
 noise_distribution = "bessel"
 transmission_std = 0.014  # unitless
 nr_teeth_for_transmission_std = 30  # teeth
+transmission_std_threshold = 0.01  # unitless
 spectrum_shift_range = (-0.02, 0.02)  # nm
 scaling_range = (0.2, 1.5)  # unitless
 modulation_intensities = {
@@ -266,6 +267,7 @@ for nr_teeth, spacing in zip(numbers_of_teeth, comb_spacings):
                 database=database,
                 transmission_std=transmission_std,
                 nr_teeth_for_transmission_std=nr_teeth_for_transmission_std,
+                transmission_std_threshold=transmission_std_threshold,
                 spectrum_shift_range=spectrum_shift_range,
                 scaling_range=scaling_range,
                 laser_wavelength_slack=laser_wavelength_slack,

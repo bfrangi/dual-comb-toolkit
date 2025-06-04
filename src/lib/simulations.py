@@ -1017,6 +1017,9 @@ def simulate_measurement(
         of the noise added to the simulated spectrum. If not specified, transmission_std is used
         directly. If specified, the standard deviation is calculated as:
             transmission_std = transmission_std · nr_teeth_for_transmission_std / number_of_teeth
+    transmission_std_threshold : float, optional
+        The threshold for the standard deviation of the teeth. Teeth with a standard deviation
+        above this threshold will be removed from the comb.
     scaling_range : float, optional
         The range of the scaling factor applied to the simulated spectrum. Defaults to (1, 1).
     spectrum_shift_range : float, optional
@@ -1178,6 +1181,18 @@ def simulate_measurement(
         J2_inv_avg = np.mean(J2_inv)
 
         transmission_std_k = transmission_std * J2_inv / J2_inv_avg
+
+        noise_threshold_mask = transmission_std_k > kwargs.get("transmission_std_threshold", np.inf)
+
+        if all(noise_threshold_mask):
+            raise ValueError(
+                "All teeth have a standard deviation above the threshold. "
+                "Please adjust the `transmission_std_threshold` or `transmission_std`."
+            )
+
+        tr_sam = tr_sam[~noise_threshold_mask]
+        fr_sam = fr_sam[~noise_threshold_mask]
+        transmission_std_k = transmission_std_k[~noise_threshold_mask]
 
         noise = np.array([np.random.normal(0, transmission_std_k[k], 1)[0] for k in range(len(tr_sam))])
     else:

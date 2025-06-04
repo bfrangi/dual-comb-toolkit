@@ -22,6 +22,7 @@ optical_comb_spacing = 500e6  # Hz
 
 transmission_std = 0.014  # unitless
 nr_teeth_for_transmission_std = 30  # teeth
+transmission_std_threshold = 0.01  # unitless
 spectrum_shift_range = (-0.02, 0.02)  # nm
 scaling_range = (0.2, 1.5)  # unitless
 laser_wavelength_slack = (-0.05, 0.05)  # nm
@@ -41,11 +42,12 @@ x_sim, y_sim = simulate_measurement(
     database=database,
     transmission_std=transmission_std,
     nr_teeth_for_transmission_std=nr_teeth_for_transmission_std,
+    transmission_std_threshold=transmission_std_threshold,
     scaling_range=scaling_range,
     spectrum_shift_range=spectrum_shift_range,
     laser_wavelength_slack=laser_wavelength_slack,
     noise_distribution="bessel",
-    modulation_intensity=13.7
+    modulation_intensity=13.7,
 )
 
 
