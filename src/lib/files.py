@@ -114,11 +114,65 @@ def initialize_csv_report(filename: str, headers: tuple[str]) -> None:
 
 
 def append_to_csv_report(filename: str, data: tuple) -> None:
+    """
+    Append data to an existing CSV report file.
+
+    Parameters
+    ----------
+    filename : str
+        The name of the CSV file to append data to.
+    data : tuple
+        The data to append to the CSV file.
+    """
     csv_path = f"{get_reports_path()}{filename}.csv"
 
     with open(csv_path, "a", newline="") as csvfile:
         writer = csv.writer(csvfile, delimiter=",")
         writer.writerow(data)
+
+
+def read_csv_report(filename: str, mapping: list[str]) -> list[list]:
+    """
+    Read a CSV report file and return each column as a list.
+    
+    Parameters
+    ----------
+    filename : str
+        The name of the CSV file to read.
+    mapping : list[str]
+        A list of column types to map the data to. 
+        Possible values are "int", "float", and "str".
+
+    Returns
+    -------
+    list[list]
+        A list of lists, where each inner list contains the data from a column.
+    """
+    csv_path = f"{get_reports_path()}{filename}.csv"
+    data = []
+
+    with open(csv_path, "r") as csvfile:
+        reader = csv.reader(csvfile, delimiter=",")
+
+        # Skip the header row
+        next(reader, None)
+
+        # Read the rest of the rows
+        for row in reader:
+            if row:  # Skip empty rows
+                data.append(row)
+
+    data = list(map(list, zip(*data)))  # Transpose the data
+
+    for i, col in enumerate(data):
+        if mapping[i] == "int":
+            data[i] = list(map(int, col))
+        elif mapping[i] == "float":
+            data[i] = list(map(float, col))
+        elif mapping[i] == "str":
+            data[i] = list(map(str, col))
+
+    return data
 
 
 def create_figures_folder(foldername) -> str:

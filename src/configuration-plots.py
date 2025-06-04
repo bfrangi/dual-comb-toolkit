@@ -1,28 +1,23 @@
-import csv
-
 import matplotlib.cm as cm
 from matplotlib import pyplot as plt
-from matplotlib.pyplot import figure
 
-from lib.files import get_figures_path, get_reports_path
-from lib.plots import tight
+from lib.files import get_figures_path, read_csv_report
+from lib.plots import tight, toggle_series_plot
 
-report_name = "report-10-per-conf"
+plt.rcParams.update({"text.usetex": True, "font.family": "Computer Modern"})
 
-report_path = f"{get_reports_path()}{report_name}.csv"
 
-with open(report_path) as csvfile:
-    reader = csv.reader(csvfile)
-    rows = list(reader)[1:]
+####################################################################################################
+# Get data from the report                                                                         #
+####################################################################################################
+
+report_name = "report-final-simulations"
+
+csv_data = read_csv_report(report_name, mapping=["int", "float", "float", "float"])
 
 data: dict[int, dict[str, list[float]]] = {}
 
-for row in rows:
-    n_teeth = int(row[0])
-    spacing = float(row[1])
-    concentration = float(row[2])
-    sdv = float(row[3])
-
+for n_teeth, spacing, concentration, sdv in zip(*csv_data):
     if n_teeth not in data:
         data[n_teeth] = {
             "spacings": [],
@@ -36,6 +31,9 @@ for row in rows:
     data[n_teeth]["concentrations"].append(concentration)
     data[n_teeth]["sdvs"].append(sdv)
 
+####################################################################################################
+# Plot standard deviation and mean concentration vs comb spacing for each number of teeth          #
+####################################################################################################
 
 for n_teeth, d in data.items():
     plt.plot(d["spacings"], d["sdvs"], "o-", c="b")
@@ -57,76 +55,67 @@ for n_teeth, d in data.items():
     plt.savefig(f"{get_figures_path()}conf-conc-{n_teeth}.svg")
     plt.clf()
 
-num_series = len(data)
-cmap = cm.get_cmap("viridis", num_series)
+plt.close("all")
 
-figure(figsize=(9, 6), dpi=80)
+####################################################################################################
+# Plot standard deviation vs comb spacing for all number of teeth                                  #
+####################################################################################################
 
-for i, item in enumerate(data.items()):
-    n_teeth = item[0]
-    d = item[1]
-    plt.plot(d["spacings"], d["sdvs"], "o-", label=f"{n_teeth} teeth", color=cmap(i))
+cmap = cm.get_cmap("viridis", len(data))
 
-plt.title(
-    "Standard deviation of the concentration as a function\n"
-    + "of the comb configuration"
+
+fig, ax = toggle_series_plot(
+    [(d["spacings"], d["sdvs"], f"{n_teeth} teeth") for n_teeth, d in data.items()],
+    title="Standard deviation of the concentration as a function\nof the comb configuration",
+    xlabel="Spacing (GHz)",
+    ylabel="Standard deviation (VMR)",
+    cmap=cmap,
+    zoom=1,
+    figsize=(9, 6),
+    save_path=f"{get_figures_path()}conf-sdv.svg",
 )
-plt.xlabel("Spacing (GHz)")
-plt.ylabel("Standard deviation (VMR)")
-plt.legend()
-plt.tight_layout(**tight)
-plt.savefig(f"{get_figures_path()}conf-sdv.svg")
-plt.clf()
 
-for i, item in enumerate(data.items()):
-    n_teeth = item[0]
-    d = item[1]
-    plt.plot(
-        d["spacings"],
-        d["concentrations"],
-        "o-",
-        label=f"{n_teeth} teeth",
-        color=cmap(i),
-    )
+plt.show()
 
-plt.title("Concentration as a function of the comb configuration")
-plt.xlabel("Spacing (GHz)")
-plt.ylabel("Concentration (VMR)")
-plt.legend()
-plt.tight_layout(**tight)
-plt.savefig(f"{get_figures_path()}conf-conc.svg")
-plt.clf()
-
-for i, item in enumerate(data.items()):
-    n_teeth = item[0]
-    d = item[1]
-    plt.plot(d["bandwidths"], d["sdvs"], "o-", label=f"{n_teeth} teeth", color=cmap(i))
-
-plt.title(
-    "Standard deviation of the concentration as a function\nof the comb bandwidth"
+fig, ax = toggle_series_plot(
+    [(d["spacings"], d["concentrations"], f"{n_teeth} teeth") for n_teeth, d in data.items()],
+    title="Concentration as a function of the comb configuration",
+    xlabel="Spacing (GHz)",
+    ylabel="Concentration (VMR)",
+    cmap=cmap,
+    zoom=1,
+    figsize=(9, 6),
+    save_path=f"{get_figures_path()}conf-conc.svg",
 )
-plt.xlabel("Bandwidth (GHz)")
-plt.ylabel("Standard deviation (VMR)")
-plt.legend()
-plt.tight_layout(**tight)
-plt.savefig(f"{get_figures_path()}conf-sdv-bw.svg")
-plt.clf()
 
-for i, item in enumerate(data.items()):
-    n_teeth = item[0]
-    d = item[1]
-    plt.plot(
-        d["bandwidths"],
-        d["concentrations"],
-        "o-",
-        label=f"{n_teeth} teeth",
-        color=cmap(i),
-    )
+plt.show()
 
-plt.title("Concentration as a function of the comb bandwidth")
-plt.xlabel("Bandwidth (GHz)")
-plt.ylabel("Concentration (VMR)")
-plt.legend()
-plt.tight_layout(**tight)
-plt.savefig(f"{get_figures_path()}conf-conc-bw.svg")
-plt.clf()
+####################################################################################################
+# Plot standard deviation vs comb bandwidth for all number of teeth                                #
+####################################################################################################
+
+fig, ax = toggle_series_plot(
+    [(d["bandwidths"], d["sdvs"], f"{n_teeth} teeth") for n_teeth, d in data.items()],
+    title="Standard deviation of the concentration as a function\nof the comb bandwidth",
+    xlabel="Bandwidth (GHz)",
+    ylabel="Standard deviation (VMR)",
+    cmap=cmap,
+    zoom=1,
+    figsize=(9, 6),
+    save_path=f"{get_figures_path()}conf-sdv-bw.svg",
+)
+
+plt.show()
+
+fig, ax = toggle_series_plot(
+    [(d["bandwidths"], d["concentrations"], f"{n_teeth} teeth") for n_teeth, d in data.items()],
+    title="Concentration as a function of the comb bandwidth",
+    xlabel="Bandwidth (GHz)",
+    ylabel="Concentration (VMR)",
+    cmap=cmap,
+    zoom=1,
+    figsize=(9, 6),
+    save_path=f"{get_figures_path()}conf-conc-bw.svg",
+)
+
+plt.show()

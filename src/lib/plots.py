@@ -3,15 +3,21 @@ from typing import TYPE_CHECKING
 import matplotlib.pyplot as plt
 
 if TYPE_CHECKING:
+    from typing import Optional
+
     from numpy.typing import ArrayLike
 
-tight = {
-    'pad': 0.1,
-    'rect': (0.02, 0, 0.99, 0.99)
-}
+tight = {"pad": 0.1, "rect": (0.02, 0, 0.99, 0.99)}
 
 
-def spectrum_plot(wu, transmission, title, xlabel='Waveunit [wu]', ylabel='Transmittance [-]', **kwargs) -> plt:
+def spectrum_plot(
+    wu,
+    transmission,
+    title,
+    xlabel="Waveunit [wu]",
+    ylabel="Transmittance [-]",
+    **kwargs,
+) -> plt:
     """
     Plot the given transmission spectrum.
 
@@ -43,7 +49,7 @@ def spectrum_plot(wu, transmission, title, xlabel='Waveunit [wu]', ylabel='Trans
     plt.ylabel(ylabel)
     plt.title(title)
     plt.tight_layout(**tight)
-    plt.yscale(kwargs.get('yscale', 'linear'))
+    plt.yscale(kwargs.get("yscale", "linear"))
     return plt
 
 
@@ -85,15 +91,15 @@ def scatter_plot(*args, **kwargs) -> plt:
     elif len(args) == 2:
         x, y = args
     else:
-        raise ValueError('Invalid number of arguments')
+        raise ValueError("Invalid number of arguments")
 
-    color = kwargs.get('color', 'b')
-    title = kwargs.get('title', '')
-    xlabel = kwargs.get('xlabel', '')
-    ylabel = kwargs.get('ylabel', '')
-    interp = kwargs.get('interp', False)
-    size = kwargs.get('size', None)
-    save_as = kwargs.get('save_as', None)
+    color = kwargs.get("color", "b")
+    title = kwargs.get("title", "")
+    xlabel = kwargs.get("xlabel", "")
+    ylabel = kwargs.get("ylabel", "")
+    interp = kwargs.get("interp", False)
+    size = kwargs.get("size", None)
+    save_as = kwargs.get("save_as", None)
 
     if type(size) not in [list, tuple] or len(size) != 2:
         size = None
@@ -102,6 +108,7 @@ def scatter_plot(*args, **kwargs) -> plt:
 
     if interp:
         from lib.fitting import loose_interpolation
+
         x, y = loose_interpolation(x, y)
         plt.plot(x, y, c=color)
     if title:
@@ -114,14 +121,15 @@ def scatter_plot(*args, **kwargs) -> plt:
         plt.gcf().set_size_inches(size[0], size[1])
     if save_as:
         import os
-        filename = f'{os.path.dirname(os.path.realpath(__file__))}/../figures/{save_as}'
-        plt.savefig(f'../figures/{save_as}')
-        print(f'Figure saved to {filename}')
+
+        filename = f"{os.path.dirname(os.path.realpath(__file__))}/../figures/{save_as}"
+        plt.savefig(f"../figures/{save_as}")
+        print(f"Figure saved to {filename}")
 
     return plt
 
 
-def stem_plot(x: 'ArrayLike', y: 'ArrayLike', **kwargs) -> plt:
+def stem_plot(x: "ArrayLike", y: "ArrayLike", **kwargs) -> plt:
     """Plot a stem plot of x and y.
 
     Parameters
@@ -147,10 +155,10 @@ def stem_plot(x: 'ArrayLike', y: 'ArrayLike', **kwargs) -> plt:
     matplotlib.pyplot
         The generated plot.
     """
-    color = kwargs.get('color', 'blue')
-    title = kwargs.get('title', '')
-    xlabel = kwargs.get('xlabel', '')
-    ylabel = kwargs.get('ylabel', '')
+    color = kwargs.get("color", "blue")
+    title = kwargs.get("title", "")
+    xlabel = kwargs.get("xlabel", "")
+    ylabel = kwargs.get("ylabel", "")
 
     from matplotlib import pyplot as plt
 
@@ -163,3 +171,85 @@ def stem_plot(x: 'ArrayLike', y: 'ArrayLike', **kwargs) -> plt:
         plt.ylabel(ylabel)
 
     return plt
+
+
+def toggle_series_plot(
+    data: "list[tuple[ArrayLike, ArrayLike, str]]",
+    title: str,
+    xlabel: "Optional[str]" = None,
+    ylabel: "Optional[str]" = None,
+    cmap=None,
+    zoom: float = 1.0,
+    figsize: tuple[int] = (9, 6),
+    save_path: "Optional[str]" = None,
+) -> "tuple[plt.Figure, plt.Axes]":
+    """Plot multiple series with a toggleable legend.
+
+    Parameters
+    ----------
+    data : list of tuples
+        Each tuple contains (x, y, label) for the series to plot.
+    title : str
+        The title of the plot.
+    xlabel : str, optional
+        The label for the x-axis. Defaults to None.
+    ylabel : str, optional
+        The label for the y-axis. Defaults to None.
+    cmap : matplotlib.colors.Colormap, optional
+        A colormap to use for the series. If None, a default color cycle is used.
+    zoom : float, optional
+        The zoom factor for the figure. Defaults to 1.0.
+    figsize : tuple of int, optional
+        The size of the figure in inches. Defaults to (9, 6).
+    save_path : str, optional
+        If provided, the plot will be saved to this path. Defaults to None.
+
+    Returns
+    -------
+    tuple[plt.Figure, plt.Axes]
+        A tuple containing the figure and axes objects.
+    """
+    fig, ax = plt.subplots(figsize=figsize, dpi=200 * zoom)
+    series_list = []
+    for i, item in enumerate(data):
+        x, y, label = item
+
+        if cmap is None:
+            (series,) = ax.plot(x, y, "o-", label=label)
+        else:
+            (series,) = ax.plot(x, y, "o-", label=label, color=cmap(i))
+
+        series_list.append(series)
+
+    plt.title(title)
+    plt.xlabel(xlabel)
+    plt.ylabel(ylabel)
+    plt.tight_layout(**tight)
+
+    legend = plt.legend()
+    legends = legend.get_lines()
+
+    graphs = {}
+    for i, leg in enumerate(legends):
+        leg.set_picker(True)
+        leg.set_pickradius(10)
+        graphs[leg] = series_list[i]
+
+    def on_pick(event):
+        legend = event.artist
+        isVisible = legend.get_visible()
+
+        graphs[legend].set_visible(not isVisible)
+        legend.set_visible(not isVisible)
+
+        fig.canvas.draw()
+
+    plt.connect("pick_event", on_pick)
+
+    if save_path:
+        plt.savefig(save_path)
+
+    return fig, ax
+
+    plt.show()
+    plt.clf()
