@@ -209,7 +209,7 @@ def toggle_series_plot(
     tuple[plt.Figure, plt.Axes]
         A tuple containing the figure and axes objects.
     """
-    fig, ax = plt.subplots(figsize=figsize, dpi=200 * zoom)
+    fig, ax = plt.subplots(figsize=(figsize[0]/zoom, figsize[1]/zoom), dpi=300)
     series_list = []
     for i, item in enumerate(data):
         x, y, label = item
@@ -251,5 +251,41 @@ def toggle_series_plot(
 
     return fig, ax
 
-    plt.show()
-    plt.clf()
+
+def config_plot(
+    x, y, title, xlabel, ylabel, save_path=None
+) -> "tuple[plt.Figure, plt.Axes]":
+    """Plot a configuration plot with given x and y data.
+
+    Parameters
+    ----------
+    x : array-like
+        The x values.
+    y : array-like
+        The y values.
+    title : str
+        The title of the plot.
+    xlabel : str
+        The label for the x-axis.
+    ylabel : str
+        The label for the y-axis.
+    save_path : str, optional
+        If provided, the plot will be saved to this path. Defaults to None.
+
+    Returns
+    -------
+    tuple[plt.Figure, plt.Axes]
+    fig, ax : tuple
+        The figure and axes objects of the plot.
+    """
+    scale = 1.5
+    fig, ax = plt.subplots(figsize=(3 * scale, 2 * scale), dpi=300)
+    ax.plot(x, y, "o-", c="b")
+    ax.set_title(title)
+    ax.set_xlabel(xlabel)
+    ax.set_ylabel(ylabel)
+    plt.tight_layout(**tight)
+
+    if save_path:
+        plt.savefig(save_path)
+    return fig, ax

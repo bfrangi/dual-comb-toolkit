@@ -45,7 +45,7 @@ min_comb_span = 0.15  # nm
 noise_distribution = "bessel"
 transmission_std = 0.014  # unitless
 nr_teeth_for_transmission_std = 30  # teeth
-transmission_std_threshold = 0.01  # unitless
+transmission_std_threshold = 0.05  # unitless
 spectrum_shift_range = (-0.02, 0.02)  # nm
 scaling_range = (0.2, 1.5)  # unitless
 modulation_intensities = {
@@ -79,8 +79,12 @@ modulation_intensities = {
 
 # Plots
 
-generate_plots = False
+generate_plots = True
 use_latex = False
+
+# Reports
+detailed_report = False
+"""If True, a detailed report of each simulation will be generated in CSV files."""
 
 ####################################################################################################
 #  Fitting parameters                                                                              #
@@ -127,7 +131,7 @@ if getattr(args, "config"):
 
 total_nr_configs = min(len(numbers_of_teeth), len(comb_spacings))
 
-print(f"Simulating {total_nr_configs} configurations.")
+print(f"Simulating {total_nr_configs} configurations.\n")
 
 
 def indentation(i: int) -> str:
@@ -146,6 +150,15 @@ def print_config_result(nr_teeth: int, spacing: float, mean: float, std: float) 
     print(
         f"Number of teeth: {nr_teeth}, Comb spacing: {spacing / 1e9:.2f} GHz, "
         + f"Mean concentration: {mean:.6f} VMR, Standard deviation: {std:.6f} VMR"
+    )
+
+
+def print_skipped_config(nr_config: int, nr_teeth: int, spacing: float) -> None:
+    spacing_ghz = spacing / 1e9
+    print(
+        f"Skipping configuration {nr_config} ({nr_teeth} teeth, "
+        + f"{spacing_ghz:.2f} GHz) due to comb span being too large or too small.",
+        end="\n\n",
     )
 
 
@@ -177,7 +190,7 @@ def print_progress(
 ####################################################################################################
 
 timestr = time.strftime("%Y%m%d-%H%M%S")
-csv_filename = f"report-{timestr}.csv"
+csv_filename = f"report-{timestr}"
 initialize_csv_report(
     csv_filename,
     (
@@ -229,6 +242,7 @@ for nr_teeth, spacing in zip(numbers_of_teeth, comb_spacings):
     comb_spacing = comb_span / (nr_teeth - 1)  # nm
 
     if comb_span + 2 * comb_spacing > wl_max - wl_min or comb_span < min_comb_span:
+        print_skipped_config(nr_config, nr_teeth, spacing)
         continue
 
     # Laser wavelength slack range
@@ -242,6 +256,14 @@ for nr_teeth, spacing in zip(numbers_of_teeth, comb_spacings):
     print_config_params(nr_teeth, spacing)
 
     # Simulate and fit `nr_simulations_per_config` times ###########################################
+
+    if detailed_report:
+        initialize_csv_report(
+            f'simulations-{nr_teeth}-{spacing / 1e9:.2f}',
+            (
+                "Concentration (VMR)",
+            )
+        )
 
     fitting_results = []
 
@@ -284,6 +306,12 @@ for nr_teeth, spacing in zip(numbers_of_teeth, comb_spacings):
             fitting_results.append(f.concentration)
 
         print_fitting_result(i, f.concentration)
+
+        if detailed_report:
+            append_to_csv_report(
+                f'simulations-{nr_teeth}-{spacing / 1e9:.2f}.csv',
+                (f.concentration,),
+            )
 
         # Plot the simulated and measured transmission spectra #####################################
 
