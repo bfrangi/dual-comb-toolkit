@@ -167,6 +167,7 @@ def transmission_spectrum(
     wavelength_step: float = 0.001,
     database: str = "hitran",
     return_spectrum: bool = False,
+    **kwargs 
 ) -> tuple[np.ndarray, np.ndarray] | tuple[np.ndarray, np.ndarray, "Spectrum"]:
     """
     Calculate the transmission spectrum of a molecule in air.
@@ -215,12 +216,13 @@ def transmission_spectrum(
     )
 
     pressure = pa_to_bar(pressure)
+    length = length * 100
     wn_min = wavelength_to_wavenumber(wl_max)
     wn_max = wavelength_to_wavenumber(wl_min)
     central_wl = (wl_min + wl_max) / 2
     wavenumber_step = delta_wavelength_to_delta_wavenumber(wavelength_step, central_wl)
 
-    s = calc_spectrum(
+    spectrum = calc_spectrum(
         wn_min,
         wn_max,
         molecule=molecule,
@@ -228,16 +230,16 @@ def transmission_spectrum(
         pressure=pressure,
         Tgas=temperature,
         mole_fraction=vmr,
-        path_length=length * 100,
+        path_length=length,
         databank=database,
         verbose=False,
         wstep=wavenumber_step,
     )
 
-    wn, transmittance = s.get("transmittance_noslit")
+    wn, transmittance = spectrum.get("transmittance_noslit")
 
     if return_spectrum:
-        return wavenumber_to_wavelength(wn)[::-1], transmittance[::-1], s
+        return wavenumber_to_wavelength(wn)[::-1], transmittance[::-1], spectrum
 
     return wavenumber_to_wavelength(wn)[::-1], transmittance[::-1]
 
@@ -255,6 +257,7 @@ def transmission_spectrum_gpu(
     database: str = "hitran",
     spectrum: "Optional[Spectrum]" = None,
     exit_gpu: bool = True,
+    **kwargs
 ) -> tuple[np.ndarray, np.ndarray, "Optional[Spectrum]"]:
     """
     Calculate the transmission spectrum of a molecule in air using GPU.
@@ -296,13 +299,19 @@ def transmission_spectrum_gpu(
         The spectrum object used for the calculation.
     """
 
-    from lib.conversions import wavelength_to_wavenumber, wavenumber_to_wavelength
+    from lib.conversions import (
+        delta_wavelength_to_delta_wavenumber,
+        pa_to_bar,
+        wavelength_to_wavenumber,
+        wavenumber_to_wavelength,
+    )
 
+    pressure = pa_to_bar(pressure)
+    length = length * 100
     wn_min = wavelength_to_wavenumber(wl_max)
     wn_max = wavelength_to_wavenumber(wl_min)
-
-    pressure_bar = pressure / 1e5
-    length_cm = length * 1e2
+    central_wl = (wl_min + wl_max) / 2
+    wavenumber_step = delta_wavelength_to_delta_wavenumber(wavelength_step, central_wl)
 
     if spectrum is None:
         import contextlib
@@ -314,7 +323,7 @@ def transmission_spectrum_gpu(
             wn_max,
             molecule=molecule,
             isotope=isotopes,
-            wstep=wavelength_step,
+            wstep=wavenumber_step,
         )
 
         with contextlib.redirect_stdout(None): # Remove to see what GPU is being used
@@ -325,18 +334,18 @@ def transmission_spectrum_gpu(
 
             spectrum = sf.eq_spectrum_gpu(
                 Tgas=temperature,
-                pressure=pressure_bar,
+                pressure=pressure,
                 mole_fraction=vmr,
-                path_length=length_cm,
+                path_length=length,
                 exit_gpu=False,
                 device_id = 1 # TODO: choose device_id based on available GPUs
             )
     else:
         spectrum.recalc_gpu(
             Tgas=temperature,
-            pressure=pressure_bar,
+            pressure=pressure,
             mole_fraction=vmr,
-            path_length=length_cm,
+            path_length=length,
         )
 
     wn, transmittance = spectrum.get("transmittance_noslit")
@@ -786,6 +795,8 @@ class Simulator:
             self._wl_max,
         ]
 
+        # If paraemters have not changed since the last calculation, return the current results.
+
         if all(
             param == computed_param
             for param, computed_param in zip(sim_params, sim_params_computed)
@@ -793,45 +804,36 @@ class Simulator:
             if self._wavelength is not None and self._transmission is not None:
                 return self._wavelength, self._transmission
 
-        if self._use_gpu:
-            spectrum = (
-                self._spectrum
-                if self._wl_min == wl_min and self._wl_max == wl_max
-                else None
-            )
+        # Compute the transmission spectrum.
 
-            self._wavelength, self._transmission, self._spectrum = (
-                transmission_spectrum_gpu(
-                    wl_min,
-                    wl_max,
-                    self._molecule,
-                    self.vmr,
-                    self.pressure,
-                    self.temperature,
-                    self.length,
-                    self._isotopes,
-                    self._wavelength_step,
-                    self._database,
-                    spectrum,
-                    exit_gpu=exit_gpu,
-                )
-            )
+        spectrum = (
+            self._spectrum
+            if self._wl_min == wl_min and self._wl_max == wl_max
+            else None
+        )
+
+        kwargs = dict(
+            wl_min=wl_min,
+            wl_max=wl_max,
+            molecule=self._molecule,
+            vmr=self.vmr,
+            pressure=self.pressure,
+            temperature=self.temperature,
+            length=self.length,
+            isotopes=self._isotopes,
+            wavelength_step=self._wavelength_step,
+            database=self._database,
+            spectrum=spectrum,
+            exit_gpu=exit_gpu,
+            return_spectrum=True,
+        )
+
+        if self._use_gpu:
+            tr_spectrum = transmission_spectrum_gpu
         else:
-            self._wavelength, self._transmission, self._spectrum = (
-                transmission_spectrum(
-                    wl_min,
-                    wl_max,
-                    self._molecule,
-                    self.vmr,
-                    self.pressure,
-                    self.temperature,
-                    self.length,
-                    self._isotopes,
-                    self._wavelength_step,
-                    self._database,
-                    return_spectrum=True,
-                )
-            )
+            tr_spectrum = transmission_spectrum
+        
+        self._wavelength, self._transmission, self._spectrum = tr_spectrum(**kwargs)
 
         self._wl_min = wl_min
         self._wl_max = wl_max

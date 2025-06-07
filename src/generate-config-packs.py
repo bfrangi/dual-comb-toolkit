@@ -7,7 +7,7 @@ nr_configs = min(len(comb_spacings), len(numbers_of_teeth))
 
 print(f"Number of configurations: {nr_configs}")
 
-nr_packs = 6
+nr_packs = 8
 
 divisions = nr_configs // nr_packs
 if nr_configs % nr_packs != 0:

@@ -307,6 +307,9 @@ def map_measurement_concentration(meas_names: list[str], **specifications) -> "M
         Minimum wavelength for the simulation in nm.
     wl_max : float
         Maximum wavelength for the simulation in nm.
+    fitter : str, optional
+        Fitter to use. Defaults to 'normal'. Possible values are 'normal', 'interp' and
+        'normal_gpu'.
 
     Other Parameters
     ----------------
@@ -316,6 +319,8 @@ def map_measurement_concentration(meas_names: list[str], **specifications) -> "M
         Print the fitting results. Defaults to False.
     baseline_names : list[str], optional
         Names of the measurements used to obtain the baseline.
+    spectrum_plot_folder : str, optional
+        Folder to save the spectrum plots. Defaults to None, so no plots are saved.
 
     Returns
     -------

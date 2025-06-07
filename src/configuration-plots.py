@@ -2,9 +2,9 @@ import matplotlib.cm as cm
 from matplotlib import pyplot as plt
 
 from lib.files import get_figures_path, read_csv_report
-from lib.plots import config_plot, toggle_series_plot
+from lib.plots import config_plot, toggle_series_plot, use_latex
 
-plt.rcParams.update({"text.usetex": True, "font.family": "Computer Modern"})
+use_latex()
 
 
 ####################################################################################################

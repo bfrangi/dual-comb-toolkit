@@ -1,6 +1,5 @@
 import argparse
-import time
-from time import perf_counter
+from time import perf_counter, strftime
 
 import matplotlib.pyplot as plt
 from numpy import array
@@ -15,6 +14,7 @@ from lib.files import (
     read_configurations,
 )
 from lib.plots import tight
+from lib.plots import use_latex as latex
 from lib.shortcuts import fit_simulated_measurement_concentration
 
 ####################################################################################################
@@ -29,9 +29,9 @@ database = "hitran"
 # Physical conditions
 
 vmr = 0.01  # volume mixing ratio
-pressure = 53328.94736842  # Pa
+pressure = 101325  # Pa
 temperature = 298  # K
-length = 0.055  # m
+length = 0.07  # m
 laser_wavelength = 3427.41  # nm
 
 # Simulation range
@@ -80,9 +80,10 @@ modulation_intensities = {
 # Plots
 
 generate_plots = True
-use_latex = False
+use_latex = True
 
 # Reports
+
 detailed_report = False
 """If True, a detailed report of each simulation will be generated in CSV files."""
 
@@ -189,7 +190,7 @@ def print_progress(
 # Prepare output file                                                                              #
 ####################################################################################################
 
-timestr = time.strftime("%Y%m%d-%H%M%S")
+timestr = strftime("%Y%m%d-%H%M%S")
 csv_filename = f"report-{timestr}"
 initialize_csv_report(
     csv_filename,
@@ -218,7 +219,7 @@ time_start = perf_counter()
 simulator = None
 
 if use_latex:
-    plt.rcParams.update({"text.usetex": True, "font.family": "Computer Modern"})
+    latex()
 
 ####################################################################################################
 # Simulate for every combination of number of teeth and comb spacing                               #
@@ -259,15 +260,17 @@ for nr_teeth, spacing in zip(numbers_of_teeth, comb_spacings):
 
     if detailed_report:
         initialize_csv_report(
-            f'simulations-{nr_teeth}-{spacing / 1e9:.2f}',
-            (
-                "Concentration (VMR)",
-            )
+            f"simulations-{nr_teeth}-{spacing / 1e9:.2f}", ("Concentration (VMR)",)
         )
 
-    fitting_results = []
+    if generate_plots:
+        # Create a folder in `figures` with name like `8 x 1.0 GHz` to store the plots
 
-    from time import time
+        sp = "{:g}".format(float("{:.{p}g}".format(spacing / 1e9, p=4)))
+        folder_name = f"{nr_teeth} x {sp} GHz"
+        folder_path = create_figures_folder(folder_name)
+
+    fitting_results = []
 
     for i in range(nr_simulations_per_config):
         # Perform the simulation and fitting ###################################################
@@ -309,7 +312,7 @@ for nr_teeth, spacing in zip(numbers_of_teeth, comb_spacings):
 
         if detailed_report:
             append_to_csv_report(
-                f'simulations-{nr_teeth}-{spacing / 1e9:.2f}.csv',
+                f"simulations-{nr_teeth}-{spacing / 1e9:.2f}.csv",
                 (f.concentration,),
             )
 
@@ -317,11 +320,6 @@ for nr_teeth, spacing in zip(numbers_of_teeth, comb_spacings):
 
         if not generate_plots:
             continue
-
-        # Create a folder in `figures` with name like `8 x 1.0 GHz` to store the plots
-
-        folder_name = f"{nr_teeth} x {spacing / 1e9:.1f} GHz"
-        folder_path = create_figures_folder(folder_name)
 
         meas = f.measured_transmission
         sim = f.simulated_transmission

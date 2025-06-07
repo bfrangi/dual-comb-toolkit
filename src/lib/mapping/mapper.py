@@ -1,7 +1,9 @@
 import re
+import os
 from typing import TYPE_CHECKING
 
 from lib.entities import MeasuredSpectrum, Result
+from lib.files import get_figures_path
 from lib.fitting import ConcentrationFitter
 
 if TYPE_CHECKING:
@@ -13,7 +15,7 @@ if TYPE_CHECKING:
 
 class Mapper:
     """
-    Fit a spatial sweep of measured spectra to simulated spectra. 
+    Fit a spatial sweep of measured spectra to simulated spectra.
 
     Parameters
     ----------
@@ -28,25 +30,39 @@ class Mapper:
     ----------------
     initial_guess : float, optional
         Initial guess for the concentration. Defaults to 0.5.
+    fitter : str, optional
+        Fitter to use. Defaults to 'normal'. Possible values are 'normal', 'interp' and
+        'normal_gpu'.
+    spectrum_plot_folder : str, optional
+        Folder to save the spectrum plots. Defaults to None, so no plots are saved.
     """
 
-    def __init__(self, meas_transmissions: 'list[MeasuredSpectrum]', wl_min: float, wl_max: float,
-                 **kwargs: dict[str, float]) -> None:
+    def __init__(
+        self,
+        meas_transmissions: "list[MeasuredSpectrum]",
+        wl_min: float,
+        wl_max: float,
+        **kwargs: dict[str, float],
+    ) -> None:
         # Measurement parameters
         self.meas_transmissions = meas_transmissions
 
         # Simulation parameters
         self.wl_min = wl_min
         self.wl_max = wl_max
-        self.initial_guess: dict[str, float] = kwargs.get('initial_guess', 0.5)
+        self.initial_guess: dict[str, float] = kwargs.get("initial_guess", 0.5)
 
         # Other parameters
-        self.verbose: bool = kwargs.get('verbose', False)
+        self.verbose: bool = kwargs.get("verbose", False)
+        self.fitter: str = kwargs.get("fitter", "normal")
 
         # Results
-        self._concentrations: 'Optional[list[float]]' = None
-        self._results: 'Optional[list[Result]]' = None
-        self._positions: 'Optional[list[float]]' = None
+        self._concentrations: "Optional[list[float]]" = None
+        self._results: "Optional[list[Result]]" = None
+        self._positions: "Optional[list[float]]" = None
+        self._spectrum_plot_folder: "Optional[str]" = kwargs.get(
+            "spectrum_plot_folder", None
+        )
 
     @property
     def concentrations(self) -> list[float]:
@@ -76,7 +92,7 @@ class Mapper:
         return self._positions
 
     @property
-    def concentration_map(self) -> 'ndarray':
+    def concentration_map(self) -> "ndarray":
         """
         Concentration map of the measured spectra. Format is a 2D array with the concentration
         at each position (x, y).
@@ -104,23 +120,46 @@ class Mapper:
         self._positions = []
 
         for meas_transmission in self.meas_transmissions:
-            fitter = ConcentrationFitter(meas_transmission, self.wl_min, self.wl_max,
-                                         initial_guess=self.initial_guess)
-            
+            fitter = ConcentrationFitter(
+                meas_transmission,
+                self.wl_min,
+                self.wl_max,
+                initial_guess=self.initial_guess,
+                fitter=self.fitter,
+            )
+
+            if self._spectrum_plot_folder is not None:
+                folder_path = os.path.join(
+                    get_figures_path(), self._spectrum_plot_folder
+                )
+                file_name = f"{fitter.result.measured_spectrum.meas_name.split('/')[-1].split('.')[0]}.svg"
+
+                if not os.path.exists(folder_path):
+                    os.makedirs(folder_path)
+
+                plt = fitter.result.generate_plot()
+                plt.savefig(os.path.join(folder_path, file_name))
+                plt.close()
+
             self._results.append(fitter.result)
             self._concentrations.append(fitter.concentration)
-            
+
             meas_name = fitter.result.measured_spectrum.meas_name
             self._positions.append(
-                tuple(float(pos)
-                      for pos in re.findall(r'\-X([0-9\.]+)\-Y([0-9\.]+)$', meas_name)[0])
+                tuple(
+                    float(pos)
+                    for pos in re.findall(r"\-X([0-9\.]+)\-Y([0-9\.]+)$", meas_name)[0]
+                )
             )
 
             if self.verbose:
-                print(f'Position: {self._positions[-1]}, Concentration:' +
-                      f' {self._concentrations[-1]}', end='\n\n')
+                print(
+                    f"Position: {self._positions[-1]}, Concentration:"
+                    + f" {self._concentrations[-1]}",
+                    end="\n\n",
+                )
 
-    def generate_concentration_heatmap(self) -> 'plt':
+    def generate_concentration_heatmap(self) -> "plt":
         """
         Generate a heatmap of the concentration as a function of position.
         """
@@ -137,8 +176,8 @@ class Mapper:
         ax = sns.heatmap(df, cmap="crest")
         ax.invert_yaxis()
         ax.set_title("Concentration as a function of position")
-        ax.set_xlabel('X')
-        ax.set_ylabel('Y')
+        ax.set_xlabel("X")
+        ax.set_ylabel("Y")
         ax.set_xlim(non_nan_cols[0], non_nan_cols[-1] + 1)
         ax.set_ylim(non_nan_rows[0], non_nan_rows[-1] + 1)
 
@@ -150,8 +189,9 @@ class Mapper:
         """
         return self.generate_concentration_heatmap().show()
 
-    def generate_concentration_plot(self, x: 'Optional[int]' = None,
-                                    y: 'Optional[int]' = None) -> 'plt':
+    def generate_concentration_plot(
+        self, x: "Optional[int]" = None, y: "Optional[int]" = None
+    ) -> "plt":
         """
         Generate a heatmap of the concentration as a function of position.
         """
@@ -160,36 +200,39 @@ class Mapper:
         rulers = [x, y]
         if all(r is None for r in rulers):
             non_nan_rows = np.where(~np.isnan(self.concentration_map.T).all(axis=1))[0]
-            if not non_nan_rows:
-                raise ValueError('No non-NaN values in the concentration map.')
+            if not any(non_nan_rows):
+                raise ValueError("No non-NaN values in the concentration map.")
             y = non_nan_rows[0]
         if all(r is not None for r in rulers):
-            raise ValueError('Only one of x or y can be specified.')
+            raise ValueError("Only one of x or y can be specified.")
 
         from matplotlib import pyplot as plt
 
         if y is not None:
             conc = self.concentration_map[:, y]
-            ruler = 'y'
-            other = 'x'
+            ruler = "y"
+            other = "x"
         else:
             conc = self.concentration_map[x, :]
-            ruler = 'x'
-            other = 'y'
+            ruler = "x"
+            other = "y"
 
         positions = np.arange(len(conc))
         non_nan_indices = np.where(~np.isnan(conc))[0]
 
-        plt.scatter(positions, conc)
+        plt.scatter(positions, conc, c='b')
         plt.xlim(non_nan_indices[0] - 1, non_nan_indices[-1] + 1)
-        plt.xlabel('Position')
-        plt.ylabel('Concentration [VMR]')
-        plt.title(f'Concentration as a function of the {other} position ' +
-                  f'for {ruler} = {x if y is None else y}')
+        plt.xlabel("Position")
+        plt.ylabel("Concentration [VMR]")
+        plt.title(
+            f"Concentration as a function of the {other} position "
+            + f"for {ruler} = {x if y is None else y}"
+        )
         return plt
 
-    def show_concentration_plot(self, x: 'Optional[int]' = None,
-                                y: 'Optional[int]' = None) -> None:
+    def show_concentration_plot(
+        self, x: "Optional[int]" = None, y: "Optional[int]" = None
+    ) -> None:
         """
         Show the heatmap of the concentration as a function of position.
         """

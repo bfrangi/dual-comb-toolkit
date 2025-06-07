@@ -209,7 +209,7 @@ def toggle_series_plot(
     tuple[plt.Figure, plt.Axes]
         A tuple containing the figure and axes objects.
     """
-    fig, ax = plt.subplots(figsize=(figsize[0]/zoom, figsize[1]/zoom), dpi=300)
+    fig, ax = plt.subplots(figsize=(figsize[0] / zoom, figsize[1] / zoom), dpi=300)
     series_list = []
     for i, item in enumerate(data):
         x, y, label = item
@@ -226,13 +226,13 @@ def toggle_series_plot(
     plt.ylabel(ylabel)
     plt.tight_layout(**tight)
 
-    legend = plt.legend()
+    legend = plt.legend(prop={"size": 6.5})
     legends = legend.get_lines()
 
     graphs = {}
     for i, leg in enumerate(legends):
         leg.set_picker(True)
-        leg.set_pickradius(10)
+        leg.set_pickradius(4)
         graphs[leg] = series_list[i]
 
     def on_pick(event):
@@ -289,3 +289,8 @@ def config_plot(
     if save_path:
         plt.savefig(save_path)
     return fig, ax
+
+
+def use_latex():
+    """Use LaTeX for rendering text in plots."""
+    plt.rcParams.update({"text.usetex": True, "font.family": "Computer Modern"})
