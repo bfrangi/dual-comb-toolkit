@@ -1,10 +1,11 @@
-import re
 import os
+import re
 from typing import TYPE_CHECKING
 
 from lib.entities import MeasuredSpectrum, Result
 from lib.files import get_figures_path
 from lib.fitting import ConcentrationFitter
+from lib.math import bounded
 
 if TYPE_CHECKING:
     from typing import Optional
@@ -35,6 +36,12 @@ class Mapper:
         'normal_gpu'.
     spectrum_plot_folder : str, optional
         Folder to save the spectrum plots. Defaults to None, so no plots are saved.
+    lower_bound : float, optional
+        Lower bound for the concentration. Defaults to 0.
+    upper_bound : float, optional
+        Upper bound for the concentration. Defaults to 1.
+    verbose : bool, optional
+        Whether to print the results of the fitting. Defaults to False.
     """
 
     def __init__(
@@ -51,6 +58,11 @@ class Mapper:
         self.wl_min = wl_min
         self.wl_max = wl_max
         self.initial_guess: dict[str, float] = kwargs.get("initial_guess", 0.5)
+        self.lower_bound: float = bounded(kwargs.get("lower_bound", 0.0), 0, 1)
+        self.upper_bound: float = bounded(kwargs.get("upper_bound", 1.0), 0, 1)
+
+        if self.lower_bound >= self.upper_bound:
+            raise ValueError("Lower bound must be less than upper bound.")
 
         # Other parameters
         self.verbose: bool = kwargs.get("verbose", False)
@@ -125,6 +137,9 @@ class Mapper:
                 self.wl_min,
                 self.wl_max,
                 initial_guess=self.initial_guess,
+                lower_bound=self.lower_bound,
+                upper_bound=self.upper_bound,
+                verbose=self.verbose,
                 fitter=self.fitter,
             )
 
@@ -152,12 +167,6 @@ class Mapper:
                 )
             )
 
-            if self.verbose:
-                print(
-                    f"Position: {self._positions[-1]}, Concentration:"
-                    + f" {self._concentrations[-1]}",
-                    end="\n\n",
-                )
 
     def generate_concentration_heatmap(self) -> "plt":
         """
@@ -172,6 +181,15 @@ class Mapper:
         non_nan_rows = np.where(~np.isnan(conc).all(axis=1))[0]
         non_nan_cols = np.where(~np.isnan(conc).all(axis=0))[0]
 
+        if conc.shape[1] < conc.shape[0]/5:
+            plt.figure(figsize=(4, 12), dpi=100)
+            tight = {'pad': 0.1, 'rect': (0.02, 0.02, 0.96, 0.99)}
+        elif conc.shape[0] < conc.shape[1]/5:
+            plt.figure(figsize=(12, 4), dpi=100)
+            tight = {'pad': 0.1, 'rect': (0.02, 0.02, 1.08, 0.99)}
+        else:
+            tight = {'pad': 0.1, 'rect': (0.02, 0.02, 0.99, 0.99)}
+
         df = pd.DataFrame(conc)
         ax = sns.heatmap(df, cmap="crest")
         ax.invert_yaxis()
@@ -180,6 +198,7 @@ class Mapper:
         ax.set_ylabel("Y")
         ax.set_xlim(non_nan_cols[0], non_nan_cols[-1] + 1)
         ax.set_ylim(non_nan_rows[0], non_nan_rows[-1] + 1)
+        plt.tight_layout(**tight)
 
         return plt
 
@@ -220,14 +239,17 @@ class Mapper:
         positions = np.arange(len(conc))
         non_nan_indices = np.where(~np.isnan(conc))[0]
 
+        plt.figure(figsize=(9, 6), dpi=100)
         plt.scatter(positions, conc, c='b')
         plt.xlim(non_nan_indices[0] - 1, non_nan_indices[-1] + 1)
         plt.xlabel("Position")
         plt.ylabel("Concentration [VMR]")
         plt.title(
             f"Concentration as a function of the {other} position "
-            + f"for {ruler} = {x if y is None else y}"
+            + f"for ${ruler} = {x if y is None else y}$"
         )
+        tight = {'pad': 0.1, 'rect': (0.02, 0.02, 0.98, 0.97)}
+        plt.tight_layout(**tight)
         return plt
 
     def show_concentration_plot(

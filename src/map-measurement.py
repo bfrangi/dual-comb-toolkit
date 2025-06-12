@@ -1,39 +1,71 @@
-from lib.files import get_measurement_names
-from lib.shortcuts import map_measurement_concentration
-from lib.plots import use_latex
+from datetime import datetime
 
-# Define the molecule, pressure, temperature, and length.
+from lib.files import get_figures_path, get_measurement_names, save_mapping_report
+from lib.plots import use_latex
+from lib.shortcuts import map_measurement_concentration
+
+####################################################################################################
+# Measurement parameters                                                                           #
+####################################################################################################
+
+# Molecule and physical conditions.
 
 molecule = "CH4"
 pressure = 101325  # Pa
 temperature = 298  # K
 length = 0.07  # m
-wl_min = 3427.0  # nm
-wl_max = 3427.9  # nm
 
-# Name and specifications of the measurement.
+# Simulation range.
 
-sweep_name = "1a"
-meas_names = get_measurement_names(sweep_name)
+wl_min = 3426.8  # nm
+wl_max = 3428.1  # nm
+
+# Measurement names.
+
+mapping_name = "1a"
+measurement_names = get_measurement_names(mapping_name)
 baseline_names = []
+
+# Radio frequency comb specifications.
+
 center_freq = 40000.0  # Hz
 freq_spacing = 200.0  # Hz
-number_of_teeth = 12
-laser_wavelength = 3427.437e-9  # m
-optical_comb_spacing = 1250e6  # Hz
 acq_freq = 400000.0  # Hz
-fitter = "normal"
-initial_guess = 0.001  # VMR
-spectrum_plot_folder = sweep_name
+
+# Optical comb specifications.
+
+number_of_teeth = 12
+laser_wavelength = (wl_max + wl_min) / 2 * 1e-9  # m
+optical_comb_spacing = 1250e6  # Hz
+
+
+####################################################################################################
+# Fitting parameters                                                                               #
+####################################################################################################
+
+# Fitter, initial guess and allowed concentration bounds.
+
+fitter = "normal_gpu"
+initial_guess = 0.0001  # VMR
+lower_bound = 0.0  # VMR
+upper_bound = 0.15  # VMR
+
+# Output and plotting parameters.
+
+verbose = True
+spectrum_plot_folder = mapping_name
 
 # Use LaTeX for plotting.
 
 use_latex()
 
-# Map the measurements.
+
+####################################################################################################
+# Mapping                                                                                          #
+####################################################################################################
 
 mapper = map_measurement_concentration(
-    meas_names=meas_names,
+    meas_names=measurement_names,
     center_freq=center_freq,
     freq_spacing=freq_spacing,
     number_of_teeth=number_of_teeth,
@@ -49,9 +81,64 @@ mapper = map_measurement_concentration(
     baseline_names=baseline_names,
     fitter=fitter,
     initial_guess=initial_guess,
+    lower_bound=lower_bound,
+    upper_bound=upper_bound,
+    verbose=verbose,
     spectrum_plot_folder=spectrum_plot_folder,
 )
 
-mapper.show_concentration_heatmap()
 
-mapper.show_concentration_plot(x=1)
+####################################################################################################
+# Results plots                                                                                    #
+####################################################################################################
+
+if spectrum_plot_folder:
+    folder_path = f"{get_figures_path()}{spectrum_plot_folder}"
+    heatmap_path = f"{folder_path}/heatmap.pdf"
+    plot_path = f"{folder_path}/plot.pdf"
+
+    plt = mapper.generate_concentration_heatmap()
+    plt.savefig(heatmap_path)
+    plt.close()
+
+    plt = mapper.generate_concentration_plot(x=1)
+    plt.savefig(plot_path)
+    plt.close()
+
+    if verbose:
+        print(f"Concentration heatmap saved to {heatmap_path}.")
+        print(f"Concentration plot saved to {plot_path}.")
+else:
+    mapper.show_concentration_heatmap()
+    mapper.show_concentration_plot(x=1)
+
+
+####################################################################################################
+# Mapping report                                                                                   #
+####################################################################################################
+
+report_filename = f"{mapping_name} @ {datetime.now().strftime('%Y-%m-%d %H-%M-%S')}"
+
+save_mapping_report(
+    filename=report_filename,
+    data={
+        "molecule": molecule,
+        "pressure": pressure,
+        "temperature": temperature,
+        "path_length": length,
+        "optical_comb_spacing": optical_comb_spacing / 1e9,  # Convert to GHz
+        "number_of_teeth": number_of_teeth,
+        "laser_wavelength": laser_wavelength * 1e9,  # Convert to nm
+        "wl_min": wl_min,
+        "wl_max": wl_max,
+        "comb_spacing": freq_spacing,
+        "center_frequency": center_freq,
+        "acquisition_frequency": acq_freq,
+        "fitter": fitter,
+        "initial_guess": initial_guess,
+        "lower_bound": lower_bound,
+        "upper_bound": upper_bound,
+        "results": mapper.results,
+    },
+    verbose=verbose,
+)

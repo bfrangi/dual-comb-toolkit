@@ -1,28 +1,65 @@
-from matplotlib import pyplot as plt
+import os
 
-from lib.plots import tight
+from lib.entities import Result, SimulatedSpectrum
+from lib.files import get_figures_path, initialize_figures_folder
+from lib.plots import use_latex
 from lib.shortcuts import get_measurement_transmission, simulate_line
 
-# Define the molecule, VMR, pressure, temperature, and length.
+####################################################################################################
+# Simulation parameters                                                                            #
+####################################################################################################
+
+# Molecule and physical conditions.
+
 molecule = "CH4"
-vmr = 0.005  # volume mixing ratio
+vmr = 0.00065  # VMR
 pressure = 101325  # Pa
 temperature = 298  # K
 length = 0.07  # m
-wl_min = 3427.0  # nm
-wl_max = 3427.9  # nm
 
-# Specify the name and specifications of the measurement.
-meas_name = "4a/Position-X10-Y1"
+# Simulation range.
+
+wl_min = 3426.8  # nm
+wl_max = 3428.1  # nm
+
+
+####################################################################################################
+# Measurement parameters                                                                           #
+####################################################################################################
+
+# Measurement name.
+
+measurement_name = "9a/Position-X1-Y23"
 baseline_names = []
+
+# Radio frequency comb specifications.
+
 center_freq = 40000.0  # Hz
 freq_spacing = 200.0  # Hz
-number_of_teeth = 12
-laser_wavelength = 3427.54e-9  # m
-optical_comb_spacing = 1250e6  # Hz
 acq_freq = 400000.0  # Hz
 
+# Optical comb specifications.
+
+number_of_teeth = 12
+laser_wavelength = (wl_max + wl_min) / 2 * 1e-9 + 0.11e-9  # m
+optical_comb_spacing = 1250e6  # Hz
+
+# Measurement scaling factor.
+
+scaling_factor = 1.001  # Adjust the measured spectrum by this factor.
+
+# Plotting parameters.
+
+spectrum_plot_folder = 'process-measurement-output'
+use_latex()
+
+
+####################################################################################################
+# Simulation                                                                                       #
+####################################################################################################
+
 # Simulate the transmission spectrum.
+
 x_sim, y_sim = simulate_line(
     molecule=molecule,
     wl_min=wl_min,
@@ -33,9 +70,26 @@ x_sim, y_sim = simulate_line(
     length=length,
 )
 
+simulated_spectrum = SimulatedSpectrum(
+    x=x_sim,
+    y=y_sim,
+    xu="nm",
+    molecule=molecule,
+    pressure=pressure,
+    temperature=temperature,
+    length=length,
+    concentration=vmr,
+)
+
+
+####################################################################################################
+# Measurement                                                                                      #
+####################################################################################################
+
 # Get the measured transmission spectrum.
-x_meas, y_meas = get_measurement_transmission(
-    meas_name=meas_name,
+ 
+measured_spectrum = get_measurement_transmission(
+    meas_name=measurement_name,
     center_freq=center_freq,
     freq_spacing=freq_spacing,
     number_of_teeth=number_of_teeth,
@@ -45,17 +99,28 @@ x_meas, y_meas = get_measurement_transmission(
     baseline_names=baseline_names,
 )
 
+measured_spectrum.scale_by(scaling_factor)
 
-# Plot the simulated and measured transmission spectra.
 
-plt.plot(x_sim, y_sim, label="Simulated", color="blue", zorder=0)
-plt.scatter(x_meas, y_meas, label="Measured", color="red", zorder=1)
-plt.legend()
-plt.xlabel("Wavelength (nm)")
-plt.ylabel("Transmission")
-plt.title(
-    f"Transmission spectrum of {molecule} at {pressure:.2f} Pa "
-    + f"and {temperature:.2f} K.\n{length:.3f} m path length, {vmr:.3f} VMR."
-)
-plt.tight_layout(**tight)
-plt.show()
+####################################################################################################
+# Plots                                                                                            #
+####################################################################################################
+
+
+result = Result(measured_spectrum=measured_spectrum, simulated_spectrum=simulated_spectrum)
+
+if spectrum_plot_folder:
+    initialize_figures_folder(spectrum_plot_folder)
+
+    file_name = measurement_name.split("/")[-1] + ".svg"
+    folder_path = os.path.join(get_figures_path(), spectrum_plot_folder)
+    file_path = os.path.join(folder_path, file_name)
+
+    plt = result.generate_plot()
+    plt.savefig(file_path)
+
+    print(f"Plot saved to {file_path}.")
+
+    plt.show()
+else:
+    plt = result.show_plot()

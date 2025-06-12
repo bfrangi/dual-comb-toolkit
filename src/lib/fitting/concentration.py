@@ -1,9 +1,10 @@
 from typing import TYPE_CHECKING
 
 from lib.fitting import overlap_transmission
+from lib.math import bounded
 
 if TYPE_CHECKING:
-    from typing import Optional
+    from typing import Callable, Optional
 
     from numpy import ndarray
 
@@ -108,6 +109,12 @@ def fit_concentration(
     exit_gpu : bool, optional
         Whether to exit the GPU after the fitting. Defaults to True. Only used if `simulator` uses the GPU or
         if `use_gpu` is provided.
+    lower_bound : float, optional
+        Lower bound for the concentration. Defaults to 0.
+    upper_bound : float, optional
+        Upper bound for the concentration. Defaults to 1.
+    verbose : bool, optional
+        Whether to print the results of the fitting. Defaults to False.
 
     Returns
     -------
@@ -122,12 +129,15 @@ def fit_concentration(
     a_sample : ndarray
         Amplitude data of the measured spectrum.
     """
+    tol = 1e-6
+    verbose = kwargs.get("verbose", False)
+
     condition_names = ["pressure", "temperature", "length"]
     for name in condition_names:
         if name not in conditions:
             raise ValueError(f"Missing condition: {name}.")
 
-    from numpy import sum
+    import numpy as np
     from scipy.optimize import minimize
 
     from lib.combs import to_frequency
@@ -160,8 +170,9 @@ def fit_concentration(
             f"Simulator molecule {s.molecule} does not match the provided molecule {molecule}."
         )
 
-    # Fit concentration
-    def f(conc, f_sample, a_sample):
+
+    # Objective function to minimize
+    def f(conc: float, f_sample: 'ndarray', a_sample: 'ndarray') -> float:
         # Get the simulated curve
         s.vmr = conc
         s.compute_transmission_spectrum(wl_min=wl_min, wl_max=wl_max, exit_gpu=False)
@@ -176,22 +187,29 @@ def fit_concentration(
         # Sample the simulated data to the measurement frequency grid
         idcs = closest_value_indices(f_ref, f_sample)
         a_ref_com = a_ref[idcs]
-        a_sample_com = (
+        a_sample_com: 'ndarray' = (
             a_sample * a_ref_com.max()
         )  # To account for measurements not covering the full line width
 
-        return sum((a_sample_com - a_ref_com) ** 2)
+        return np.abs(a_ref_com-a_sample_com).mean()
 
+    # Set bounds for the concentration and validate the initial guess
+    upper_bound = max(min(kwargs.get("upper_bound", 1), 1), 0)
+    lower_bound = max(min(kwargs.get("lower_bound", 0), 1), 0)
+    initial_guess = bounded(initial_guess, lower_bound, upper_bound)
+        
+    # Perform the minimization
     result = minimize(
         f,
         initial_guess,
         args=(meas_freq, meas_amp),
-        tol=1e-4,
-        bounds=[(0, 1)],
-        method="trust-constr",
-        options={"initial_tr_radius": 0.1},
+        tol=tol,
+        bounds=[(lower_bound, upper_bound)],
+        method="Nelder-Mead",
     )
     concentration = result.x[0]
+    nr_iterations = result.nit
+    nr_function_evaluations = result.nfev
 
     # Get the simulated curve
     s.vmr = concentration
@@ -201,9 +219,15 @@ def fit_concentration(
     # Transform simulation data to frequency
     f_ref, a_ref = to_frequency(wl_ref, a_ref)
 
+    # Shift the sample spectrum to overlap with the simulated data as much as possible
+    meas_freq = overlap_transmission(meas_freq, meas_amp, f_ref, a_ref)
+
     # Scale the measured amplitude
     idcs = closest_value_indices(f_ref, meas_freq)
     scaling_factor = a_ref[idcs].max()
+
+    if verbose:
+        print(f"Fitted concentration: {concentration:.6f} VMR ({nr_iterations} iterations and {nr_function_evaluations} objective function evaluations).")
 
     return concentration, f_ref, a_ref, meas_freq, meas_amp * scaling_factor
 
@@ -236,6 +260,12 @@ class ConcentrationFitter:
     exit_gpu : bool, optional
         Whether to exit the GPU after the fitting. Defaults to True. Only used if `fitter` is
         'normal_gpu'.
+    lower_bound : float, optional
+        Lower bound for the concentration. Defaults to 0.
+    upper_bound : float, optional
+        Upper bound for the concentration. Defaults to 1.
+    verbose : bool, optional
+        Whether to print the results of the fitting. Defaults to False.
     """
 
     def __init__(
@@ -256,7 +286,13 @@ class ConcentrationFitter:
         self.wl_min = wl_min
         self.wl_max = wl_max
         self.initial_guess: float = kwargs.get("initial_guess", 0.5)
+        self.lower_bound: float = bounded(kwargs.get("lower_bound", 0.0), 0, 1)
+        self.upper_bound: float = bounded(kwargs.get("upper_bound", 1.0), 0, 1)
         self.fitter: str = kwargs.get("fitter", "normal")
+        self.verbose: bool = kwargs.get("verbose", False)
+
+        if self.lower_bound >= self.upper_bound:
+            raise ValueError("Lower bound must be less than upper bound.")
 
         self._check_fitter()
 
@@ -336,6 +372,9 @@ class ConcentrationFitter:
             fitter = fit_interpolated_concentration
             use_gpu = False
 
+        if self.verbose:
+            print(f"Fitting {self._pre_meas_trasmission.meas_name} ... ", end="")
+
         concentration, sim_freq, sim_amp, meas_freq, meas_amp = fitter(
             self._pre_meas_trasmission.x_hz,
             self._pre_meas_trasmission.y_hz,
@@ -344,6 +383,9 @@ class ConcentrationFitter:
             self.wl_max,
             self.conditions,
             self.initial_guess,
+            lower_bound=self.lower_bound,
+            upper_bound=self.upper_bound,
+            verbose=self.verbose,
             simulator=self.simulator,
             use_gpu=use_gpu,
             exit_gpu=self._exit_gpu,

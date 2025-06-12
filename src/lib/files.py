@@ -1,5 +1,10 @@
 import csv
 import os
+from datetime import datetime
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from lib.entities.result import Result
 
 
 def get_root_path() -> str:
@@ -155,13 +160,13 @@ def append_to_csv_report(filename: str, data: tuple) -> None:
 def read_csv_report(filename: str, mapping: list[str]) -> list[list]:
     """
     Read a CSV report file and return each column as a list.
-    
+
     Parameters
     ----------
     filename : str
         The name of the CSV file to read.
     mapping : list[str]
-        A list of column types to map the data to. 
+        A list of column types to map the data to.
         Possible values are "int", "float", and "str".
 
     Returns
@@ -196,7 +201,7 @@ def read_csv_report(filename: str, mapping: list[str]) -> list[list]:
     return data
 
 
-def create_figures_folder(foldername) -> str:
+def initialize_figures_folder(foldername) -> str:
     """
     Create a folder in the figures directory if it does not exist.
 
@@ -262,3 +267,97 @@ def save_configurations(
     with open(f"{get_configurations_path()}{filename}", "w") as file:
         for freq, teeth in zip(comb_spacings, numbers_of_teeth):
             file.write(f"{freq} {teeth}\n")
+
+
+def save_mapping_report(
+    filename: str,
+    data: dict[str, str | int | float, list["Result"]],
+    verbose: bool = False,
+) -> None:
+    """
+    Save a mapping report to a .txt file.
+
+    Parameters
+    ----------
+    filename : str
+        The name of the file to save the report.
+    data : dict[str, str | int | float, list[Result]]
+        A dictionary containing the report data. It should include:
+        - "molecule": The name of the molecule.
+        - "pressure": The pressure in Pa.
+        - "temperature": The temperature in K.
+        - "path_length": The path length in m.
+        - "optical_comb_spacing": The optical comb spacing in GHz.
+        - "number_of_teeth": The number of teeth in the comb.
+        - "laser_wavelength": The laser wavelength in m.
+        - "comb_spacing": The RF comb spacing in Hz.
+        - "acquisition_frequency": The acquisition frequency in Hz.
+        - "fitter": The fitter used for the mapping.
+        - "initial_guess": The initial guess for the concentration in VMR.
+        - "lower_bound": The lower bound for the concentration in VMR.
+        - "upper_bound": The upper bound for the concentration in VMR.
+        - "wl_min": The minimum wavelength in nm.
+        - "wl_max": The maximum wavelength in nm.
+        - "center_frequency": The RF central frequency in Hz.
+    - "results": A list of Result objects containing the measured spectra and their concentrations.
+    verbose : bool, optional
+        Whether to print additional information during the saving process. Defaults to False.
+    """
+    report_path = f"{get_reports_path()}{filename}.txt"
+
+    optical_spacing = "{:g}".format(
+        float("{:.{p}g}".format(data["optical_comb_spacing"], p=4))
+    )
+    metadata = [
+        "Mapping Report",
+        "---------------------------------------",
+        f"Generated on {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n",
+        f"Molecule: {data['molecule']}",
+        f"Pressure: {data['pressure']} Pa",
+        f"Temperature: {data['temperature']} K",
+        f"Path length: {data['path_length']} m\n",
+        f"Optical Comb spacing: {optical_spacing} GHz",
+        f"Number of teeth: {data['number_of_teeth']}",
+        f"Laser wavelength: {data['laser_wavelength']} m",
+        f"Minimum wavelength: {data['wl_min']} nm",
+        f"Maximum wavelength: {data['wl_max']} nm\n",
+        f"RF central frequency: {data['center_frequency']} Hz",
+        f"RF comb spacing: {data['comb_spacing']} Hz",
+        f"Acquisition frequency: {data['acquisition_frequency']} Hz\n",
+        f"Fitter: {data['fitter']}",
+        f"Initial guess: {data['initial_guess']} VMR",
+        f"Lower bound: {data['lower_bound']} VMR",
+        f"Upper bound: {data['upper_bound']} VMR",
+        "---------------------------------------",
+    ]
+
+    def get_y_position(result: "Result") -> float:
+        """
+        Get the y position for sorting results based on measured spectrum name.
+        """
+        return int(result.measured_spectrum.meas_name.split("Y")[-1])
+
+    def get_x_position(result: "Result") -> float:
+        """
+        Get the x position for sorting results based on measured spectrum name.
+        """
+        return int(result.measured_spectrum.meas_name.split("-")[-2].strip("X"))
+
+    data["results"].sort(key=get_y_position)
+    data["results"].sort(key=get_x_position)
+
+    with open(report_path, "w") as file:
+        # Write the header
+        file.write("\n".join(metadata) + "\n\n")
+
+        # Write the data
+        for res in data["results"]:
+            name = res.measured_spectrum.meas_name
+            conc = res.concentration
+            file.write(f"{name}\t{conc:.6f} VMR\n")
+        file.write("\n")
+        file.write("End of report.\n")
+        (file.write("---------------------------------------\n"),)
+
+    if verbose:
+        print(f"Mapping report saved to {report_path}.")

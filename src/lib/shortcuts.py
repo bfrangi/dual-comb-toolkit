@@ -5,7 +5,7 @@ if TYPE_CHECKING:
 
     import numpy as np
 
-    from lib.entities import Measurement
+    from lib.entities import MeasuredSpectrum, Measurement
     from lib.fitting.concentration import ConcentrationFitter
     from lib.mapping import Mapper
     from lib.simulations import Simulator
@@ -135,7 +135,7 @@ def get_measurement(
 
 def get_measurement_transmission(
     meas_name: str, **specifications: dict[str, float | int]
-) -> "tuple[np.ndarray, np.ndarray]":
+) -> "MeasuredSpectrum":
     """
     Get the transmission spectrum of a measurement.
 
@@ -176,12 +176,12 @@ def get_measurement_transmission(
 
     Returns
     -------
-    tuple[np.ndarray, np.ndarray]
-        The wavelength and transmission spectrum.
+    MeasuredSpectrum
+        The measured transmission spectrum.
     """
     m = get_measurement(meas_name, **specifications)
 
-    return m.transmission_spectrum.x_nm, m.transmission_spectrum.y_nm
+    return m.transmission_spectrum
 
 
 def fit_measurement_concentration(
@@ -231,6 +231,12 @@ def fit_measurement_concentration(
     fitter : str, optional
         Fitter to use. Defaults to 'normal'. Possible values are 'normal', 'interp' and
         'normal_gpu'.
+    lower_bound : float, optional
+        Lower bound for the concentration. Defaults to 0.
+    upper_bound : float, optional
+        Upper bound for the concentration. Defaults to 1.
+    verbose : bool, optional
+        Whether to print the fitting results. Defaults to False.
 
     Returns
     -------
@@ -321,6 +327,12 @@ def map_measurement_concentration(meas_names: list[str], **specifications) -> "M
         Names of the measurements used to obtain the baseline.
     spectrum_plot_folder : str, optional
         Folder to save the spectrum plots. Defaults to None, so no plots are saved.
+    lower_bound : float, optional
+        Lower bound for the concentration. Defaults to 0.0.
+    upper_bound : float, optional
+        Upper bound for the concentration. Defaults to 0.5.
+    verbose : bool, optional
+        Whether to print the fitting results. Defaults to False.
 
     Returns
     -------

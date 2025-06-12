@@ -1,6 +1,6 @@
 from typing import TYPE_CHECKING
 
-from lib.combs import to_wavelength, to_frequency
+from lib.combs import to_frequency, to_wavelength
 
 if TYPE_CHECKING:
     from typing import Optional
@@ -10,7 +10,7 @@ if TYPE_CHECKING:
 
 class Spectrum:
     """
-    A spectrum with x and y values. The x values are always stored in nm, 
+    A spectrum with x and y values. The x values are always stored in nm,
     but can be given in nm or Hz.
 
     Parameters
@@ -21,7 +21,7 @@ class Spectrum:
         Transmission values.
     xu : str, optional
         Unit of the given values. Defaults to 'nm'. Can be 'nm' or 'Hz'.
-    
+
     Other Parameters
     ----------------
     molecule : Optional[str]
@@ -36,19 +36,18 @@ class Spectrum:
         Length of the absorption path in m.
     """
 
-    def __init__(self, x: 'ndarray', y: 'ndarray', xu: str = 'nm', **kwargs) -> None:
-
+    def __init__(self, x: "ndarray", y: "ndarray", xu: str = "nm", **kwargs) -> None:
         # Properties
 
-        self.molecule: 'Optional[str]' = kwargs.get('molecule', None)
-        self.pressure: 'Optional[float]' = kwargs.get('pressure', None)
-        self.temperature: 'Optional[float]' = kwargs.get('temperature', None)
-        self.concentration: 'Optional[float]' = kwargs.get('concentration', None)
-        self.length: 'Optional[float]' = kwargs.get('length', None)
+        self.molecule: "Optional[str]" = kwargs.get("molecule", None)
+        self.pressure: "Optional[float]" = kwargs.get("pressure", None)
+        self.temperature: "Optional[float]" = kwargs.get("temperature", None)
+        self.concentration: "Optional[float]" = kwargs.get("concentration", None)
+        self.length: "Optional[float]" = kwargs.get("length", None)
 
         # Spectrum values
 
-        if xu not in ['nm', 'Hz']:
+        if xu not in ["nm", "Hz"]:
             raise ValueError(f'Waveunit {xu} not recognized. Use "nm" or "Hz".')
 
         self.x_nm = x
@@ -56,14 +55,14 @@ class Spectrum:
         self.x_hz = x.copy()
         self.y_hz = y.copy()
 
-        if xu == 'Hz':
+        if xu == "Hz":
             self.x_nm, self.y_nm = to_wavelength(self.x_nm, self.y_nm)
         else:
             self.x_hz, self.y_hz = to_frequency(self.x_hz, self.y_hz)
 
         self.xu = xu
 
-    def plot(self, xu: str = 'nm') -> None:
+    def plot(self, xu: str = "nm") -> None:
         """
         Plot the spectrum in the specified units.
 
@@ -72,26 +71,38 @@ class Spectrum:
         xu : str, optional
             Units of the x values. Defaults to 'nm'. Can be 'nm' or 'Hz'.
         """
-        if xu not in ['nm', 'Hz']:
+        if xu not in ["nm", "Hz"]:
             raise ValueError(f'Waveunit {xu} not recognized. Use "nm" or "Hz.')
-        
+
         from lib.plots import spectrum_plot
 
-        if xu == 'Hz':
+        if xu == "Hz":
             x, y = self.x_hz, self.y_hz
-            xlabel = 'Frequency [Hz]'
+            xlabel = "Frequency [Hz]"
         else:
             x, y = self.x_nm, self.y_nm
-            xlabel = 'Wavelength [nm]'
-        
-        spectrum_plot(x, y, 'Spectrum', xlabel=xlabel).show()
+            xlabel = "Wavelength [nm]"
+
+        spectrum_plot(x, y, "Spectrum", xlabel=xlabel).show()
+
+    def scale_by(self, factor: float) -> None:
+        """
+        Scale the y values of the spectrum by a factor.
+
+        Parameters
+        ----------
+        factor : float
+            Factor to scale the y values by.
+        """
+        self.y_nm *= factor
+        self.y_hz *= factor
 
 
 class MeasuredSpectrum(Spectrum):
     """
     A measured spectrum with additional metadata. The x values are always stored in nm,
     but can be given in nm or Hz.
-    
+
     Parameters
     ----------
     x : ndarray
@@ -112,7 +123,7 @@ class MeasuredSpectrum(Spectrum):
         Approximate value of the laser wavelength in m.
     optical_comb_spacing : Optional[float]
         Spacing of the optical optical comb in Hz.
-    acq_freq : Optional[float]  
+    acq_freq : Optional[float]
         Acquisition frequency used in the measurement in Hz.
 
     Other Parameters
@@ -128,16 +139,24 @@ class MeasuredSpectrum(Spectrum):
     length : Optional[float]
         Length of the absorption path in m.
     """
-    def __init__(self, x: 'ndarray', y: 'ndarray', xu: 'str' = 'nm',
-                 **kwargs: dict[str, str | float | int]) -> None:
+
+    def __init__(
+        self,
+        x: "ndarray",
+        y: "ndarray",
+        xu: "str" = "nm",
+        **kwargs: dict[str, str | float | int],
+    ) -> None:
         super().__init__(x, y, xu, **kwargs)
-        self.meas_name: 'Optional[str]' = kwargs.get('meas_name', None)
-        self.center_freq: 'Optional[float]' = kwargs.get('center_freq', None)
-        self.freq_spacing: 'Optional[float]' = kwargs.get('freq_spacing', None)
-        self.number_of_teeth: 'Optional[int]' = kwargs.get('number_of_teeth', None)
-        self.laser_wavelength: 'Optional[float]' = kwargs.get('laser_wavelength', None)
-        self.optical_comb_spacing: 'Optional[float]' = kwargs.get('optical_comb_spacing', None)
-        self.acq_freq: 'Optional[float]' = kwargs.get('acq_freq', None)
+        self.meas_name: "Optional[str]" = kwargs.get("meas_name", None)
+        self.center_freq: "Optional[float]" = kwargs.get("center_freq", None)
+        self.freq_spacing: "Optional[float]" = kwargs.get("freq_spacing", None)
+        self.number_of_teeth: "Optional[int]" = kwargs.get("number_of_teeth", None)
+        self.laser_wavelength: "Optional[float]" = kwargs.get("laser_wavelength", None)
+        self.optical_comb_spacing: "Optional[float]" = kwargs.get(
+            "optical_comb_spacing", None
+        )
+        self.acq_freq: "Optional[float]" = kwargs.get("acq_freq", None)
 
 
 class SimulatedSpectrum(Spectrum):
@@ -157,7 +176,7 @@ class SimulatedSpectrum(Spectrum):
         Minimum wavelength for the simulation in nm.
     wl_max : Optional[float]
         Maximum wavelength for the simulation in nm.
-    
+
     Other Parameters
     ----------------
     molecule : Optional[str]
@@ -171,8 +190,14 @@ class SimulatedSpectrum(Spectrum):
     length : Optional[float]
         Length of the absorption path in m.
     """
-    def __init__(self, x: 'ndarray', y: 'ndarray', xu: 'str' = 'nm',
-                 **kwargs: dict[str, str | float]) -> None:
+
+    def __init__(
+        self,
+        x: "ndarray",
+        y: "ndarray",
+        xu: "str" = "nm",
+        **kwargs: dict[str, str | float],
+    ) -> None:
         super().__init__(x, y, xu, **kwargs)
-        self.wl_min: 'Optional[float]' = kwargs.get('wl_min', None)
-        self.wl_max: 'Optional[float]' = kwargs.get('wl_max', None)
+        self.wl_min: "Optional[float]" = kwargs.get("wl_min", None)
+        self.wl_max: "Optional[float]" = kwargs.get("wl_max", None)

@@ -4,28 +4,26 @@ from lib.plots import tight
 from lib.shortcuts import fit_measurement_concentration
 
 # Define the molecule, VMR, pressure, temperature, and length.
-molecule = 'CH4'
-pressure = 53328.94736842  # Pa
+molecule = "CH4"
+pressure = 101325  # Pa
 temperature = 298  # K
-length = 0.055  # m
-wl_min = 3427.1  # nm
-wl_max = 3427.8  # nm
+length = 0.07  # m
+wl_min = 3426.8  # nm
+wl_max = 3428.1  # nm
 
 # Specify the name and specifications of the measurement.
-meas_name = 'cell-sweep-10-34-17-03-2025/Position-X4-Y1'
-baseline_names = [
-    'cell-sweep-10-34-17-03-2025/Position-X12-Y1',
-    'cell-sweep-10-34-17-03-2025/Position-X13-Y1',
-    'cell-sweep-10-34-17-03-2025/Position-X14-Y1',
-    'cell-sweep-10-34-17-03-2025/Position-X15-Y1',
-    'cell-sweep-10-34-17-03-2025/Position-X16-Y1',
-]
-# baseline_names = None
+meas_name = "1a/Position-X1-Y10"
+baseline_names = []
 center_freq = 40000.0  # Hz
 freq_spacing = 200.0  # Hz
-number_of_teeth = 35
-laser_wavelength = 3427.437e-9  # m
-optical_comb_spacing = 500e6  # Hz
+number_of_teeth = 12
+laser_wavelength = (wl_max + wl_min) / 2 * 1e-9  # m
+optical_comb_spacing = 1250e6  # Hz
+fitter = "normal_gpu"
+initial_guess = 0.0001  # VMR
+lower_bound = 0.0  # VMR
+upper_bound = 0.1  # VMR
+verbose = True
 acq_freq = 400000.0  # Hz
 
 # Fit the concentration.
@@ -44,21 +42,24 @@ vmr, x_sim, y_sim, x_meas, y_meas = fit_measurement_concentration(
     pressure=pressure,
     temperature=temperature,
     length=length,
-    initial_guess=0.5,
+    initial_guess=initial_guess,
+    fitter=fitter,
     baseline_names=baseline_names,
-    fitter='interp',
+    lower_bound=lower_bound,
+    upper_bound=upper_bound,
+    verbose=verbose,
 )
 
 # Plot the simulated and measured transmission spectra.
 
-plt.plot(x_sim, y_sim, label='Simulated', color='blue', zorder=0)
-plt.scatter(x_meas, y_meas, label='Measured', color='red', zorder=1)
+plt.plot(x_sim, y_sim, label="Simulated", color="blue", zorder=0)
+plt.scatter(x_meas, y_meas, label="Measured", color="red", zorder=1)
 plt.legend()
-plt.xlabel('Wavelength (nm)')
-plt.ylabel('Transmission')
-plt.title(f'Transmission spectrum of {molecule} at {pressure:.2f} Pa ' +
-          f'and {temperature:.2f} K.\n{length:.3f} m path length, {vmr:.3f} VMR.')
+plt.xlabel("Wavelength (nm)")
+plt.ylabel("Transmission")
+plt.title(
+    f"Transmission spectrum of {molecule} at {pressure:.2f} Pa "
+    + f"and {temperature:.2f} K.\n{length:.3f} m path length, {vmr:.3f} VMR."
+)
 plt.tight_layout(**tight)
 plt.show()
-
-print(f'The concentration of {molecule} is {vmr:.3f} VMR.')

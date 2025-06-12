@@ -9,7 +9,7 @@ from lib.constants import c
 from lib.conversions import delta_frequency_to_delta_wavelength
 from lib.files import (
     append_to_csv_report,
-    create_figures_folder,
+    initialize_figures_folder,
     initialize_csv_report,
     read_configurations,
 )
@@ -268,7 +268,7 @@ for nr_teeth, spacing in zip(numbers_of_teeth, comb_spacings):
 
         sp = "{:g}".format(float("{:.{p}g}".format(spacing / 1e9, p=4)))
         folder_name = f"{nr_teeth} x {sp} GHz"
-        folder_path = create_figures_folder(folder_name)
+        folder_path = initialize_figures_folder(folder_name)
 
     fitting_results = []
 
