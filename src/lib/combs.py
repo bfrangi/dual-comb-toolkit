@@ -104,7 +104,7 @@ def nan_shift(a: 'ndarray', n: int) -> 'ndarray':
     return np.concatenate([np.full(n, np.nan), a[:-n]])
 
 
-def normalize_transmission(f: 'ndarray', a: 'ndarray',
+def normalize_transmission(x: 'ndarray', a: 'ndarray',
                            replace_outliers: bool = False) -> 'tuple[ndarray, ndarray]':
     """
     Normalizes the transmission spectrum by dividing it by the maximum value of its rolling mean
@@ -112,8 +112,8 @@ def normalize_transmission(f: 'ndarray', a: 'ndarray',
 
     Parameters
     ----------
-    f : ndarray
-        Frequency array.
+    x : ndarray
+        Frequency or wavelength array.
     a : ndarray
         Amplitude array.
     replace_outliers : bool
@@ -122,7 +122,7 @@ def normalize_transmission(f: 'ndarray', a: 'ndarray',
     Returns
     -------
     tuple[ndarray, ndarray]
-        A tuple containing the normalized frequency and amplitude arrays.
+        A tuple containing the normalized frequency/wavelength and amplitude arrays.
 
     Note
     ----
@@ -148,7 +148,7 @@ def normalize_transmission(f: 'ndarray', a: 'ndarray',
 
     rolling_avg = rolling_mean(a_without_outliers, window=3)
 
-    return f, a / max(rolling_avg)
+    return x, a / max(rolling_avg)
 
 
 def get_comb_frequencies(center_freq: float, freq_spacing: float, number_of_teeth: int) -> 'ndarray':

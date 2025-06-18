@@ -296,6 +296,8 @@ def save_mapping_report(
         - "initial_guess": The initial guess for the concentration in VMR.
         - "lower_bound": The lower bound for the concentration in VMR.
         - "upper_bound": The upper bound for the concentration in VMR.
+        - "sub_measurements": The number of sub-measurements used to obtain the standard deviation of the teeth.
+        - "tooth_std_threshold": The threshold for the standard deviation of the teeth.
         - "wl_min": The minimum wavelength in nm.
         - "wl_max": The maximum wavelength in nm.
         - "center_frequency": The RF central frequency in Hz.
@@ -328,6 +330,8 @@ def save_mapping_report(
         f"Initial guess: {data['initial_guess']} VMR",
         f"Lower bound: {data['lower_bound']} VMR",
         f"Upper bound: {data['upper_bound']} VMR",
+        f"Number of sub-measurements: {data['sub_measurements']}",
+        f"Tooth standard deviation threshold: {data['tooth_std_threshold']}",
         "---------------------------------------",
     ]
 

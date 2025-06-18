@@ -72,6 +72,13 @@ class Result:
             color="red",
             zorder=1,
         )
+
+        if self.measured_spectrum.y_sdv_nm is not None:
+            x = self.measured_spectrum.x_nm
+            y = self.measured_spectrum.y_nm
+            yerr = self.measured_spectrum.y_sdv_nm/2
+            plt.errorbar(x, y, yerr=yerr, fmt="none", capsize=3, color="red")
+
         plt.legend()
         plt.xlabel("Wavelength (nm)")
         plt.ylabel("Transmission")

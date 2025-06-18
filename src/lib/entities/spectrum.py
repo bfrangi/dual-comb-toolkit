@@ -2,10 +2,12 @@ from typing import TYPE_CHECKING
 
 from lib.combs import to_frequency, to_wavelength
 
+from numpy import ndarray
+
 if TYPE_CHECKING:
     from typing import Optional
 
-    from numpy import ndarray
+    from matplotlib import pyplot as plt
 
 
 class Spectrum:
@@ -62,7 +64,7 @@ class Spectrum:
 
         self.xu = xu
 
-    def plot(self, xu: str = "nm") -> None:
+    def generate_plot(self, xu: str = "nm") -> "plt":
         """
         Plot the spectrum in the specified units.
 
@@ -83,7 +85,18 @@ class Spectrum:
             x, y = self.x_nm, self.y_nm
             xlabel = "Wavelength [nm]"
 
-        spectrum_plot(x, y, "Spectrum", xlabel=xlabel).show()
+        return spectrum_plot(x, y, "Spectrum", xlabel=xlabel)
+    
+    def show_plot(self, xu: str = "nm") -> None:
+        """
+        Show the spectrum plot in the specified units.
+
+        Parameters
+        ----------
+        xu : str, optional
+            Units of the x values. Defaults to 'nm'. Can be 'nm' or 'Hz'.
+        """
+        return self.generate_plot(xu).show()
 
     def scale_by(self, factor: float) -> None:
         """
@@ -125,6 +138,8 @@ class MeasuredSpectrum(Spectrum):
         Spacing of the optical optical comb in Hz.
     acq_freq : Optional[float]
         Acquisition frequency used in the measurement in Hz.
+    y_sdv : Optional[ndarray]
+        Standard deviation of the y values in the same units as `y`.
 
     Other Parameters
     ----------------
@@ -157,6 +172,19 @@ class MeasuredSpectrum(Spectrum):
             "optical_comb_spacing", None
         )
         self.acq_freq: "Optional[float]" = kwargs.get("acq_freq", None)
+        
+        self.y_sdv_nm: "Optional[ndarray]" = None
+        self.y_sdv_hz: "Optional[ndarray]" = None
+
+        y_sdv: "Optional[ndarray]" = kwargs.get("y_sdv", None)
+        if y_sdv is not None:
+            if xu == "Hz":
+                self.y_sdv_hz = y_sdv
+                _, self.y_sdv_nm = to_wavelength(x, y_sdv)
+            else:
+                self.y_sdv_nm = y_sdv
+                _, self.y_sdv_hz = to_frequency(x, y_sdv)
+
 
 
 class SimulatedSpectrum(Spectrum):

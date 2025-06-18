@@ -1,10 +1,11 @@
+from functools import cached_property
 from typing import TYPE_CHECKING
 
 from lib.fitting import overlap_transmission
 from lib.math import bounded
 
 if TYPE_CHECKING:
-    from typing import Callable, Optional
+    from typing import Optional
 
     from numpy import ndarray
 
@@ -170,9 +171,8 @@ def fit_concentration(
             f"Simulator molecule {s.molecule} does not match the provided molecule {molecule}."
         )
 
-
     # Objective function to minimize
-    def f(conc: float, f_sample: 'ndarray', a_sample: 'ndarray') -> float:
+    def f(conc: float, f_sample: "ndarray", a_sample: "ndarray") -> float:
         # Get the simulated curve
         s.vmr = conc
         s.compute_transmission_spectrum(wl_min=wl_min, wl_max=wl_max, exit_gpu=False)
@@ -187,7 +187,7 @@ def fit_concentration(
         # Sample the simulated data to the measurement frequency grid
         idcs = closest_value_indices(f_ref, f_sample)
         a_ref_com = a_ref[idcs]
-        a_sample_com: 'ndarray' = (
+        a_sample_com: "ndarray" = (
             a_sample * a_ref_com.max()
         )  # To account for measurements not covering the full line width
 
@@ -197,7 +197,7 @@ def fit_concentration(
     upper_bound = max(min(kwargs.get("upper_bound", 1), 1), 0)
     lower_bound = max(min(kwargs.get("lower_bound", 0), 1), 0)
     initial_guess = bounded(initial_guess, lower_bound, upper_bound)
-        
+
     # Perform the minimization
     result = minimize(
         f,
@@ -227,7 +227,9 @@ def fit_concentration(
     scaling_factor = a_ref[idcs].max()
 
     if verbose:
-        print(f"Fitted concentration: {concentration:.6f} VMR ({nr_iterations} iterations and {nr_function_evaluations} objective function evaluations).")
+        print(
+            f"Fitted concentration: {concentration:.6f} VMR ({nr_iterations} iterations and {nr_function_evaluations} objective function evaluations)."
+        )
 
     return concentration, f_ref, a_ref, meas_freq, meas_amp * scaling_factor
 
@@ -321,7 +323,7 @@ class ConcentrationFitter:
 
     # Properties
 
-    @property
+    @cached_property
     def result(self) -> "Result":
         from lib.entities import Result
 
@@ -415,4 +417,5 @@ class ConcentrationFitter:
             laser_wavelength=self._pre_meas_trasmission.laser_wavelength,
             optical_comb_spacing=self._pre_meas_trasmission.optical_comb_spacing,
             acq_freq=self._pre_meas_trasmission.acq_freq,
+            y_sdv=self._pre_meas_trasmission.y_sdv_hz
         )

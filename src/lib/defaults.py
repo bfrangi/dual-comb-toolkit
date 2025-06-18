@@ -6,3 +6,4 @@ OPTICAL_COMB_SPACING: float = 1.0e9
 ACQ_FREQ: float = 400000.0
 SAMPLE_TAG: str = 'sample'
 REFERENCE_TAG: str = 'reference'
+TOOTH_STD_THRESHOLD: float = 0.1

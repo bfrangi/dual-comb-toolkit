@@ -1,9 +1,11 @@
 import os
 
+from matplotlib import pyplot as plt
+
 from lib.entities import Result, SimulatedSpectrum
 from lib.files import get_figures_path, initialize_figures_folder
 from lib.plots import use_latex
-from lib.shortcuts import get_measurement_transmission, simulate_line
+from lib.shortcuts import get_measurement, simulate_line
 
 ####################################################################################################
 # Simulation parameters                                                                            #
@@ -29,7 +31,7 @@ wl_max = 3428.1  # nm
 
 # Measurement name.
 
-measurement_name = "9a/Position-X1-Y23"
+measurement_name = "11a/Position-X1-Y1"
 baseline_names = []
 
 # Radio frequency comb specifications.
@@ -43,6 +45,16 @@ acq_freq = 400000.0  # Hz
 number_of_teeth = 12
 laser_wavelength = (wl_max + wl_min) / 2 * 1e-9 + 0.11e-9  # m
 optical_comb_spacing = 1250e6  # Hz
+
+
+####################################################################################################
+# Processing parameters                                                                            #
+####################################################################################################
+
+# Noise filtering.
+
+tooth_std_threshold = 0.4 # Teeth with a standard deviation above this threshold will be discarded.
+sub_measurements = 10 # Number of sub-measurements used to obtain the standard deviation of the teeth.
 
 # Measurement scaling factor.
 
@@ -88,7 +100,7 @@ simulated_spectrum = SimulatedSpectrum(
 
 # Get the measured transmission spectrum.
  
-measured_spectrum = get_measurement_transmission(
+measurement = get_measurement(
     meas_name=measurement_name,
     center_freq=center_freq,
     freq_spacing=freq_spacing,
@@ -97,8 +109,11 @@ measured_spectrum = get_measurement_transmission(
     optical_comb_spacing=optical_comb_spacing,
     acq_freq=acq_freq,
     baseline_names=baseline_names,
+    sub_measurements=sub_measurements,
+    tooth_std_threshold=tooth_std_threshold,
 )
 
+measured_spectrum = measurement.transmission_spectrum
 measured_spectrum.scale_by(scaling_factor)
 
 
@@ -109,6 +124,8 @@ measured_spectrum.scale_by(scaling_factor)
 
 result = Result(measured_spectrum=measured_spectrum, simulated_spectrum=simulated_spectrum)
 
+result.generate_plot()
+
 if spectrum_plot_folder:
     initialize_figures_folder(spectrum_plot_folder)
 
@@ -116,11 +133,8 @@ if spectrum_plot_folder:
     folder_path = os.path.join(get_figures_path(), spectrum_plot_folder)
     file_path = os.path.join(folder_path, file_name)
 
-    plt = result.generate_plot()
     plt.savefig(file_path)
 
     print(f"Plot saved to {file_path}.")
 
-    plt.show()
-else:
-    plt = result.show_plot()
+plt.show()

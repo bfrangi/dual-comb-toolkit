@@ -101,6 +101,12 @@ def get_measurement(
         The length of the absorption path in m.
     concentration : float, optional
         The concentration of the molecule in VMR.
+    sub_measurements : int, optional
+        Number of sub-measurements used to obtain the standard deviation of the teeth. If not
+        specified, tooth filtering based on standard deviation will not be applied.
+    tooth_std_threshold : float, optional
+        Teeth with a standard deviation above this threshold will be discarded if `sub_measurements`
+        is given and is greater than 1.
 
     Returns
     -------
@@ -133,60 +139,9 @@ def get_measurement(
     return Measurement(meas_name, **specifications, baseline=baseline)
 
 
-def get_measurement_transmission(
-    meas_name: str, **specifications: dict[str, float | int]
-) -> "MeasuredSpectrum":
-    """
-    Get the transmission spectrum of a measurement.
-
-    Parameters
-    ----------
-    meas_name : str
-        The name of the measurement.
-
-    Keyword Arguments
-    -----------------
-    center_freq : float
-        The center frequency of the measurement.
-    freq_spacing : float
-        The frequency spacing of the measurement.
-    number_of_teeth : int
-        The number of teeth in the measurement.
-    laser_wavelength : float
-        The laser wavelength of the measurement.
-    optical_comb_spacing : float
-        Spacing between teeth of the measured optical comb.
-    acq_freq : float
-        The acquisition frequency of the measurement.
-
-    Other Parameters
-    ----------------
-    baseline_names: list[str], optional
-        The name of the measurements used to obtain the baseline.
-    molecule : str, optional
-        The molecule measured.
-    pressure : float, optional
-        The pressure in Pa.
-    temperature : float, optional
-        The temperature in K.
-    length : float, optional
-        The length of the absorption path in m.
-    concentration : float, optional
-        The concentration of the molecule in VMR.
-
-    Returns
-    -------
-    MeasuredSpectrum
-        The measured transmission spectrum.
-    """
-    m = get_measurement(meas_name, **specifications)
-
-    return m.transmission_spectrum
-
-
 def fit_measurement_concentration(
     meas_name: str, **specifications
-) -> tuple[float, "np.ndarray", "np.ndarray", "np.ndarray", "np.ndarray"]:
+) -> "ConcentrationFitter":
     """
     Fit the concentration of a measurement to a simulation.
 
@@ -237,12 +192,17 @@ def fit_measurement_concentration(
         Upper bound for the concentration. Defaults to 1.
     verbose : bool, optional
         Whether to print the fitting results. Defaults to False.
+    sub_measurements : int, optional
+        Number of sub-measurements used to obtain the standard deviation of the teeth. If not
+        specified, tooth filtering based on standard deviation will not be applied.
+    tooth_std_threshold : float, optional
+        Teeth with a standard deviation above this threshold will be discarded if `sub_measurements`
+        is given and is greater than 1.
 
     Returns
     -------
-    tuple[float, np.ndarray, np.ndarray, np.ndarray, np.ndarray]
-        The concentration, the wavelength and transmission spectrum of the simulation, and the
-        wavelength and transmission spectrum of the measurement.
+    ConcentrationFitter
+        The concentration fitter object.
     """
     required_kwargs = [
         "wl_min",
@@ -265,17 +225,14 @@ def fit_measurement_concentration(
     wl_min: float = specifications.pop("wl_min")
     wl_max: float = specifications.pop("wl_max")
 
-    f = ConcentrationFitter(
+    fitter = ConcentrationFitter(
         meas_transmission=meas_transmission,
         wl_min=wl_min,
         wl_max=wl_max,
         **specifications,
     )
 
-    meas = f.measured_transmission
-    sim = f.simulated_transmission
-
-    return f.concentration, sim.x_nm, sim.y_nm, meas.x_nm, meas.y_nm
+    return fitter
 
 
 def map_measurement_concentration(meas_names: list[str], **specifications) -> "Mapper":
@@ -333,6 +290,12 @@ def map_measurement_concentration(meas_names: list[str], **specifications) -> "M
         Upper bound for the concentration. Defaults to 0.5.
     verbose : bool, optional
         Whether to print the fitting results. Defaults to False.
+    sub_measurements : int, optional
+        Number of sub-measurements used to obtain the standard deviation of the teeth. If not
+        specified, tooth filtering based on standard deviation will not be applied.
+    tooth_std_threshold : float, optional
+        Teeth with a standard deviation above this threshold will be discarded if `sub_measurements`
+        is given and is greater than 1.
 
     Returns
     -------

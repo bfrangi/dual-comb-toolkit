@@ -22,7 +22,7 @@ wl_max = 3428.1  # nm
 
 # Measurement names.
 
-mapping_name = "1a"
+mapping_name = "3b"
 measurement_names = get_measurement_names(mapping_name)
 baseline_names = []
 
@@ -50,10 +50,15 @@ initial_guess = 0.0001  # VMR
 lower_bound = 0.0  # VMR
 upper_bound = 0.15  # VMR
 
+# Noise filtering.
+
+tooth_std_threshold = 0.019 # Teeth with a standard deviation above this threshold will be discarded.
+sub_measurements = 10 # Number of sub-measurements used to obtain the standard deviation of the teeth.
+
 # Output and plotting parameters.
 
 verbose = True
-spectrum_plot_folder = mapping_name
+spectrum_plot_folder = mapping_name + " (filtered)"
 
 # Use LaTeX for plotting.
 
@@ -85,6 +90,8 @@ mapper = map_measurement_concentration(
     upper_bound=upper_bound,
     verbose=verbose,
     spectrum_plot_folder=spectrum_plot_folder,
+    tooth_std_threshold=tooth_std_threshold,
+    sub_measurements=sub_measurements,
 )
 
 
@@ -138,6 +145,8 @@ save_mapping_report(
         "initial_guess": initial_guess,
         "lower_bound": lower_bound,
         "upper_bound": upper_bound,
+        "sub_measurements": sub_measurements,
+        "tooth_std_threshold": tooth_std_threshold,
         "results": mapper.results,
     },
     verbose=verbose,
