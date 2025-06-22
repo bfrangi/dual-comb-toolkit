@@ -52,8 +52,10 @@ upper_bound = 0.15  # VMR
 
 # Noise filtering.
 
-tooth_std_threshold = 0.019 # Teeth with a standard deviation above this threshold will be discarded.
-sub_measurements = 10 # Number of sub-measurements used to obtain the standard deviation of the teeth.
+tooth_std_threshold = 1.5  # Teeth with a standard deviation above `tooth_std_threshold * mean_std` will be discarded.
+sub_measurements = (
+    10  # Number of sub-measurements used to obtain the standard deviation of the teeth.
+)
 
 # Output and plotting parameters.
 

@@ -105,8 +105,8 @@ def get_measurement(
         Number of sub-measurements used to obtain the standard deviation of the teeth. If not
         specified, tooth filtering based on standard deviation will not be applied.
     tooth_std_threshold : float, optional
-        Teeth with a standard deviation above this threshold will be discarded if `sub_measurements`
-        is given and is greater than 1.
+        Teeth with a standard deviation above `tooth_std_threshold * mean_std` will be discarded if 
+        `sub_measurements` is given and is greater than 1.
 
     Returns
     -------
@@ -196,8 +196,8 @@ def fit_measurement_concentration(
         Number of sub-measurements used to obtain the standard deviation of the teeth. If not
         specified, tooth filtering based on standard deviation will not be applied.
     tooth_std_threshold : float, optional
-        Teeth with a standard deviation above this threshold will be discarded if `sub_measurements`
-        is given and is greater than 1.
+        Teeth with a standard deviation above `tooth_std_threshold * mean_std` will be discarded if 
+        `sub_measurements` is given and is greater than 1.
 
     Returns
     -------
@@ -294,8 +294,8 @@ def map_measurement_concentration(meas_names: list[str], **specifications) -> "M
         Number of sub-measurements used to obtain the standard deviation of the teeth. If not
         specified, tooth filtering based on standard deviation will not be applied.
     tooth_std_threshold : float, optional
-        Teeth with a standard deviation above this threshold will be discarded if `sub_measurements`
-        is given and is greater than 1.
+        Teeth with a standard deviation above `tooth_std_threshold * mean_std` will be discarded if 
+        `sub_measurements` is given and is greater than 1.
 
     Returns
     -------

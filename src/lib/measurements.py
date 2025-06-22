@@ -251,8 +251,8 @@ class Measurement:
         Number of sub-measurements used to obtain the standard deviation of the teeth. If not
         specified, tooth filtering based on standard deviation will not be applied.
     tooth_std_threshold : float, optional
-        Teeth with a standard deviation above this threshold will be discarded if `sub_measurements`
-        is given and is greater than 1.
+        Teeth with a standard deviation above `tooth_std_threshold * mean_std` will be discarded if 
+        `sub_measurements` is given and is greater than 1.
     """
 
     time_series_properties = ["t", "sample_amplitude", "reference_amplitude"]
@@ -468,12 +468,12 @@ class Measurement:
             stacked = np.stack(sub_measurements)
             tooth_std = stacked.std(axis=0)
 
-            mask = tooth_std <= self.tooth_std_threshold
+            mask = tooth_std <= np.mean(tooth_std) * self.tooth_std_threshold
 
             if all(~mask):
                 raise ValueError(
-                    f"No teeth with standard deviation below {self.tooth_std_threshold} found. "
-                    + "Please adjust the `tooth_std_threshold` parameter."
+                    f"No teeth with standard deviation below {self.tooth_std_threshold} * mean_std "
+                    + "found. Please adjust the `tooth_std_threshold` parameter."
                 )
 
             x_nm = transmission_spectrum.x_nm[mask]

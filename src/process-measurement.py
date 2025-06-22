@@ -53,8 +53,10 @@ optical_comb_spacing = 1250e6  # Hz
 
 # Noise filtering.
 
-tooth_std_threshold = 0.4 # Teeth with a standard deviation above this threshold will be discarded.
-sub_measurements = 10 # Number of sub-measurements used to obtain the standard deviation of the teeth.
+tooth_std_threshold = 1.5  # Teeth with a standard deviation above `tooth_std_threshold * mean_std` will be discarded.
+sub_measurements = (
+    10  # Number of sub-measurements used to obtain the standard deviation of the teeth.
+)
 
 # Measurement scaling factor.
 
@@ -62,7 +64,7 @@ scaling_factor = 1.001  # Adjust the measured spectrum by this factor.
 
 # Plotting parameters.
 
-spectrum_plot_folder = 'process-measurement-output'
+spectrum_plot_folder = "process-measurement-output"
 use_latex()
 
 
@@ -99,7 +101,7 @@ simulated_spectrum = SimulatedSpectrum(
 ####################################################################################################
 
 # Get the measured transmission spectrum.
- 
+
 measurement = get_measurement(
     meas_name=measurement_name,
     center_freq=center_freq,
@@ -122,7 +124,9 @@ measured_spectrum.scale_by(scaling_factor)
 ####################################################################################################
 
 
-result = Result(measured_spectrum=measured_spectrum, simulated_spectrum=simulated_spectrum)
+result = Result(
+    measured_spectrum=measured_spectrum, simulated_spectrum=simulated_spectrum
+)
 
 result.generate_plot()
 
