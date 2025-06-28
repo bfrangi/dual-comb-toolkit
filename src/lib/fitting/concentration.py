@@ -5,7 +5,7 @@ from lib.fitting import overlap_transmission
 from lib.math import bounded
 
 if TYPE_CHECKING:
-    from typing import Optional
+    from typing import Callable, Optional
 
     from numpy import ndarray
 
@@ -13,62 +13,141 @@ if TYPE_CHECKING:
     from lib.simulations import Simulator
 
 
-def fit_interpolated_concentration(
-    meas_freq: "ndarray",
-    meas_amp: "ndarray",
+def assemble_normal_fitter(
     molecule: str,
     wl_min: float,
     wl_max: float,
     conditions: dict[str, float],
     initial_guess: float = 0.001,
     **kwargs,
-) -> "tuple[float, ndarray, ndarray]":
-    condition_names = ["pressure", "temperature", "length"]
-    for name in condition_names:
-        if name not in conditions:
-            raise ValueError(f"Missing condition: {name}.")
+) -> "Callable[..., tuple[ndarray, ndarray]]":
+    """
+    Assemble a normal fitter for the concentration fitting process.
+    This function returns a callable that can be used to simulate the transmission spectrum for a
+    given concentration.
 
-    from numpy import sum
-    from scipy.optimize import minimize
+    Parameters
+    ----------
+    molecule : str
+        Molecule name for the simulation.
+    wl_min : float
+        Minimum wavelength for the simulation in nm.
+    wl_max : float
+        Maximum wavelength for the simulation in nm.
+    conditions : dict[str, float]
+        Conditions for the simulation, must include 'pressure', 'temperature', and 'length'.
+    initial_guess : float, optional
+        Initial guess for the concentration.
 
+    Other Parameters
+    ----------------
+    simulator : Optional[Simulator], optional
+        Pre-initialized simulator to use. If not provided, a new simulator will be created.
+        Defaults to None.
+    use_gpu : bool, optional
+        Whether to use the GPU for the simulation. Defaults to False. Only used if `simulator`
+        is not provided.
+
+    Returns
+    -------
+    callable[..., tuple[ndarray, ndarray]]
+        A callable that takes a concentration as input and returns the simulated transmission spectrum
+        as a tuple of frequency and amplitude arrays.
+    """
     from lib.combs import to_frequency
-    from lib.fitting import intersect_onto_common_grid
+    from lib.simulations import Simulator
+
+    simulator: "Optional[Simulator]" = kwargs.get("simulator", None)
+    use_gpu: bool = kwargs.get("use_gpu", False)
+
+    # Obtain simulator
+
+    if not isinstance(simulator, Simulator):
+        s = Simulator(
+            molecule=molecule,
+            vmr=initial_guess,
+            pressure=conditions["pressure"],
+            temperature=conditions["temperature"],
+            length=conditions["length"],
+            use_gpu=use_gpu,
+        )
+    else:
+        s = simulator
+        s.vmr = initial_guess
+        s.pressure = conditions["pressure"]
+        s.temperature = conditions["temperature"]
+        s.length = conditions["length"]
+
+    if molecule != s.molecule:
+        raise ValueError(
+            f"Simulator molecule {s.molecule} does not match the provided molecule {molecule}."
+        )
+
+    def simulate_transmission(conc: float, **kwargs) -> "tuple[ndarray, ndarray]":
+        """
+        Get the simulated transmission spectrum for a given concentration.
+        """
+        exit_gpu: bool = kwargs.get("exit_gpu", True)
+        s.vmr = conc
+        s.compute_transmission_spectrum(wl_min=wl_min, wl_max=wl_max, exit_gpu=exit_gpu)
+        wl_ref, a_ref = s.get_transmission_spectrum(wl_min, wl_max)
+        return to_frequency(wl_ref, a_ref)
+
+    return simulate_transmission
+
+
+def assemble_interpolated_fitter(
+    molecule: str,
+    wl_min: float,
+    wl_max: float,
+    conditions: dict[str, float],
+    **kwargs,
+) -> "Callable[..., tuple[ndarray, ndarray]]":
+    """
+    Assemble an interpolated fitter for the concentration fitting process.
+    This function returns a callable that can be used to simulate the transmission spectrum for a
+    given concentration using an interpolated transmission curve.
+
+    Parameters
+    ----------
+    molecule : str
+        Molecule name for the simulation.
+    wl_min : float
+        Minimum wavelength for the simulation in nm.
+    wl_max : float
+        Maximum wavelength for the simulation in nm.
+    conditions : dict[str, float]
+        Conditions for the simulation, must include 'pressure', 'temperature', and 'length'.
+
+    Other Parameters
+    ----------------
+    n_points : int, optional
+        The number of points to use for the interpolation. Default is 3.
+    points : list[float], optional
+        The points to use for the interpolation. Default is None. If specified, takes precedence
+        over `n_points`.
+
+    Returns
+    -------
+    callable[[float, ...], tuple[ndarray, ndarray]]
+        A callable that takes a concentration as input and returns the simulated transmission spectrum
+        as a tuple of frequency and amplitude arrays.
+    """
+    from lib.combs import to_frequency
     from lib.simulations import curry_interpolated_transmission_curve
 
     transmission_curve = curry_interpolated_transmission_curve(
         wl_min, wl_max, molecule, **conditions
     )
 
-    # Fit concentration
-
-    def f(conc, f_sample, a_sample):
-        # Get the simulated curve
+    def simulate_transmission(conc: float, **kwargs) -> "tuple[ndarray, ndarray]":
+        """
+        Get the simulated transmission spectrum for a given concentration.
+        """
         wl_ref, a_ref = transmission_curve(conc)
+        return to_frequency(wl_ref, a_ref)
 
-        # Transform the simulated data to frequency
-        f_ref, a_ref = to_frequency(wl_ref, a_ref)
-
-        # Shift the sample spectrum to overlap with the simulated data as much as possible
-        f_sample = overlap_transmission(f_sample, a_sample, f_ref, a_ref)
-
-        # Interpolate the sample data onto the common grid
-        f_sample_com, a_sample_com, f_ref_com, a_ref_com = intersect_onto_common_grid(
-            f_sample, a_sample, f_ref, a_ref
-        )
-        return sum((a_sample_com - a_ref_com) ** 2)
-
-    result = minimize(
-        f, initial_guess, args=(meas_freq, meas_amp), tol=1e-4, bounds=[(0, 1)]
-    )
-    concentration = result.x[0]
-
-    # Get the simulated curve
-    wl_ref, a_ref = transmission_curve(concentration)
-
-    # Transform simulation data to frequency
-    f_ref, a_ref = to_frequency(wl_ref, a_ref)
-
-    return concentration, f_ref, a_ref, meas_freq, meas_amp
+    return simulate_transmission
 
 
 def fit_concentration(
@@ -79,6 +158,7 @@ def fit_concentration(
     wl_max: float,
     conditions: dict[str, float],
     initial_guess: float = 0.001,
+    fitter: str = "normal",
     **kwargs,
 ) -> "tuple[float, ndarray, ndarray]":
     """
@@ -100,16 +180,26 @@ def fit_concentration(
         Conditions for the simulation, must include 'pressure', 'temperature', and 'length'.
     initial_guess : float, optional
         Initial guess for the concentration. Defaults to 0.001.
+    fitter : str, optional
+        Fitter to use. Defaults to 'normal'. Possible values are 'normal' and 'interp'.
 
     Other Parameters
     ----------------
     simulator : Optional[Simulator], optional
         Pre-initialized simulator to use. If not provided, a new simulator will be created.
+        Only used if `fitter` is 'normal'.
     use_gpu : bool, optional
         Whether to use the GPU for the simulation. Defaults to False. Only used if `simulator` is not provided.
+        Only used if `fitter` is 'normal'.
     exit_gpu : bool, optional
         Whether to exit the GPU after the fitting. Defaults to True. Only used if `simulator` uses the GPU or
-        if `use_gpu` is provided.
+        if `use_gpu` is provided. Only used if `fitter` is 'normal'.
+    n_points : int, optional
+        Number of points to use for the interpolation if `fitter` is 'interp'. Defaults to 3.
+        Only used if `fitter` is 'interp'.
+    points : Optional[list[float]], optional
+        Points to use for the interpolation if `fitter` is 'interp'. Defaults to None. If specified, takes precedence
+        over `n_points`. Only used if `fitter` is 'interp'.
     lower_bound : float, optional
         Lower bound for the concentration. Defaults to 0.
     upper_bound : float, optional
@@ -141,45 +231,41 @@ def fit_concentration(
     import numpy as np
     from scipy.optimize import minimize
 
-    from lib.combs import to_frequency
-    from lib.simulations import Simulator, closest_value_indices
+    from lib.simulations import closest_value_indices
 
-    simulator: "Optional[Simulator]" = kwargs.get("simulator", None)
-    use_gpu: bool = kwargs.get("use_gpu", False)
-    exit_gpu: bool = kwargs.get("exit_gpu", True)
+    # Assemble the simulator
+    fitter = kwargs.get("fitter", "normal")
+    if fitter == "interp":
+        n_points: int = kwargs.get("n_points", 3)
+        points: "Optional[list[float]]" = kwargs.get("points", None)
 
-    # Obtain simulator
-
-    if not isinstance(simulator, Simulator):
-        s = Simulator(
-            molecule=molecule,
-            vmr=initial_guess,
-            pressure=conditions["pressure"],
-            temperature=conditions["temperature"],
-            length=conditions["length"],
-            use_gpu=use_gpu,
+        simulate_transmission = assemble_interpolated_fitter(
+            molecule,
+            wl_min,
+            wl_max,
+            conditions,
+            n_points=n_points,
+            points=points,
         )
-    else:
-        s = simulator
-        s.vmr = initial_guess
-        s.pressure = conditions["pressure"]
-        s.temperature = conditions["temperature"]
-        s.length = conditions["length"]
+    elif fitter == "normal":
+        simulator: "Optional[Simulator]" = kwargs.get("simulator", None)
+        use_gpu: bool = kwargs.get("use_gpu", False)
+        exit_gpu: bool = kwargs.get("exit_gpu", True)
 
-    if molecule != s.molecule:
-        raise ValueError(
-            f"Simulator molecule {s.molecule} does not match the provided molecule {molecule}."
+        simulate_transmission = assemble_normal_fitter(
+            molecule,
+            wl_min,
+            wl_max,
+            conditions,
+            initial_guess=initial_guess,
+            simulator=simulator,
+            use_gpu=use_gpu,
         )
 
     # Objective function to minimize
     def f(conc: float, f_sample: "ndarray", a_sample: "ndarray") -> float:
         # Get the simulated curve
-        s.vmr = conc
-        s.compute_transmission_spectrum(wl_min=wl_min, wl_max=wl_max, exit_gpu=False)
-        wl_ref, a_ref = s.get_transmission_spectrum(wl_min, wl_max)
-
-        # Transform the simulated data to frequency
-        f_ref, a_ref = to_frequency(wl_ref, a_ref)
+        f_ref, a_ref = simulate_transmission(conc, exit_gpu=False)
 
         # Shift the sample spectrum to overlap with the simulated data as much as possible
         f_sample = overlap_transmission(f_sample, a_sample, f_ref, a_ref)
@@ -191,7 +277,7 @@ def fit_concentration(
             a_sample * a_ref_com.max()
         )  # To account for measurements not covering the full line width
 
-        return np.abs(a_ref_com-a_sample_com).mean()
+        return np.abs(a_ref_com - a_sample_com).mean()
 
     # Set bounds for the concentration and validate the initial guess
     upper_bound = max(min(kwargs.get("upper_bound", 1), 1), 0)
@@ -212,12 +298,7 @@ def fit_concentration(
     nr_function_evaluations = result.nfev
 
     # Get the simulated curve
-    s.vmr = concentration
-    s.compute_transmission_spectrum(wl_min=wl_min, wl_max=wl_max, exit_gpu=exit_gpu)
-    wl_ref, a_ref = s.get_transmission_spectrum(wl_min, wl_max)
-
-    # Transform simulation data to frequency
-    f_ref, a_ref = to_frequency(wl_ref, a_ref)
+    f_ref, a_ref = simulate_transmission(concentration, exit_gpu=exit_gpu)
 
     # Shift the sample spectrum to overlap with the simulated data as much as possible
     meas_freq = overlap_transmission(meas_freq, meas_amp, f_ref, a_ref)
@@ -262,6 +343,12 @@ class ConcentrationFitter:
     exit_gpu : bool, optional
         Whether to exit the GPU after the fitting. Defaults to True. Only used if `fitter` is
         'normal_gpu'.
+    n_points : int, optional
+        Number of points to use for the interpolation if `fitter` is 'interp'. Defaults to 3.
+        Only used if `fitter` is 'interp'.
+    points : Optional[list[float]], optional
+        Points to use for the interpolation if `fitter` is 'interp'. Defaults to None. If specified, takes precedence
+        over `n_points`. Only used if `fitter` is 'interp'.
     lower_bound : float, optional
         Lower bound for the concentration. Defaults to 0.
     upper_bound : float, optional
@@ -304,6 +391,10 @@ class ConcentrationFitter:
 
         self.simulator: "Optional[Simulator]" = kwargs.get("simulator", None)
         self._exit_gpu: bool = kwargs.get("exit_gpu", True)
+
+        # Interpolation parameters
+        self.n_points: int = kwargs.get("n_points", 3)
+        self.points: "Optional[list[float]]" = kwargs.get("points", None)
 
         # Conditions
 
@@ -365,19 +456,24 @@ class ConcentrationFitter:
 
         self._check_fitter()
 
-        fitter = fit_concentration
+        fit = fit_concentration
         use_gpu = False
+        fitter = "normal"
 
-        if self.fitter == "normal_gpu":
-            use_gpu = True
-        elif self.fitter == "interp":
-            fitter = fit_interpolated_concentration
+        if self.fitter == "normal":
             use_gpu = False
+            fitter = "normal"
+        elif self.fitter == "normal_gpu":
+            use_gpu = True
+            fitter = "normal"
+        elif self.fitter == "interp":
+            use_gpu = False
+            fitter = "interp"
 
         if self.verbose:
             print(f"Fitting {self._pre_meas_trasmission.meas_name} ... ", end="")
 
-        concentration, sim_freq, sim_amp, meas_freq, meas_amp = fitter(
+        concentration, sim_freq, sim_amp, meas_freq, meas_amp = fit(
             self._pre_meas_trasmission.x_hz,
             self._pre_meas_trasmission.y_hz,
             self.molecule,
@@ -385,12 +481,15 @@ class ConcentrationFitter:
             self.wl_max,
             self.conditions,
             self.initial_guess,
+            fitter=fitter,
             lower_bound=self.lower_bound,
             upper_bound=self.upper_bound,
             verbose=self.verbose,
             simulator=self.simulator,
             use_gpu=use_gpu,
             exit_gpu=self._exit_gpu,
+            n_points=self.n_points,
+            points=self.points,
         )
 
         self._sim_transmission = SimulatedSpectrum(
@@ -417,5 +516,5 @@ class ConcentrationFitter:
             laser_wavelength=self._pre_meas_trasmission.laser_wavelength,
             optical_comb_spacing=self._pre_meas_trasmission.optical_comb_spacing,
             acq_freq=self._pre_meas_trasmission.acq_freq,
-            y_sdv=self._pre_meas_trasmission.y_sdv_hz
+            y_sdv=self._pre_meas_trasmission.y_sdv_hz,
         )

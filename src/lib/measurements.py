@@ -251,7 +251,7 @@ class Measurement:
         Number of sub-measurements used to obtain the standard deviation of the teeth. If not
         specified, tooth filtering based on standard deviation will not be applied.
     tooth_std_threshold : float, optional
-        Teeth with a standard deviation above `tooth_std_threshold * mean_std` will be discarded if 
+        Teeth with a standard deviation above `tooth_std_threshold * mean_std` will be discarded if
         `sub_measurements` is given and is greater than 1.
     """
 
@@ -313,6 +313,11 @@ class Measurement:
         self.concentration: float = kwargs.get("concentration", None)
 
     @property
+    def measurement_time(self) -> float:
+        """Total time of the measurement in seconds."""
+        return (self.t[-1] - self.t[0])
+
+    @property
     def kwargs(self) -> dict:
         return {
             "center_freq": self.center_freq,
@@ -368,25 +373,30 @@ class Measurement:
             self._compute_transmission()
         return self._transmission_spectrum
 
-    def _set_metadata(self) -> None:
+    def _set_metadata(
+        self, transmission_spectrum: "Optional[MeasuredSpectrum]" = None
+    ) -> None:
         """
         Set the metadata for the transmission spectrum.
         This method is called after computing the transmission spectrum.
         """
-        self.transmission_spectrum.meas_name = self.measurement_name
-        self.transmission_spectrum.center_freq = self.center_freq
-        self.transmission_spectrum.freq_spacing = self.freq_spacing
-        self.transmission_spectrum.number_of_teeth = self.number_of_teeth
-        self.transmission_spectrum.laser_wavelength = self.laser_wavelength
-        self.transmission_spectrum.optical_comb_spacing = self.optical_comb_spacing
-        self.transmission_spectrum.acq_freq = self.acq_freq
-        self.transmission_spectrum.molecule = self.molecule
-        self.transmission_spectrum.pressure = self.pressure
-        self.transmission_spectrum.temperature = self.temperature
-        self.transmission_spectrum.length = self.length
-        self.transmission_spectrum.concentration = self.concentration
+        if transmission_spectrum is None:
+            transmission_spectrum = self.transmission_spectrum
 
-    def _compute_single_transmission(
+        transmission_spectrum.meas_name = self.measurement_name
+        transmission_spectrum.center_freq = self.center_freq
+        transmission_spectrum.freq_spacing = self.freq_spacing
+        transmission_spectrum.number_of_teeth = self.number_of_teeth
+        transmission_spectrum.laser_wavelength = self.laser_wavelength
+        transmission_spectrum.optical_comb_spacing = self.optical_comb_spacing
+        transmission_spectrum.acq_freq = self.acq_freq
+        transmission_spectrum.molecule = self.molecule
+        transmission_spectrum.pressure = self.pressure
+        transmission_spectrum.temperature = self.temperature
+        transmission_spectrum.length = self.length
+        transmission_spectrum.concentration = self.concentration
+
+    def compute_transmission(
         self, start: "Optional[float]" = None, end: "Optional[float]" = None
     ) -> "MeasuredSpectrum":
         """
@@ -418,6 +428,8 @@ class Measurement:
             normalize=self.normalize,
             **self.kwargs,
         )
+
+        self._set_metadata(transmission_spectrum)
 
         return transmission_spectrum
 
@@ -453,16 +465,14 @@ class Measurement:
         from lib.combs import normalize_transmission
         from lib.entities import MeasuredSpectrum
 
-        transmission_spectrum = self._compute_single_transmission()
+        transmission_spectrum = self.compute_transmission()
 
         if self._valid_sub_measurements():
             sub_measurements = []
             intervals = self._sub_measurement_intervals
 
             for start, end in intervals:
-                sub_measurement = self._compute_single_transmission(
-                    start=start, end=end
-                )
+                sub_measurement = self.compute_transmission(start=start, end=end)
                 sub_measurements.append(sub_measurement.y_nm)
 
             stacked = np.stack(sub_measurements)
@@ -482,7 +492,9 @@ class Measurement:
             if self.normalize:
                 x_nm, y_nm = normalize_transmission(x_nm, y_nm, replace_outliers=False)
 
-            transmission_spectrum = MeasuredSpectrum(x=x_nm, y=y_nm, xu="nm", y_sdv=tooth_std[mask])
+            transmission_spectrum = MeasuredSpectrum(
+                x=x_nm, y=y_nm, xu="nm", y_sdv=tooth_std[mask]
+            )
 
         self._transmission_spectrum = transmission_spectrum
         self._set_metadata()
@@ -509,7 +521,7 @@ class Measurement:
         if self._valid_sub_measurements():
             x = self.transmission_spectrum.x_nm
             y = self.transmission_spectrum.y_nm
-            yerr = self.transmission_spectrum.y_sdv_nm/2
+            yerr = self.transmission_spectrum.y_sdv_nm / 2
             plt.errorbar(x, y, yerr=yerr, fmt="none", capsize=3)
 
         self.transmission_spectrum.generate_plot(xu="nm")

@@ -9,8 +9,8 @@ from lib.constants import c
 from lib.conversions import delta_frequency_to_delta_wavelength
 from lib.files import (
     append_to_csv_report,
-    initialize_figures_folder,
     initialize_csv_report,
+    initialize_figures_folder,
     read_configurations,
 )
 from lib.plots import tight
@@ -24,30 +24,50 @@ from lib.shortcuts import fit_simulated_measurement_concentration
 # Molecule and database
 
 molecule = "CH4"
-database = "hitran"
+"""Molecule to simulate."""
+database = "hitran"  # HITRAN 2020 Database
+"""Database to use for the simulation. Can be 'hitran', 'hitemp', 'exomol' or 'geisa'. Some may not
+be available for all molecules."""
 
 # Physical conditions
 
 vmr = 0.01  # volume mixing ratio
+"""Volume mixing ratio of the molecule in the gas mixture."""
 pressure = 101325  # Pa
+"""Pressure of the gas mixture."""
 temperature = 298  # K
+"""Temperature of the gas mixture."""
 length = 0.07  # m
+"""Path length of the gas mixture."""
 laser_wavelength = 3427.41  # nm
+"""Wavelength of the laser used to probe the gas mixture."""
 
 # Simulation range
 
 wl_min = 3427.0  # nm
+"""Minimum wavelength of the simulation range."""
 wl_max = 3427.9  # nm
+"""Maximum wavelength of the simulation range."""
 min_comb_span = 0.15  # nm
+"""Minimum comb span to consider a configuration valid. If the comb span is smaller than this value,
+it will be skipped."""
 
 # Noise and error parameters
 
 noise_distribution = "bessel"
+"""Distribution of the noise to simulate. Can be 'bessel' or 'uniform'."""
 transmission_std = 0.014  # unitless
+"""Standard deviation of the transmission spectrum for a given number of teeth (max transmission 
+is 1). Used to calculate the standard deviation of the noise added to the transmission spectrum."""
 nr_teeth_for_transmission_std = 30  # teeth
+"""Used to scale the `transmission_std` value for different numbers of teeth."""
 transmission_std_threshold = 0.05  # unitless
+"""Threshold for the standard deviation of the transmission spectrum. If the standard deviation is
+greater than this value, the tooth will be discarded from the fitting process."""
 spectrum_shift_range = (-0.02, 0.02)  # nm
+"""Range of the wavelength shift to apply to the final transmission spectrum."""
 scaling_range = (0.2, 1.5)  # unitless
+"""Range of the scaling factor to apply to the final transmission spectrum."""
 modulation_intensities = {
     5: 0.93,
     6: 1.81,
@@ -76,32 +96,47 @@ modulation_intensities = {
     29: 12.69,
     30: 13.7,
 }
+"""Modulation intensity used to compute the bessel noise distribution for the different numbers
+of teeth."""
 
 # Plots
 
 generate_plots = True
-use_latex = True
+"""If True, plots of the simulated and fitted spectra will be generated."""
+use_latex = False
+"""If True, LaTeX will be used for plotting. Requires LaTeX to be installed on the system."""
 
 # Reports
 
 detailed_report = False
-"""If True, a detailed report of each simulation will be generated in CSV files."""
+"""If True, a detailed report containing the fitted concentrations of each configuration will be 
+generated in CSV files."""
 
 ####################################################################################################
 #  Fitting parameters                                                                              #
 ####################################################################################################
 
 normalize = True
+"""If True, the measured transmission spectrum will be normalized to the maximum value before fitting."""
 initial_guess = 0.001
-fitter = "normal_gpu"
+"""Initial guess for the concentration to fit in VMR (volume mixing ratio)."""
+lower_bound = 0.0  # VMR
+"""Lower bound for the concentration to fit in VMR (volume mixing ratio)."""
+upper_bound = 0.15  # VMR
+"""Upper bound for the concentration to fit in VMR (volume mixing ratio)."""
+fitter = "interp"
+"""Fitter to use for the fitting process. Can be 'normal', 'normal_gpu' or 'interp'."""
 
 ####################################################################################################
 #  Simulation cases                                                                                #
 ####################################################################################################
 
 nr_simulations_per_config = 100
+"""Number of simulations to perform for each configuration of number of teeth and comb spacing."""
 comb_spacings = [(i + 1) * 100e6 for i in range(30)] * 26  # Hz
+"""Comb spacings to simulate."""
 numbers_of_teeth = [i for i in range(5, 31) for _ in range(30)]  # teeth
+"""Number of teeth to simulate."""
 
 ####################################################################################################
 #  Command line arguments                                                                          #

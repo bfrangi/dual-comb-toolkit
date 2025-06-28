@@ -14,7 +14,8 @@ cd dual-comb-processing
 2. Install `virtualenv` and create a virtual environment:
 
 ```bash
-sudo apt install python3-venv
+sudo apt-get update
+sudo apt-get install python3-venv
 python3 -m venv .venv
 source .venv/bin/activate
 ```
@@ -23,4 +24,11 @@ source .venv/bin/activate
 
 ```bash
 pip install -r requirements.txt
+```
+
+4. [Optional] If you want to use LaTeX for plotting, install the `texlive` package:
+
+```bash
+sudo apt-get update
+sudo apt-get install texlive-latex-extra texlive-fonts-extra
 ```
