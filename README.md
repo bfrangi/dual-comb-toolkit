@@ -24,8 +24,7 @@ source .venv/bin/activate
 
 ```bash
 pip install -r requirements.txt
-chmod +x ./radis-patch/patch.sh
-./radis-patch/patch.sh # Optional, to suppress vaex output
+python radis-patch/apply.py # Optional, to suppress vaex output
 ```
 
 4. [Optional] If you want to use LaTeX for plotting, install the `texlive` package:
