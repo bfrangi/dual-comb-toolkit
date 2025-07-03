@@ -37,8 +37,8 @@ def launch_command_windows(base_name: str, n: int) -> None:
     for i in range(n):
         cmd = command(base_name, i + 1)
         full_cmd = f'start "Config Pack {i + 1}" {cmd}'
-        subprocess.Popen(cmd, shell=True)
-        print(f"Launched terminal {i + 1} with command: {full_cmd}")
+        subprocess.Popen(full_cmd, shell=True)
+        print(f"Launched terminal {i + 1} with command: {cmd}")
 
 
 def launch_command_linux(base_name: str, n: int) -> None:
@@ -51,8 +51,8 @@ def launch_command_linux(base_name: str, n: int) -> None:
         cmd = command(base_name, i + 1)
         full_cmd = f"{cmd}; exec bash"
         if terminal == "gnome-terminal":
-            subprocess.Popen([terminal, "--", "bash", "-c", cmd])
-        print(f"Launched terminal {i + 1} with command: {full_cmd}")
+            subprocess.Popen([terminal, "--", "bash", "-c", full_cmd])
+        print(f"Launched terminal {i + 1} with command: {cmd}")
 
 
 DEFAULT_BASE_NAME = "config_pack"
