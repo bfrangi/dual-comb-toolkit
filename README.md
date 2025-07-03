@@ -41,3 +41,12 @@ Check out the `DEVICE_ID` setting in `src/lib/gpu.py`. By default, it is set to 
 use the NVIDIA GPU if available. If you want to use a different GPU, run the `identify-gpu.py` script to
 list available GPUs and set the `DEVICE_ID` accordingly (it can be the number of the GPU in the 
 output list or a string contained in the name of the device).
+
+## Issues with plots
+
+If you encounter `UserWarning: FigureCanvasAgg is non-interactive, and thus cannot be shown plt.show()`,
+just install `PyQt6`:
+
+```bash
+pip install PyQt6
+```
