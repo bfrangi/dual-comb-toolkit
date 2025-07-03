@@ -4,6 +4,8 @@ Useful scripts for processing dual comb data.
 
 ## Setup
 
+### Linux
+
 1. Clone the repository:
 
 ```bash
@@ -33,6 +35,36 @@ python radis-patch/apply.py # Optional, to suppress vaex output
 sudo apt-get update
 sudo apt-get install texlive-latex-extra texlive-fonts-extra dvipng
 ```
+
+### Windows
+
+1. Clone the repository:
+
+```bash
+git clone https://github.com/bfrangi/dual-comb-processing.git
+cd dual-comb-processing
+```
+
+2. Install `Python3.10` from the Microsoft Store.
+
+3. Create a virtual environment:
+
+```bash
+python3.10 -m venv .venv
+.\.venv\Scripts\activate
+```
+
+4. Install dependencies and apply the radis patch (this second part is optional):
+
+```bash
+pip install -r requirements-win.txt
+python radis-patch/apply.py # Optional, to suppress vaex output
+```
+
+5. [Optional] If you want to use LaTeX for plotting, install the `texlive` package by downloading
+   the installer from [here](https://www.tug.org/texlive/windows.html) or the ISO from 
+   [here](https://www.tug.org/texlive/acquire-iso.html) and following the installation
+   instructions.
 
 ## Using GPU Acceleration
 

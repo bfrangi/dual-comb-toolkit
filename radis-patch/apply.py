@@ -1,13 +1,29 @@
 # Radis patch script
 # Radis version: 0.16.2
+import os
 import shutil
 import sys
 from pathlib import Path
 
+# Check if running on Windows or Linux/MacOS
+WINDOWS = "nt" # Windows
+POSIX = "posix" # Linux/MacOS
+OS = os.name
+
+# Get python packages path depending on OS
+path = ""
+if OS == WINDOWS:
+    path = "..\.venv\Lib\site-packages\\radis\\"
+elif OS == POSIX:
+    path = "../.venv/lib/python3.10/site-packages/radis/"
+else:
+    print(f"Unknown OS: {OS}.")
+    sys.exit(1)
+
 # The source directory is the directory containing this script
 SOURCE_DIR = Path(__file__).resolve().parent
-DEST_DIR_LBL = SOURCE_DIR / "../.venv/lib/python3.10/site-packages/radis/lbl"
-DEST_DIR_API = SOURCE_DIR / "../.venv/lib/python3.10/site-packages/radis/api"
+DEST_DIR_LBL = SOURCE_DIR / f"{path}lbl"
+DEST_DIR_API = SOURCE_DIR / f"{path}api"
 
 LBL_FILES = ["base.py", "broadening.py", "loader.py"]
 
