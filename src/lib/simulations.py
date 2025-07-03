@@ -10,6 +10,8 @@ if TYPE_CHECKING:
 import matplotlib.pyplot as plt
 import numpy as np
 
+from lib.gpu import DEVICE_ID
+
 # Spectrum simulation ##############################################################################
 
 
@@ -167,7 +169,7 @@ def transmission_spectrum(
     wavelength_step: float = 0.001,
     database: str = "hitran",
     return_spectrum: bool = False,
-    **kwargs 
+    **kwargs,
 ) -> tuple[np.ndarray, np.ndarray] | tuple[np.ndarray, np.ndarray, "Spectrum"]:
     """
     Calculate the transmission spectrum of a molecule in air.
@@ -257,7 +259,7 @@ def transmission_spectrum_gpu(
     database: str = "hitran",
     spectrum: "Optional[Spectrum]" = None,
     exit_gpu: bool = True,
-    **kwargs
+    **kwargs,
 ) -> tuple[np.ndarray, np.ndarray, "Optional[Spectrum]"]:
     """
     Calculate the transmission spectrum of a molecule in air using GPU.
@@ -326,10 +328,10 @@ def transmission_spectrum_gpu(
             wstep=wavenumber_step,
         )
 
-        with contextlib.redirect_stdout(None): # Remove to see what GPU is being used
+        with contextlib.redirect_stdout(None):  # Remove to see what GPU is being used
             sf.fetch_databank(
-                database, 
-                memory_mapping_engine='pytables' # TODO: remove when vaex supports numpy 2
+                database,
+                memory_mapping_engine="pytables",  # TODO: remove when vaex supports numpy 2
             )
 
             spectrum = sf.eq_spectrum_gpu(
@@ -338,7 +340,7 @@ def transmission_spectrum_gpu(
                 mole_fraction=vmr,
                 path_length=length,
                 exit_gpu=False,
-                device_id = 1 # TODO: choose device_id based on available GPUs
+                device_id=DEVICE_ID,
             )
     else:
         spectrum.recalc_gpu(
@@ -757,7 +759,7 @@ class Simulator:
     def transmission(self) -> "Optional[list]":
         """The transmission spectrum."""
         return self._transmission
-    
+
     @property
     def use_gpu(self) -> bool:
         """Whether to use GPU for the calculation."""
@@ -832,7 +834,7 @@ class Simulator:
             tr_spectrum = transmission_spectrum_gpu
         else:
             tr_spectrum = transmission_spectrum
-        
+
         self._wavelength, self._transmission, self._spectrum = tr_spectrum(**kwargs)
 
         self._wl_min = wl_min
@@ -937,8 +939,8 @@ def closest_value_indices(array: "ndarray", values: "ndarray") -> "ndarray":
 
 
 def bessel_sideband_amplitudes(
-        nr_teeth: int,
-        Ω: float,
+    nr_teeth: int,
+    Ω: float,
 ) -> np.ndarray:
     """
     Calculate the Bessel sideband amplitudes for a dual comb spectrum.
@@ -963,7 +965,7 @@ def bessel_sideband_amplitudes(
         nr_teeth += 1
     amps = []
 
-    for k in range(0, nr_teeth//2 + 1):
+    for k in range(0, nr_teeth // 2 + 1):
         amps.append(jv(k, Ω))
 
     amps = amps[::-1] + amps[1:]
@@ -1010,7 +1012,7 @@ def simulate_measurement(
     database : str, optional
         The database to use. Either 'hitran' or 'hitemp'.
     wavelength_step : float, optional
-        The wavelength step in nm used for the simulation. This limits the resolution of the 
+        The wavelength step in nm used for the simulation. This limits the resolution of the
         simulation.
     transmission_std : float, optional
         The standard deviation of the noise added to the simulated spectrum.
@@ -1030,11 +1032,11 @@ def simulate_measurement(
         Range of the laser wavelength's random variation. Defaults to (-0.05, 0.05).
     noise_distribution : str, optional
         The way that noise is distributed among the teeth in the comb.
-        Options are 'uniform' (all teeth have the same amount of noise) or 'bessel', which 
+        Options are 'uniform' (all teeth have the same amount of noise) or 'bessel', which
         simulates the real distribution of noise in a dual comb.
     modulation_intensity: float, optional
         The intensity of the modulation applied to the comb. This is used to simulate the
-        Bessel sidebands in the dual comb spectrum and it is required if 
+        Bessel sidebands in the dual comb spectrum and it is required if
         `noise_distribution` is set to 'bessel'.
     simulator : Simulator, optional
         A pre-initialized simulator object to use for the simulation. If not provided,
@@ -1090,11 +1092,11 @@ def simulate_measurement(
 
     # Simulator object
 
-    if 'simulator' in kwargs and isinstance(kwargs['simulator'], Simulator):
+    if "simulator" in kwargs and isinstance(kwargs["simulator"], Simulator):
         s: Simulator = kwargs.get("simulator")
     else:
         s = Simulator(**dict(**kwargs, molecule=molecule))
-    
+
     s.vmr = vmr
     s.pressure = pressure
     s.temperature = temperature
@@ -1138,7 +1140,7 @@ def simulate_measurement(
 
     fr_sam = fr_sam + left_overflow - right_overflow
 
-    # Simulate the transmission spectrum of the molecule  
+    # Simulate the transmission spectrum of the molecule
 
     exit_gpu: bool = kwargs.get("exit_gpu", True)
 
@@ -1153,7 +1155,9 @@ def simulate_measurement(
 
     # Add noise to the sampled spectrum.
 
-    nr_teeth_for_transmission_std: int = kwargs.get("nr_teeth_for_transmission_std", None)
+    nr_teeth_for_transmission_std: int = kwargs.get(
+        "nr_teeth_for_transmission_std", None
+    )
     if nr_teeth_for_transmission_std is not None:
         transmission_std = (
             kwargs.get("transmission_std", 0.01)
@@ -1162,29 +1166,32 @@ def simulate_measurement(
         )
     else:
         transmission_std = kwargs.get("transmission_std", 0.01)
-    
+
     noise_distribution = kwargs.get("noise_distribution", "uniform")
 
-    if noise_distribution not in ['bessel', 'uniform']:
+    if noise_distribution not in ["bessel", "uniform"]:
         raise ValueError(
-            "Invalid `noise_distribution` specified. "
-            "Options are 'uniform' or 'bessel'."
+            "Invalid `noise_distribution` specified. Options are 'uniform' or 'bessel'."
         )
-    
-    if noise_distribution == 'bessel':
-        if 'modulation_intensity' not in kwargs:
+
+    if noise_distribution == "bessel":
+        if "modulation_intensity" not in kwargs:
             raise ValueError(
                 "If `noise_distribution` is set to 'bessel', "
                 "`modulation_intensity` must be specified."
             )
         modulation_intensity: float = kwargs.get("modulation_intensity")
 
-        J2_inv = 1 / bessel_sideband_amplitudes(number_of_teeth, modulation_intensity)**2
+        J2_inv = (
+            1 / bessel_sideband_amplitudes(number_of_teeth, modulation_intensity) ** 2
+        )
         J2_inv_avg = np.mean(J2_inv)
 
         transmission_std_k = transmission_std * J2_inv / J2_inv_avg
 
-        noise_threshold_mask = transmission_std_k > kwargs.get("transmission_std_threshold", np.inf)
+        noise_threshold_mask = transmission_std_k > kwargs.get(
+            "transmission_std_threshold", np.inf
+        )
 
         if all(noise_threshold_mask):
             raise ValueError(
@@ -1196,10 +1203,15 @@ def simulate_measurement(
         fr_sam = fr_sam[~noise_threshold_mask]
         transmission_std_k = transmission_std_k[~noise_threshold_mask]
 
-        noise = np.array([np.random.normal(0, transmission_std_k[k], 1)[0] for k in range(len(tr_sam))])
+        noise = np.array(
+            [
+                np.random.normal(0, transmission_std_k[k], 1)[0]
+                for k in range(len(tr_sam))
+            ]
+        )
     else:
         noise = np.random.normal(0, transmission_std, len(tr_sam))
-    
+
     tr_sam += noise
 
     # Apply random scaling
@@ -1217,8 +1229,14 @@ def simulate_measurement(
     right_slack = wl_sim[-1] - wl_sam[-1]
 
     spectrum_shift_range = kwargs.get("spectrum_shift_range", (0, 0))
-    spectrum_shift = min(max(np.random.uniform(spectrum_shift_range[0], spectrum_shift_range[1]), -left_slack), right_slack)
-    
+    spectrum_shift = min(
+        max(
+            np.random.uniform(spectrum_shift_range[0], spectrum_shift_range[1]),
+            -left_slack,
+        ),
+        right_slack,
+    )
+
     wl_sam += spectrum_shift
 
     if kwargs.get("return_simulator", False):
