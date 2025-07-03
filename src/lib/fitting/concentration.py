@@ -456,7 +456,6 @@ class ConcentrationFitter:
 
         self._check_fitter()
 
-        fit = fit_concentration
         use_gpu = False
         fitter = "normal"
 
@@ -473,7 +472,7 @@ class ConcentrationFitter:
         if self.verbose:
             print(f"Fitting {self._pre_meas_trasmission.meas_name} ... ", end="")
 
-        concentration, sim_freq, sim_amp, meas_freq, meas_amp = fit(
+        concentration, sim_freq, sim_amp, meas_freq, meas_amp = fit_concentration(
             self._pre_meas_trasmission.x_hz,
             self._pre_meas_trasmission.y_hz,
             self.molecule,
