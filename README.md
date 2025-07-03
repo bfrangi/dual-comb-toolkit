@@ -58,7 +58,7 @@ python3.10 -m venv .venv
 
 ```bash
 pip install -r requirements-win.txt
-python radis-patch/apply.py # Optional, to suppress vaex output
+python radis-patch\apply.py # Optional, to suppress vaex output
 ```
 
 5. [Optional] If you want to use LaTeX for plotting, install the `texlive` package by downloading
