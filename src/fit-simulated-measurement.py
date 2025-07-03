@@ -155,10 +155,21 @@ parser.add_argument(
     default="",
     help="Path to the file with configurations to simulate.",
 )
+parser.add_argument(
+    "-r",
+    "--report",
+    type=str,
+    default="",
+    help="Name of the output report."
+)
 args = parser.parse_args()
 
 if getattr(args, "config"):
     comb_spacings, numbers_of_teeth = read_configurations(args.config)
+
+report_name = None
+if getattr(args, "report"):
+    report_name = args.report
 
 
 ####################################################################################################
@@ -226,7 +237,7 @@ def print_progress(
 ####################################################################################################
 
 timestr = strftime("%Y%m%d-%H%M%S")
-csv_filename = f"report-{timestr}"
+csv_filename = report_name or f"report-{timestr}"
 initialize_csv_report(
     csv_filename,
     (
