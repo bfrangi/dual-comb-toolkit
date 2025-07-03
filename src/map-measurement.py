@@ -60,7 +60,7 @@ sub_measurements = (
 # Output and plotting parameters.
 
 verbose = True
-spectrum_plot_folder = mapping_name + " (filtered)"
+spectrum_plot_folder = mapping_name
 
 # Use LaTeX for plotting.
 
@@ -126,7 +126,7 @@ else:
 # Mapping report                                                                                   #
 ####################################################################################################
 
-report_filename = f"{mapping_name} @ {datetime.now().strftime('%Y-%m-%d %H-%M-%S')}"
+report_filename = f"{mapping_name.split('/')[-1]} @ {datetime.now().strftime('%Y-%m-%d %H-%M-%S')}"
 
 save_mapping_report(
     filename=report_filename,

@@ -4,15 +4,15 @@ from lib.simulations import Simulator
 
 molecule = "CH4"
 vmr = 0.01  # volume mixing ratio
-pressure = 53328.94736842  # Pa
+pressure = 101325  # Pa
 temperature = 298  # K
-length = 0.055  # m
+length = 0.07  # m
 
 # Simulation configuration.
 
 wl_min = 3427.1  # nm
 wl_max = 3427.8  # nm
-use_gpu = False
+use_gpu = True
 
 # Simulate the transmission spectrum.
 

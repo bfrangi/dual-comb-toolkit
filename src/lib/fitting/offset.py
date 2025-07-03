@@ -35,30 +35,35 @@ def overlap_transmission(
     ndarray
         The x-values of the shifted data.
     """
-    y_to_fit_mod: "ndarray" = y_to_fit - y_to_fit.min()
-    if y_to_fit_mod.max() == 0:
+    if len(x_to_fit) < 2:
         return x_to_fit
-    if y_to_fit_mod.max() != 0:
-        y_to_fit_mod /= y_to_fit_mod.max()
+
+    y_to_fit_mod: "ndarray" = y_to_fit - y_to_fit.min()
+    y_to_fit_mod_max = y_to_fit_mod.max()
+    if y_to_fit_mod_max == 0:
+        return x_to_fit
+    y_to_fit_mod /= y_to_fit_mod_max
 
     y_reference_mod: "ndarray" = y_reference - y_reference.min()
-    if y_reference_mod.max() == 0:
+    y_reference_mod_max = y_reference_mod.max()
+    if y_reference_mod_max == 0:
         return x_to_fit
-    if y_reference_mod.max() != 0:
-        y_reference_mod /= y_reference_mod.max()
+    y_reference_mod /= y_reference_mod_max
 
     if len(x_to_fit) >= len(x_reference):
         raise ValueError("`x_to_fit` must not be longer than `x_reference`.")
 
-    offset_x_to_fit = np.tile(x_to_fit - x_to_fit[0], (len(x_reference), 1)) + np.tile(
-        x_reference[:, np.newaxis], (1, len(x_to_fit))
+    ref_len = len(x_reference)
+    ref_step = x_reference[1] - x_reference[0]
+    to_fit_len = len(x_to_fit)
+    to_fit_step = x_to_fit[1] - x_to_fit[0]
+    max_nr_shifts = int(
+        (ref_step * (ref_len - 1) - to_fit_step * (to_fit_len - 1)) // ref_step + 1
     )
 
-    ref_step = x_reference[1] - x_reference[0]
-    to_fit_step = x_to_fit[1] - x_to_fit[0]
-    limit = len(x_reference) - int(len(x_to_fit) * to_fit_step / ref_step + 0.5)
-
-    offset_x_to_fit = offset_x_to_fit[:limit, :]
+    offset_x_to_fit = np.tile(x_to_fit - x_to_fit[0], (max_nr_shifts, 1)) + np.tile(
+        x_reference[:max_nr_shifts, np.newaxis], (1, to_fit_len)
+    )
 
     min_difference = np.inf
     index = None

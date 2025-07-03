@@ -124,7 +124,7 @@ lower_bound = 0.0  # VMR
 """Lower bound for the concentration to fit in VMR (volume mixing ratio)."""
 upper_bound = 0.15  # VMR
 """Upper bound for the concentration to fit in VMR (volume mixing ratio)."""
-fitter = "interp"
+fitter = "normal_gpu"
 """Fitter to use for the fitting process. Can be 'normal', 'normal_gpu' or 'interp'."""
 
 ####################################################################################################

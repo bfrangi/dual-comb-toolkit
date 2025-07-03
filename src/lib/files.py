@@ -264,7 +264,10 @@ def save_configurations(
     numbers_of_teeth : list[int]
         List of numbers of teeth.
     """
-    with open(f"{get_configurations_path()}{filename}", "w") as file:
+    config_folder = get_configurations_path()
+    if not os.path.exists(config_folder):
+        os.makedirs(config_folder)
+    with open(f"{config_folder}{filename}", "w") as file:
         for freq, teeth in zip(comb_spacings, numbers_of_teeth):
             file.write(f"{freq} {teeth}\n")
 
