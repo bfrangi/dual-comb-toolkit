@@ -441,6 +441,9 @@ def fit_simulated_measurement_concentration(
     exit_gpu = kwargs.get("exit_gpu", True)
     kwargs["exit_gpu"] = False
 
+    if kwargs.get("fitter", "normal") == "normal_gpu":
+        kwargs["use_gpu"] = True
+
     x_meas, y_meas, simulator = simulate_measurement(
         molecule=molecule, wl_min=wl_min, wl_max=wl_max, **kwargs
     )
