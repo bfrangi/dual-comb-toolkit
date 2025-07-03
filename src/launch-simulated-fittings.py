@@ -3,17 +3,20 @@ import shutil
 import subprocess
 import sys
 from pathlib import Path
+from time import strftime
 
 this_script_dir = Path(__file__).resolve().parent
 script = str(this_script_dir / "fit-simulated-measurement.py")
 python = sys.executable
+
+timestr = strftime("%Y%m%d-%H%M%S")
 
 
 def command(base_name: str, n: int) -> str:
     """
     Generate the command to launch the fitting script with the n-th configuration pack.
     """
-    return f'"{python}" "{script}" --config {base_name}_{n}.txt'
+    return f'"{python}" "{script}" --config {base_name}_{n}.txt --report "report-{timestr}-{base_name}-{n}"'
 
 
 def select_linux_terminal() -> str:
