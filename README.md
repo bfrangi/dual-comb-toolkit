@@ -16,14 +16,16 @@ cd dual-comb-processing
 ```bash
 sudo apt-get update
 sudo apt-get install python3-venv
-python3 -m venv .venv
+python3.10 -m venv .venv
 source .venv/bin/activate
 ```
 
-3. Install dependencies:
+3. Install dependencies and apply the radis patch (this second part is optional):
 
 ```bash
 pip install -r requirements.txt
+chmod +x ./radis-patch/patch.sh
+./radis-patch/patch.sh # Optional, to suppress vaex output
 ```
 
 4. [Optional] If you want to use LaTeX for plotting, install the `texlive` package:
