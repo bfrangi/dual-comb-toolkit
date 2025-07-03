@@ -16,7 +16,8 @@ def command(base_name: str, n: int) -> str:
     """
     Generate the command to launch the fitting script with the n-th configuration pack.
     """
-    return f'"{python}" "{script}" --config {base_name}_{n}.txt --report "report-{timestr}-{base_name}-{n}"'
+    config_name = f"{base_name}_{n}"
+    return f'"{python}" "{script}" --config {config_name}.txt --report "report-{timestr}-{config_name}"'
 
 
 def select_linux_terminal() -> str:
