@@ -1,67 +1,102 @@
-#!/usr/bin/env python3
-
 import platform
 import shutil
 import subprocess
 import sys
+from pathlib import Path
 
-this_file_dir = (
-    __file__.rsplit("/", 1)[0] if "/" in __file__ else __file__.rsplit("\\", 1)[0]
-)
+this_script_dir = Path(__file__).resolve().parent
+script = str(this_script_dir / "fit-simulated-measurement.py")
 python = sys.executable
-script = f"{this_file_dir}/fit-simulated-measurement.py"
 
 
-def launch_command_windows(base_config, n):
-    for i in range(n):
-        cmd = f'"{python}" "{script}" --config {base_config}_{i}.txt'
-        subprocess.Popen(["start", "cmd", "/k", cmd], shell=True)
-        print(f"Launched terminal {i} with command: {cmd}")
+def command(base_name: str, n: int) -> str:
+    """
+    Generate the command to launch the fitting script with the n-th configuration pack.
+    """
+    return f'"{python}" "{script}" --config {base_name}_{n}.txt'
 
 
-def launch_command_linux(base_config, n):
-    terminal = None
-    terminals = ["gnome-terminal", "xterm", "konsole", "xfce4-terminal", "lxterminal"]
-    for t in terminals:
-        if shutil.which(t):
-            terminal = t
-            break
+def select_linux_terminal() -> str:
+    """
+    Select a terminal emulator available on the Linux system.
+    """
+    terminals = ["gnome-terminal"]
+
+    for terminal in terminals:
+        if shutil.which(terminal):
+            return terminal
 
     print(f"No supported terminal found. Install one of: {', '.join(terminals)}.")
-    if not terminal:
-        print(f"No supported terminal found. Install one of: {', '.join(terminals)}.")
-        sys.exit(1)
+    sys.exit(1)
+
+
+def launch_command_windows(base_name: str, n: int) -> None:
+    """
+    Launch the fitting script in separate terminals on Windows.
+    """
+    for i in range(n):
+        cmd = command(base_name, i + 1)
+        full_cmd = f'start "Config Pack {i + 1}" {cmd}'
+        subprocess.Popen(cmd, shell=True)
+        print(f"Launched terminal {i + 1} with command: {full_cmd}")
+
+
+def launch_command_linux(base_name: str, n: int) -> None:
+    """
+    Launch the fitting script in separate terminals on Linux.
+    """
+    terminal = select_linux_terminal()
 
     for i in range(n):
-        cmd = f'"{python}" "{script}" --config {base_config}_{i}.txt'
+        cmd = command(base_name, i + 1)
+        full_cmd = f"{cmd}; exec bash"
         if terminal == "gnome-terminal":
-            subprocess.Popen([terminal, "--", "bash", "-c", f"{cmd}; exec bash"])
-        elif terminal == "xterm":
-            subprocess.Popen([terminal, "-e", f"{cmd}; bash"])
-        elif terminal == "konsole":
-            subprocess.Popen([terminal, "-e", cmd])
-        elif terminal == "xfce4-terminal":
-            subprocess.Popen([terminal, "-e", f"bash -c '{cmd}; exec bash'"])
-        elif terminal == "lxterminal":
-            subprocess.Popen([terminal, "-e", cmd])
-        print(f"Launched terminal {i} with command: {cmd}")
+            subprocess.Popen([terminal, "--", "bash", "-c", cmd])
+        print(f"Launched terminal {i + 1} with command: {full_cmd}")
+
+
+DEFAULT_BASE_NAME = "config_pack"
+DEFAULT_N = 1
+
+
+def parse_args():
+    """
+    Parse command line arguments.
+    """
+    import argparse
+
+    parser = argparse.ArgumentParser(
+        description="Launch fitting of simulated measurements in separate terminals."
+    )
+    parser.add_argument(
+        "-b",
+        "--base-name",
+        type=str,
+        default=DEFAULT_BASE_NAME,
+        help="Base name for the configuration packs to simulate and fit. "
+        "The n-th configuration pack is constructed as `<base_name>_<n>.txt`.",
+    )
+    parser.add_argument(
+        "-n",
+        "--number-configs",
+        type=int,
+        default=DEFAULT_N,
+        help="Number of configuration packs to simulate and fit.",
+    )
+    return parser.parse_args()
 
 
 def main():
-    if len(sys.argv) != 3:
-        print(
-            "Usage: python launch_simulated_fittings.py base_configurations_name number_of_configurations"
-        )
-        sys.exit(1)
+    args = parse_args()
+    base_name = getattr(args, "base_name", DEFAULT_BASE_NAME)
+    n = getattr(args, "number_configs", DEFAULT_N)
 
-    base_config = sys.argv[1]
-    n = int(sys.argv[2])
     system = platform.system()
 
     if system == "Windows":
-        launch_command_windows(base_config, n)
+        launch_command_windows(base_name, n)
     elif system == "Linux":
-        launch_command_linux(base_config, n)
+        launch_command_linux(base_name, n)
     else:
         print(f"Unsupported OS: {system}")
         sys.exit(1)
