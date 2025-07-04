@@ -51,7 +51,7 @@ cd dual-comb-processing
 
 ```bash
 python3.10 -m venv .venv
-.\.venv\Scripts\activate
+.\.venv\Scripts\activate.bat
 ```
 
 4. Install dependencies and apply the radis patch (this second part is optional):
