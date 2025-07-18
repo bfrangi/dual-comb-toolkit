@@ -397,6 +397,7 @@ def get_mac_interpolation_points(
     length: float,
     n_points: int,
     points: "Optional[list[float]]" = None,
+    database: str = "hitran",
     **conditions,
 ) -> "list[tuple[ndarray, ndarray]]":
     """
@@ -421,6 +422,8 @@ def get_mac_interpolation_points(
     points : list[float], optional
         The points to use for the interpolation. Default is None. If specified, takes precedence
         over `n_points`.
+    database : str, optional
+        The database to use. Either 'hitran' or 'hitemp'. Defaults to 'hitran'.
     conditions : dict
         The conditions for the simulation. Must include 'length', 'pressure', and
         'temperature'.
@@ -465,6 +468,7 @@ def get_mac_interpolation_points(
                 pressure,
                 temperature,
                 length,
+                database=database,
                 **conditions,
             )
             mac = -np.log10(tr) / (length * placeholder_vmr)
@@ -477,6 +481,7 @@ def get_mac_interpolation_points(
                 pressure,
                 temperature,
                 length,
+                database=database,
                 **conditions,
             )
             mac = -np.log10(tr) / (length * vmr)
@@ -489,6 +494,7 @@ def curry_interpolated_molar_attenuation_coefficient(
     wl_min: float,
     wl_max: float,
     molecule: str,
+    database: str = "hitran",
     n_points: int = 3,
     points: "Optional[list[float]]" = None,
     **conditions,
@@ -505,6 +511,8 @@ def curry_interpolated_molar_attenuation_coefficient(
         The maximum wavelength in nm.
     molecule : str
         The name of the molecule.
+    database : str, optional
+        The database to use. Either 'hitran' or 'hitemp'. Defaults to 'hitran'.
     n_points : int, optional
         The number of points to use for the interpolation. Default is 3.
     points : list[float], optional
@@ -556,6 +564,7 @@ def curry_interpolated_molar_attenuation_coefficient(
         length,
         n_points,
         points,
+        database=database,
         **conditions,
     )
 
@@ -612,6 +621,7 @@ def curry_interpolated_transmission_curve(
     wl_min: float,
     wl_max: float,
     molecule: str,
+    database: str = "hitran",
     n_points: int = 5,
     points: "Optional[list[float]]" = None,
     **conditions,
@@ -628,6 +638,8 @@ def curry_interpolated_transmission_curve(
         The maximum wavelength in nm.
     molecule : str
         The name of the molecule.
+    database : str, optional
+        The database to use. Either 'hitran' or 'hitemp'. Defaults to 'hitran'.
     n_points : int, optional
         The number of points to use for the interpolation. Default is 3.
     points : list[float], optional
@@ -657,7 +669,13 @@ def curry_interpolated_transmission_curve(
     length = conditions.get("length")
 
     interp_mac = curry_interpolated_molar_attenuation_coefficient(
-        wl_min, wl_max, molecule, n_points, points, **conditions
+        wl_min,
+        wl_max,
+        molecule,
+        database=database,
+        n_points=n_points,
+        points=points,
+        **conditions,
     )
 
     def interpolated_transmission_curve(vmr: float) -> "tuple[np.ndarray, np.ndarray]":

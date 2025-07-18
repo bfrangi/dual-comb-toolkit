@@ -253,6 +253,8 @@ class Measurement:
     tooth_std_threshold : float, optional
         Teeth with a standard deviation above `tooth_std_threshold * mean_std` will be discarded if
         `sub_measurements` is given and is greater than 1.
+    flip : bool, optional
+        Whether to flip the measured transmission spectrum or not. Default is False.
     """
 
     time_series_properties = ["t", "sample_amplitude", "reference_amplitude"]
@@ -298,6 +300,7 @@ class Measurement:
         )
         self.normalize: bool = kwargs.get("normalize", True)
         self.baseline: "Optional[Baseline]" = kwargs.get("baseline", None)
+        self.flip: bool = kwargs.get("flip", False)
 
         # Noise filtering parameters
         self.sub_measurements: int = kwargs.get("sub_measurements", 1)
@@ -325,6 +328,7 @@ class Measurement:
             "number_of_teeth": self.number_of_teeth,
             "laser_wavelength": self.laser_wavelength,
             "optical_comb_spacing": self.optical_comb_spacing,
+            "flip": self.flip,
         }
 
     def get(self, property_name: str) -> "ndarray":

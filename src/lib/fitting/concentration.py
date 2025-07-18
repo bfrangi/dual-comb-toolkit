@@ -59,6 +59,7 @@ def assemble_normal_fitter(
 
     simulator: "Optional[Simulator]" = kwargs.get("simulator", None)
     use_gpu: bool = kwargs.get("use_gpu", False)
+    database: str = kwargs.get("database", "hitran")
 
     # Obtain simulator
 
@@ -70,6 +71,7 @@ def assemble_normal_fitter(
             temperature=conditions["temperature"],
             length=conditions["length"],
             use_gpu=use_gpu,
+            database=database,
         )
     else:
         s = simulator
@@ -126,6 +128,8 @@ def assemble_interpolated_fitter(
     points : list[float], optional
         The points to use for the interpolation. Default is None. If specified, takes precedence
         over `n_points`.
+    database : str, optional
+        The database to use for the simulation. Either 'hitran' or 'hitemp'. Defaults to 'hitran'.
 
     Returns
     -------
@@ -136,8 +140,10 @@ def assemble_interpolated_fitter(
     from lib.combs import to_frequency
     from lib.simulations import curry_interpolated_transmission_curve
 
+    database: str = kwargs.get("database", "hitran")
+
     transmission_curve = curry_interpolated_transmission_curve(
-        wl_min, wl_max, molecule, **conditions
+        wl_min, wl_max, molecule, database=database, **conditions
     )
 
     def simulate_transmission(conc: float, **kwargs) -> "tuple[ndarray, ndarray]":
@@ -204,6 +210,9 @@ def fit_concentration(
         Lower bound for the concentration. Defaults to 0.
     upper_bound : float, optional
         Upper bound for the concentration. Defaults to 1.
+    database : str, optional
+        The database to use for the simulation. Either 'hitran' or 'hitemp'. Defaults to 'hitran'.
+        Only used if `simulator` is not provided.
     verbose : bool, optional
         Whether to print the results of the fitting. Defaults to False.
 
@@ -221,6 +230,7 @@ def fit_concentration(
         Amplitude data of the measured spectrum.
     """
     tol = 1e-6
+    database = kwargs.get("database", "hitran")
     verbose = kwargs.get("verbose", False)
 
     condition_names = ["pressure", "temperature", "length"]
@@ -234,7 +244,6 @@ def fit_concentration(
     from lib.simulations import closest_value_indices
 
     # Assemble the simulator
-    fitter = kwargs.get("fitter", "normal")
     if fitter == "interp":
         n_points: int = kwargs.get("n_points", 3)
         points: "Optional[list[float]]" = kwargs.get("points", None)
@@ -246,6 +255,7 @@ def fit_concentration(
             conditions,
             n_points=n_points,
             points=points,
+            database=database,
         )
     elif fitter == "normal":
         simulator: "Optional[Simulator]" = kwargs.get("simulator", None)
@@ -260,6 +270,7 @@ def fit_concentration(
             initial_guess=initial_guess,
             simulator=simulator,
             use_gpu=use_gpu,
+            database=database,
         )
 
     # Objective function to minimize
@@ -353,6 +364,9 @@ class ConcentrationFitter:
         Lower bound for the concentration. Defaults to 0.
     upper_bound : float, optional
         Upper bound for the concentration. Defaults to 1.
+    database : str, optional
+        The database to use for the simulation. Either 'hitran' or 'hitemp'. Defaults to 'hitran'.
+        Only used if `simulator` is not provided.
     verbose : bool, optional
         Whether to print the results of the fitting. Defaults to False.
     """
@@ -379,6 +393,7 @@ class ConcentrationFitter:
         self.upper_bound: float = bounded(kwargs.get("upper_bound", 1.0), 0, 1)
         self.fitter: str = kwargs.get("fitter", "normal")
         self.verbose: bool = kwargs.get("verbose", False)
+        self.database: str = kwargs.get("database", "hitran")
 
         if self.lower_bound >= self.upper_bound:
             raise ValueError("Lower bound must be less than upper bound.")
@@ -489,6 +504,7 @@ class ConcentrationFitter:
             exit_gpu=self._exit_gpu,
             n_points=self.n_points,
             points=self.points,
+            database=self.database,
         )
 
         self._sim_transmission = SimulatedSpectrum(

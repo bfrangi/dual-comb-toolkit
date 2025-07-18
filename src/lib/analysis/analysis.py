@@ -52,6 +52,7 @@ class TransmissionAnalyser:
         self.number_of_teeth: int = kwargs.get('number_of_teeth', NUMBER_OF_TEETH)
         self.laser_wavelength: float = kwargs.get('laser_wavelength', LASER_WAVELENGTH)
         self.optical_comb_spacing: float = kwargs.get('optical_comb_spacing', OPTICAL_COMB_SPACING)
+        self.flip: bool = kwargs.get('flip', False)
 
         # Transmission data
         self._transmission_freq: 'Optional[ndarray]' = None
@@ -101,6 +102,10 @@ class TransmissionAnalyser:
         rfce_sample = RadioFrequencyCombExtractor(fftc_sample.fft_x, fftc_sample.fft_y, **kwargs)
         rfce_reference = RadioFrequencyCombExtractor(
             fftc_reference.fft_x, fftc_reference.fft_y, **kwargs)
+
+        if self.flip:
+            rfce_sample.flip_comb()
+            rfce_reference.flip_comb()
 
         ofce_sample = OpticalFrequencyCombExtractor(
             rfce_sample.comb_freq, rfce_sample.comb_amp, **kwargs)

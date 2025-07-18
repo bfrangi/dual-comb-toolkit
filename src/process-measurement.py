@@ -39,6 +39,8 @@ baseline_names = []
 center_freq = 40000.0  # Hz
 freq_spacing = 200.0  # Hz
 acq_freq = 400000.0  # Hz
+flip = True
+"""If True, the measured transmission spectrum will be flipped with respect to the center frequency."""
 
 # Optical comb specifications.
 
@@ -113,6 +115,7 @@ measurement = get_measurement(
     baseline_names=baseline_names,
     sub_measurements=sub_measurements,
     tooth_std_threshold=tooth_std_threshold,
+    flip=flip,
 )
 
 measured_spectrum = measurement.transmission_spectrum

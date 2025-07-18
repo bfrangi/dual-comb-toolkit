@@ -107,6 +107,8 @@ def get_measurement(
     tooth_std_threshold : float, optional
         Teeth with a standard deviation above `tooth_std_threshold * mean_std` will be discarded if 
         `sub_measurements` is given and is greater than 1.
+    flip : bool, optional
+        Whether to flip the measured transmission spectrum or not. Default is False.
 
     Returns
     -------
@@ -170,6 +172,8 @@ def fit_measurement_concentration(
         The maximum wavelength for the simulation in nm.
     molecule : str
         The molecule measured.
+    database : str, optional
+        The database to use. Either 'hitran' or 'hitemp'. Defaults to 'hitran'.
     pressure : float
         The pressure in Pa.
     temperature : float
@@ -198,6 +202,8 @@ def fit_measurement_concentration(
     tooth_std_threshold : float, optional
         Teeth with a standard deviation above `tooth_std_threshold * mean_std` will be discarded if 
         `sub_measurements` is given and is greater than 1.
+    flip : bool, optional
+        Whether to flip the measured transmission spectrum or not. Default is False.
 
     Returns
     -------

@@ -30,6 +30,8 @@ baseline_names = []
 center_freq = 40000.0  # Hz
 freq_spacing = 200.0  # Hz
 acq_freq = 400000.0  # Hz
+flip = False
+"""If True, the measured transmission spectrum will be flipped with respect to the center frequency."""
 
 # Optical comb specifications.
 
@@ -78,9 +80,11 @@ f = fit_measurement_concentration(
     laser_wavelength=laser_wavelength,
     optical_comb_spacing=optical_comb_spacing,
     acq_freq=acq_freq,
+    flip=flip,
     wl_min=wl_min,
     wl_max=wl_max,
     molecule=molecule,
+    database=database,
     pressure=pressure,
     temperature=temperature,
     length=length,
