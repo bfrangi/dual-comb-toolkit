@@ -25,7 +25,7 @@ def absorption_spectrum(
     length: float,
     isotopes: str = "1",
     wavelength_step: float = 0.001,
-    database: str = "hitran",
+    database: "Optional[str]" = None,
     return_spectrum: bool = False,
 ) -> tuple[np.ndarray, np.ndarray] | tuple[np.ndarray, np.ndarray, "Simulator"]:
     """
@@ -52,7 +52,8 @@ def absorption_spectrum(
     wavelength_step : float, optional
         The wavelength step in nm.
     database : str, optional
-        The database to use. Either 'hitran' or 'hitemp'.
+        The database to use. Either 'hitran' or 'hitemp'. Defaults to 'hitran' (defined in
+        `lib.defaults`).
     return_spectrum : bool, optional
         Whether to return the spectrum object. Default is False.
 
@@ -65,6 +66,11 @@ def absorption_spectrum(
     spectrum : Spectrum, optional
         The spectrum object used for the calculation.
     """
+    from lib.defaults import DATABASE
+
+    if database is None:
+        database = DATABASE
+
     results = transmission_spectrum(
         wl_min,
         wl_max,
@@ -96,7 +102,7 @@ def absorption_spectrum_gpu(
     length: float,
     isotopes: str = "1",
     wavelength_step: float = 0.001,
-    database: str = "hitran",
+    database: "Optional[str]" = None,
     spectrum: "Optional[Spectrum]" = None,
     exit_gpu: bool = True,
 ) -> tuple[np.ndarray, np.ndarray, "Optional[Spectrum]"]:
@@ -124,7 +130,8 @@ def absorption_spectrum_gpu(
     wavelength_step : float, optional
         The wavelength step in nm.
     database : str, optional
-        The database to use. Either 'hitran' or 'hitemp'.
+        The database to use. Either 'hitran' or 'hitemp'. Defaults to 'hitran' (defined in
+        `lib.defaults`).
     spectrum : Spectrum, optional
         The spectrum object to use. If None, a new spectrum object will be created.
     exit_gpu : bool, optional
@@ -167,7 +174,7 @@ def transmission_spectrum(
     length: float,
     isotopes: str = "1",
     wavelength_step: float = 0.001,
-    database: str = "hitran",
+    database: "Optional[str]" = None,
     return_spectrum: bool = False,
     **kwargs,
 ) -> tuple[np.ndarray, np.ndarray] | tuple[np.ndarray, np.ndarray, "Spectrum"]:
@@ -195,7 +202,8 @@ def transmission_spectrum(
     wavelength_step : float, optional
         The wavelength step in nm.
     database : str, optional
-        The database to use. Either 'hitran' or 'hitemp'.
+        The database to use. Either 'hitran' or 'hitemp'. Defaults to 'hitran' (defined in
+        `lib.defaults`).
     return_spectrum : bool, optional
         Whether to return the spectrum object. Default is False.
 
@@ -216,6 +224,10 @@ def transmission_spectrum(
         wavelength_to_wavenumber,
         wavenumber_to_wavelength,
     )
+    from lib.defaults import DATABASE
+
+    if database is None:
+        database = DATABASE
 
     pressure = pa_to_bar(pressure)
     length = length * 100
@@ -256,7 +268,7 @@ def transmission_spectrum_gpu(
     length: float,
     isotopes: str = "1",
     wavelength_step: float = 0.001,
-    database: str = "hitran",
+    database: "Optional[str]" = None,
     spectrum: "Optional[Spectrum]" = None,
     exit_gpu: bool = True,
     **kwargs,
@@ -285,7 +297,8 @@ def transmission_spectrum_gpu(
     wavelength_step : float, optional
         The wavelength step in nm.
     database : str, optional
-        The database to use. Either 'hitran' or 'hitemp'.
+        The database to use. Either 'hitran' or 'hitemp'. Defaults to 'hitran' (defined in
+        `lib.defaults`).
     spectrum : Spectrum, optional
         The spectrum object to use. If None, a new spectrum object will be created.
     exit_gpu : bool, optional
@@ -307,6 +320,10 @@ def transmission_spectrum_gpu(
         wavelength_to_wavenumber,
         wavenumber_to_wavelength,
     )
+    from lib.defaults import DATABASE
+
+    if database is None:
+        database = DATABASE
 
     pressure = pa_to_bar(pressure)
     length = length * 100
@@ -397,7 +414,7 @@ def get_mac_interpolation_points(
     length: float,
     n_points: int,
     points: "Optional[list[float]]" = None,
-    database: str = "hitran",
+    database: "Optional[str]" = None,
     **conditions,
 ) -> "list[tuple[ndarray, ndarray]]":
     """
@@ -423,7 +440,8 @@ def get_mac_interpolation_points(
         The points to use for the interpolation. Default is None. If specified, takes precedence
         over `n_points`.
     database : str, optional
-        The database to use. Either 'hitran' or 'hitemp'. Defaults to 'hitran'.
+        The database to use. Either 'hitran' or 'hitemp'. Defaults to 'hitran' (defined in
+        `lib.defaults`).
     conditions : dict
         The conditions for the simulation. Must include 'length', 'pressure', and
         'temperature'.
@@ -432,8 +450,6 @@ def get_mac_interpolation_points(
     ----------------
     isotopes : str, optional
         The isotopes of the molecule. Format: '1,2,3'.
-    database : str, optional
-        The database to use. Either 'hitran' or 'hitemp'.
     wavelength_step : float, optional
         The wavelength step in nm.
 
@@ -444,6 +460,11 @@ def get_mac_interpolation_points(
     mac_by_parts : list[tuple[ndarray, ndarray]]
         The molar attenuation coefficient data.
     """
+    from lib.defaults import DATABASE
+
+    if database is None:
+        database = DATABASE
+
     if points is not None:
         n_points = None
 
@@ -494,7 +515,7 @@ def curry_interpolated_molar_attenuation_coefficient(
     wl_min: float,
     wl_max: float,
     molecule: str,
-    database: str = "hitran",
+    database: Optional[str] = None,
     n_points: int = 3,
     points: "Optional[list[float]]" = None,
     **conditions,
@@ -512,7 +533,8 @@ def curry_interpolated_molar_attenuation_coefficient(
     molecule : str
         The name of the molecule.
     database : str, optional
-        The database to use. Either 'hitran' or 'hitemp'. Defaults to 'hitran'.
+        The database to use. Either 'hitran' or 'hitemp'. Defaults to 'hitran' (defined in
+        `lib.defaults`).
     n_points : int, optional
         The number of points to use for the interpolation. Default is 3.
     points : list[float], optional
@@ -526,8 +548,6 @@ def curry_interpolated_molar_attenuation_coefficient(
     ----------------
     isotopes : str, optional
         The isotopes of the molecule. Format: '1,2,3'.
-    database : str, optional
-        The database to use. Either 'hitran' or 'hitemp'.
     wavelength_step : float, optional
         The wavelength step in nm.
 
@@ -544,7 +564,11 @@ def curry_interpolated_molar_attenuation_coefficient(
         if condition not in conditions:
             raise ValueError(f"Missing specification for: {condition}.")
 
+    from lib.defaults import DATABASE
     from lib.fitting import interpolate_onto_common_grid
+
+    if database is None:
+        database = DATABASE
 
     if points is not None:
         n_points = None
@@ -621,7 +645,7 @@ def curry_interpolated_transmission_curve(
     wl_min: float,
     wl_max: float,
     molecule: str,
-    database: str = "hitran",
+    database: "Optional[str]" = None,
     n_points: int = 5,
     points: "Optional[list[float]]" = None,
     **conditions,
@@ -639,7 +663,8 @@ def curry_interpolated_transmission_curve(
     molecule : str
         The name of the molecule.
     database : str, optional
-        The database to use. Either 'hitran' or 'hitemp'. Defaults to 'hitran'.
+        The database to use. Either 'hitran' or 'hitemp'. Defaults to 'hitran' (defined in
+        `lib.defaults`).
     n_points : int, optional
         The number of points to use for the interpolation. Default is 3.
     points : list[float], optional
@@ -653,8 +678,6 @@ def curry_interpolated_transmission_curve(
     ----------------
     isotopes : str, optional
         The isotopes of the molecule. Format: '1,2,3'.
-    database : str, optional
-        The database to use. Either 'hitran' or 'hitemp'.
     wavelength_step : float, optional
         The wavelength step in nm.
     """
@@ -662,6 +685,11 @@ def curry_interpolated_transmission_curve(
     for condition in required_conditions:
         if condition not in conditions:
             raise ValueError(f"Missing specification for: {condition}.")
+
+    from lib.defaults import DATABASE
+
+    if database is None:
+        database = DATABASE
 
     if points is not None:
         n_points = None
@@ -725,7 +753,8 @@ class Simulator:
         isotopes : str, optional
             The isotopes of the molecule. Format: '1,2,3'.
         database : str, optional
-            The database to use. Either 'hitran' or 'hitemp'.
+            The database to use. Either 'hitran' or 'hitemp'. Defaults to 'hitran' (defined in
+            `lib.defaults`).
         wavelength_step : float, optional
             The wavelength step in nm.
         use_gpu : bool, optional
@@ -734,6 +763,8 @@ class Simulator:
             The spectrum object to use when `use_gpu` is True. If None given and `use_gpu` is True,
             a new spectrum object will be created.
         """
+        from lib.defaults import DATABASE
+
         required_kwargs = ["molecule", "vmr", "pressure", "temperature", "length"]
         for key in required_kwargs:
             if key not in kwargs:
@@ -753,7 +784,7 @@ class Simulator:
         self._computed_temperature = None
         self._computed_length = None
         self._isotopes: str = kwargs.get("isotopes", "1")
-        self._database: str = kwargs.get("database", "hitran")
+        self._database: str = kwargs.get("database", DATABASE)
         self._wavelength_step: float = kwargs.get("wavelength_step", 0.01)
         self._use_gpu: bool = kwargs.get("use_gpu", False)
         self._spectrum: "Optional[Spectrum]" = None

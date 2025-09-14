@@ -114,11 +114,13 @@ def get_measurement_names(directory: str) -> list[str]:
         The names of the measurements.
     """
     measurement_filenames = get_measurement_filenames(directory)
-    return [
-        f"{directory}/{f[:-14]}"
-        for f in measurement_filenames
-        if f.endswith("-reference.lvm")
-    ]
+    return sorted(
+        [
+            f"{directory}/{f[:-14]}"
+            for f in measurement_filenames
+            if f.endswith("-reference.lvm")
+        ]
+    )
 
 
 def initialize_csv_report(filename: str, headers: tuple[str]) -> None:
@@ -368,3 +370,16 @@ def save_mapping_report(
 
     if verbose:
         print(f"Mapping report saved to {report_path}.")
+
+
+def get_animations_path() -> str:
+    """
+    Get the animations folder path.
+
+    Returns
+    -------
+    str
+        The animations folder path.
+    """
+    root_path = get_root_path()
+    return os.path.join(root_path, "animations/")

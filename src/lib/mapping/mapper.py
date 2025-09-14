@@ -34,6 +34,8 @@ class Mapper:
     fitter : str, optional
         Fitter to use. Defaults to 'normal'. Possible values are 'normal', 'interp' and
         'normal_gpu'.
+    database : str, optional
+        Database to use for the simulation. Defaults to 'hitran' (defined in `lib.defaults`).
     spectrum_plot_folder : str, optional
         Folder to save the spectrum plots. Defaults to None, so no plots are saved.
     lower_bound : float, optional
@@ -51,6 +53,8 @@ class Mapper:
         wl_max: float,
         **kwargs: dict[str, float],
     ) -> None:
+        from lib.defaults import DATABASE
+
         # Measurement parameters
         self.meas_transmissions = meas_transmissions
 
@@ -60,6 +64,7 @@ class Mapper:
         self.initial_guess: dict[str, float] = kwargs.get("initial_guess", 0.5)
         self.lower_bound: float = bounded(kwargs.get("lower_bound", 0.0), 0, 1)
         self.upper_bound: float = bounded(kwargs.get("upper_bound", 1.0), 0, 1)
+        self.database: str = kwargs.get("database", DATABASE)
 
         if self.lower_bound >= self.upper_bound:
             raise ValueError("Lower bound must be less than upper bound.")
@@ -141,6 +146,7 @@ class Mapper:
                 upper_bound=self.upper_bound,
                 verbose=self.verbose,
                 fitter=self.fitter,
+                database=self.database,
             )
 
             if self._spectrum_plot_folder is not None:
@@ -167,7 +173,6 @@ class Mapper:
                 )
             )
 
-
     def generate_concentration_heatmap(self) -> "plt":
         """
         Generate a heatmap of the concentration as a function of position.
@@ -181,14 +186,14 @@ class Mapper:
         non_nan_rows = np.where(~np.isnan(conc).all(axis=1))[0]
         non_nan_cols = np.where(~np.isnan(conc).all(axis=0))[0]
 
-        if conc.shape[1] < conc.shape[0]/5:
+        if conc.shape[1] < conc.shape[0] / 5:
             plt.figure(figsize=(4, 12), dpi=100)
-            tight = {'pad': 0.1, 'rect': (0.02, 0.02, 0.96, 0.99)}
-        elif conc.shape[0] < conc.shape[1]/5:
+            tight = {"pad": 0.1, "rect": (0.02, 0.02, 0.96, 0.99)}
+        elif conc.shape[0] < conc.shape[1] / 5:
             plt.figure(figsize=(12, 4), dpi=100)
-            tight = {'pad': 0.1, 'rect': (0.02, 0.02, 1.08, 0.99)}
+            tight = {"pad": 0.1, "rect": (0.02, 0.02, 1.08, 0.99)}
         else:
-            tight = {'pad': 0.1, 'rect': (0.02, 0.02, 0.99, 0.99)}
+            tight = {"pad": 0.1, "rect": (0.02, 0.02, 0.99, 0.99)}
 
         df = pd.DataFrame(conc)
         ax = sns.heatmap(df, cmap="crest")
@@ -240,7 +245,7 @@ class Mapper:
         non_nan_indices = np.where(~np.isnan(conc))[0]
 
         plt.figure(figsize=(9, 6), dpi=100)
-        plt.scatter(positions, conc, c='b')
+        plt.scatter(positions, conc, c="b")
         plt.xlim(non_nan_indices[0] - 1, non_nan_indices[-1] + 1)
         plt.xlabel("Position")
         plt.ylabel("Concentration [VMR]")
@@ -248,7 +253,7 @@ class Mapper:
             f"Concentration as a function of the {other} position "
             + f"for ${ruler} = {x if y is None else y}$"
         )
-        tight = {'pad': 0.1, 'rect': (0.02, 0.02, 0.98, 0.97)}
+        tight = {"pad": 0.1, "rect": (0.02, 0.02, 0.98, 0.97)}
         plt.tight_layout(**tight)
         return plt
 

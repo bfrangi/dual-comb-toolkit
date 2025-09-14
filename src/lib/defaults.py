@@ -7,3 +7,4 @@ ACQ_FREQ: float = 400000.0
 SAMPLE_TAG: str = 'sample'
 REFERENCE_TAG: str = 'reference'
 TOOTH_STD_THRESHOLD: float = 0.1
+DATABASE: str = 'hitran'

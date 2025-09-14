@@ -55,11 +55,12 @@ def assemble_normal_fitter(
         as a tuple of frequency and amplitude arrays.
     """
     from lib.combs import to_frequency
+    from lib.defaults import DATABASE
     from lib.simulations import Simulator
 
     simulator: "Optional[Simulator]" = kwargs.get("simulator", None)
     use_gpu: bool = kwargs.get("use_gpu", False)
-    database: str = kwargs.get("database", "hitran")
+    database: str = kwargs.get("database", DATABASE)
 
     # Obtain simulator
 
@@ -129,7 +130,8 @@ def assemble_interpolated_fitter(
         The points to use for the interpolation. Default is None. If specified, takes precedence
         over `n_points`.
     database : str, optional
-        The database to use for the simulation. Either 'hitran' or 'hitemp'. Defaults to 'hitran'.
+        The database to use for the simulation. Either 'hitran' or 'hitemp'. Defaults to 'hitran'
+        (defined in `lib.defaults`).
 
     Returns
     -------
@@ -138,9 +140,10 @@ def assemble_interpolated_fitter(
         as a tuple of frequency and amplitude arrays.
     """
     from lib.combs import to_frequency
+    from lib.defaults import DATABASE
     from lib.simulations import curry_interpolated_transmission_curve
 
-    database: str = kwargs.get("database", "hitran")
+    database: str = kwargs.get("database", DATABASE)
 
     transmission_curve = curry_interpolated_transmission_curve(
         wl_min, wl_max, molecule, database=database, **conditions
@@ -211,8 +214,8 @@ def fit_concentration(
     upper_bound : float, optional
         Upper bound for the concentration. Defaults to 1.
     database : str, optional
-        The database to use for the simulation. Either 'hitran' or 'hitemp'. Defaults to 'hitran'.
-        Only used if `simulator` is not provided.
+        The database to use for the simulation. Either 'hitran' or 'hitemp'. Defaults to 'hitran' 
+        (defined in `lib.defaults`). Only used if `simulator` is not provided.
     verbose : bool, optional
         Whether to print the results of the fitting. Defaults to False.
 
@@ -229,8 +232,10 @@ def fit_concentration(
     a_sample : ndarray
         Amplitude data of the measured spectrum.
     """
+    from lib.defaults import DATABASE
+
     tol = 1e-6
-    database = kwargs.get("database", "hitran")
+    database = kwargs.get("database", DATABASE)
     verbose = kwargs.get("verbose", False)
 
     condition_names = ["pressure", "temperature", "length"]
@@ -365,8 +370,8 @@ class ConcentrationFitter:
     upper_bound : float, optional
         Upper bound for the concentration. Defaults to 1.
     database : str, optional
-        The database to use for the simulation. Either 'hitran' or 'hitemp'. Defaults to 'hitran'.
-        Only used if `simulator` is not provided.
+        The database to use for the simulation. Either 'hitran' or 'hitemp'. Defaults to 'hitran' 
+        (defined in `lib.defaults`). Only used if `simulator` is not provided.
     verbose : bool, optional
         Whether to print the results of the fitting. Defaults to False.
     """
@@ -378,6 +383,8 @@ class ConcentrationFitter:
         wl_max: float,
         **kwargs: dict[str, float],
     ) -> None:
+        from lib.defaults import DATABASE
+
         # Measurement parameters
 
         self._pre_meas_trasmission = meas_transmission
@@ -393,7 +400,7 @@ class ConcentrationFitter:
         self.upper_bound: float = bounded(kwargs.get("upper_bound", 1.0), 0, 1)
         self.fitter: str = kwargs.get("fitter", "normal")
         self.verbose: bool = kwargs.get("verbose", False)
-        self.database: str = kwargs.get("database", "hitran")
+        self.database: str = kwargs.get("database", DATABASE)
 
         if self.lower_bound >= self.upper_bound:
             raise ValueError("Lower bound must be less than upper bound.")

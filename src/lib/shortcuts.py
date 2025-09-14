@@ -37,7 +37,8 @@ def simulate_line(
     length : float
         The length of the absorption path in m.
     database : str, optional
-        The database to use. Either 'hitran' or 'hitemp'. Defaults to 'hitran'.
+        The database to use. Either 'hitran' or 'hitemp'. Defaults to 'hitran' (defined in 
+        `lib.defaults`).
 
     Returns
     -------
@@ -45,13 +46,14 @@ def simulate_line(
         The wavelength and transmission spectrum.
     """
     from lib.simulations import Simulator
+    from lib.defaults import DATABASE
 
     for key in ["vmr", "pressure", "temperature", "length"]:
         if key not in conditions:
             raise ValueError(f"Missing condition: {key}.")
 
     s = Simulator(
-        molecule=molecule, **conditions, database=conditions.get("database", "hitran")
+        molecule=molecule, **conditions, database=conditions.get("database", DATABASE)
     )
     s.compute_transmission_spectrum(wl_min=wl_min, wl_max=wl_max)
     wl, transmission = s.get_transmission_spectrum(wl_min, wl_max)
@@ -173,7 +175,8 @@ def fit_measurement_concentration(
     molecule : str
         The molecule measured.
     database : str, optional
-        The database to use. Either 'hitran' or 'hitemp'. Defaults to 'hitran'.
+        The database to use. Either 'hitran' or 'hitemp'. Defaults to 'hitran' (defined in 
+        `lib.defaults`).
     pressure : float
         The pressure in Pa.
     temperature : float
@@ -388,7 +391,8 @@ def fit_simulated_measurement_concentration(
     Other Parameters
     ----------------
     database : str, optional
-        The database to use. Either 'hitran' or 'hitemp'. Defaults to 'hitran'.
+        The database to use. Either 'hitran' or 'hitemp'. Defaults to 'hitran' (defined in 
+        `lib.defaults`).
     transmission_std : float, optional
         The standard deviation of the noise. Defaults to 0.005.
     spectrum_shift_range : float, optional
