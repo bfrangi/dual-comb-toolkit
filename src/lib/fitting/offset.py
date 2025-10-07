@@ -53,13 +53,13 @@ def overlap_transmission(
     if len(x_to_fit) >= len(x_reference):
         raise ValueError("`x_to_fit` must not be longer than `x_reference`.")
 
-    ref_len = len(x_reference)
-    ref_step = x_reference[1] - x_reference[0]
+    wiggle_distance = x_reference[-1] - x_reference[0] - (x_to_fit[-1] - x_to_fit[0])
+    max_nr_shifts = np.searchsorted(x_reference-x_reference[0], wiggle_distance, side='left') - 1
+
+    if max_nr_shifts < 1:
+        return x_to_fit
+
     to_fit_len = len(x_to_fit)
-    to_fit_step = x_to_fit[1] - x_to_fit[0]
-    max_nr_shifts = int(
-        (ref_step * (ref_len - 1) - to_fit_step * (to_fit_len - 1)) // ref_step + 1
-    )
 
     offset_x_to_fit = np.tile(x_to_fit - x_to_fit[0], (max_nr_shifts, 1)) + np.tile(
         x_reference[:max_nr_shifts, np.newaxis], (1, to_fit_len)

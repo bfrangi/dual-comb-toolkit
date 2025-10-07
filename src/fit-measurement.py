@@ -11,8 +11,9 @@ from lib.shortcuts import fit_measurement_concentration
 # Molecule and physical conditions.
 
 molecule = "CH4"
+database = "hitemp"
 pressure = 101325  # Pa
-temperature = 298  # K
+temperature = 450  # K
 length = 0.07  # m
 
 # Simulation range.
@@ -35,9 +36,9 @@ flip = False
 
 # Optical comb specifications.
 
-number_of_teeth = 26
+number_of_teeth = 12
 laser_wavelength = (wl_max + wl_min) / 2 * 1e-9  # m
-optical_comb_spacing = 700e6  # Hz
+optical_comb_spacing = 1250e6  # Hz
 
 
 ####################################################################################################
@@ -48,15 +49,18 @@ optical_comb_spacing = 700e6  # Hz
 
 fitter = "normal_gpu"
 initial_guess = 0.0001  # VMR
-lower_bound = 0.0  # VMR
-upper_bound = 0.15  # VMR
+lower_bound = 0  # VMR
+upper_bound = 0.1  # VMR
 
 # Noise filtering.
 
-tooth_std_threshold = 1.5  # Teeth with a standard deviation above `tooth_std_threshold * mean_std` will be discarded.
+tooth_std_threshold = 10  # Teeth with a standard deviation above `tooth_std_threshold * mean_std` will be discarded.
 sub_measurements = (
-    10  # Number of sub-measurements used to obtain the standard deviation of the teeth.
+    0  # Number of sub-measurements used to obtain the standard deviation of the teeth.
 )
+
+# Removing noisy teeth
+remove_teeth_indices = [7, 9, 10, 12] # List of tooth indices to be removed from the fitting.
 
 # Output and plotting parameters.
 
@@ -95,6 +99,7 @@ f = fit_measurement_concentration(
     upper_bound=upper_bound,
     sub_measurements=sub_measurements,
     tooth_std_threshold=tooth_std_threshold,
+    remove_teeth_indices=remove_teeth_indices,
     verbose=verbose,
 )
 

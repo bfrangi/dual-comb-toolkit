@@ -318,7 +318,7 @@ class Measurement:
     @property
     def measurement_time(self) -> float:
         """Total time of the measurement in seconds."""
-        return (self.t[-1] - self.t[0])
+        return self.t[-1] - self.t[0]
 
     @property
     def kwargs(self) -> dict:
@@ -376,6 +376,46 @@ class Measurement:
         if self._transmission_spectrum is None:
             self._compute_transmission()
         return self._transmission_spectrum
+
+    def remove_teeth(self, teeth_indices: list[int], normalize: bool = True) -> None:
+        """
+        Remove teeth from the optical comb.
+
+        Parameters
+        ----------
+        teeth_indices : list[int]
+            The indices of the teeth to remove. Indices assume nm units for the x values.
+        normalize : bool, optional
+            Whether to normalize the transmission spectrum after removing the teeth. Default is True.
+        """
+        import numpy as np
+
+        from lib.combs import normalize_transmission, to_frequency
+
+        if self._transmission_spectrum is None:
+            raise ValueError(
+                "Transmission spectrum must be computed before removing a tooth."
+            )
+
+        teeth_indices = [ti - 1 for ti in teeth_indices]  # Convert to 0-indexed
+
+        def index_in_range(tooth_index: int) -> bool:
+            return 0 <= tooth_index < len(self._transmission_spectrum.x_nm)
+
+        teeth_indices = [ti for ti in teeth_indices if index_in_range(ti)]
+
+        x_nm = np.delete(self._transmission_spectrum.x_nm, teeth_indices)
+        y_nm = np.delete(self._transmission_spectrum.y_nm, teeth_indices)
+
+        if normalize:
+            x_nm, y_nm = normalize_transmission(x_nm, y_nm, replace_outliers=False)
+
+        self.transmission_spectrum.x_nm = x_nm
+        self.transmission_spectrum.y_nm = y_nm
+
+        self._transmission_spectrum.x_hz, self._transmission_spectrum.y_hz = (
+            to_frequency(x_nm, y_nm)
+        )
 
     def _set_metadata(
         self, transmission_spectrum: "Optional[MeasuredSpectrum]" = None

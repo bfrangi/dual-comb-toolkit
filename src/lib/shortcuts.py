@@ -37,7 +37,7 @@ def simulate_line(
     length : float
         The length of the absorption path in m.
     database : str, optional
-        The database to use. Either 'hitran' or 'hitemp'. Defaults to 'hitran' (defined in 
+        The database to use. Either 'hitran' or 'hitemp'. Defaults to 'hitran' (defined in
         `lib.defaults`).
 
     Returns
@@ -45,15 +45,15 @@ def simulate_line(
     tuple[np.ndarray, np.ndarray]
         The wavelength and transmission spectrum.
     """
-    from lib.simulations import Simulator
     from lib.defaults import DATABASE
+    from lib.simulations import Simulator
 
     for key in ["vmr", "pressure", "temperature", "length"]:
         if key not in conditions:
             raise ValueError(f"Missing condition: {key}.")
 
     s = Simulator(
-        molecule=molecule, **conditions, database=conditions.get("database", DATABASE)
+        molecule=molecule, database=conditions.pop("database", DATABASE), **conditions
     )
     s.compute_transmission_spectrum(wl_min=wl_min, wl_max=wl_max)
     wl, transmission = s.get_transmission_spectrum(wl_min, wl_max)
@@ -107,7 +107,7 @@ def get_measurement(
         Number of sub-measurements used to obtain the standard deviation of the teeth. If not
         specified, tooth filtering based on standard deviation will not be applied.
     tooth_std_threshold : float, optional
-        Teeth with a standard deviation above `tooth_std_threshold * mean_std` will be discarded if 
+        Teeth with a standard deviation above `tooth_std_threshold * mean_std` will be discarded if
         `sub_measurements` is given and is greater than 1.
     flip : bool, optional
         Whether to flip the measured transmission spectrum or not. Default is False.
@@ -175,7 +175,7 @@ def fit_measurement_concentration(
     molecule : str
         The molecule measured.
     database : str, optional
-        The database to use. Either 'hitran' or 'hitemp'. Defaults to 'hitran' (defined in 
+        The database to use. Either 'hitran' or 'hitemp'. Defaults to 'hitran' (defined in
         `lib.defaults`).
     pressure : float
         The pressure in Pa.
@@ -203,10 +203,12 @@ def fit_measurement_concentration(
         Number of sub-measurements used to obtain the standard deviation of the teeth. If not
         specified, tooth filtering based on standard deviation will not be applied.
     tooth_std_threshold : float, optional
-        Teeth with a standard deviation above `tooth_std_threshold * mean_std` will be discarded if 
+        Teeth with a standard deviation above `tooth_std_threshold * mean_std` will be discarded if
         `sub_measurements` is given and is greater than 1.
     flip : bool, optional
         Whether to flip the measured transmission spectrum or not. Default is False.
+    remove_teeth_indices : list[int], optional
+        List of indices of the teeth to be removed from the fitting.
 
     Returns
     -------
@@ -226,9 +228,13 @@ def fit_measurement_concentration(
         if key not in specifications:
             raise ValueError(f"Missing specification: {key}.")
 
+    remove_teeth_indices = specifications.pop("remove_teeth_indices", [])
+
     from lib.fitting import ConcentrationFitter
 
     meas = get_measurement(meas_name, **specifications)
+    meas._compute_transmission()
+    meas.remove_teeth(remove_teeth_indices)
     meas_transmission = meas.transmission_spectrum
 
     wl_min: float = specifications.pop("wl_min")
@@ -269,6 +275,9 @@ def map_measurement_concentration(meas_names: list[str], **specifications) -> "M
         Acquisition frequency used in the measurement in Hz.
     molecule : str
         Name of the molecule measured and simulated.
+    database : str, optional
+        The database to use. Either 'hitran' or 'hitemp'. Defaults to 'hitran' (defined in
+        `lib.defaults`).
     pressure : float
         Pressure in Pa.
     temperature : float
@@ -303,7 +312,7 @@ def map_measurement_concentration(meas_names: list[str], **specifications) -> "M
         Number of sub-measurements used to obtain the standard deviation of the teeth. If not
         specified, tooth filtering based on standard deviation will not be applied.
     tooth_std_threshold : float, optional
-        Teeth with a standard deviation above `tooth_std_threshold * mean_std` will be discarded if 
+        Teeth with a standard deviation above `tooth_std_threshold * mean_std` will be discarded if
         `sub_measurements` is given and is greater than 1.
 
     Returns
@@ -391,7 +400,7 @@ def fit_simulated_measurement_concentration(
     Other Parameters
     ----------------
     database : str, optional
-        The database to use. Either 'hitran' or 'hitemp'. Defaults to 'hitran' (defined in 
+        The database to use. Either 'hitran' or 'hitemp'. Defaults to 'hitran' (defined in
         `lib.defaults`).
     transmission_std : float, optional
         The standard deviation of the noise. Defaults to 0.005.

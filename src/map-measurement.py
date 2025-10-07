@@ -12,7 +12,7 @@ from lib.shortcuts import map_measurement_concentration
 
 molecule = "CH4"
 pressure = 101325  # Pa
-temperature = 298  # K
+temperature = 2100  # K
 length = 0.07  # m
 
 # Simulation range.
@@ -22,7 +22,7 @@ wl_max = 3428.1  # nm
 
 # Measurement names.
 
-mapping_name = "3b"
+mapping_name = "7a"
 measurement_names = get_measurement_names(mapping_name)
 baseline_names = []
 
@@ -43,16 +43,17 @@ optical_comb_spacing = 1250e6  # Hz
 # Fitting parameters                                                                               #
 ####################################################################################################
 
-# Fitter, initial guess and allowed concentration bounds.
+# Fitter, database, initial guess and allowed concentration bounds.
 
 fitter = "normal_gpu"
+database = "hitemp"
 initial_guess = 0.0001  # VMR
 lower_bound = 0.0  # VMR
-upper_bound = 0.15  # VMR
+upper_bound = 1.0  # VMR
 
 # Noise filtering.
 
-tooth_std_threshold = 1.5  # Teeth with a standard deviation above `tooth_std_threshold * mean_std` will be discarded.
+tooth_std_threshold = 10  # Teeth with a standard deviation above `tooth_std_threshold * mean_std` will be discarded.
 sub_measurements = (
     10  # Number of sub-measurements used to obtain the standard deviation of the teeth.
 )
@@ -87,6 +88,7 @@ mapper = map_measurement_concentration(
     wl_max=wl_max,
     baseline_names=baseline_names,
     fitter=fitter,
+    database=database,
     initial_guess=initial_guess,
     lower_bound=lower_bound,
     upper_bound=upper_bound,
@@ -126,7 +128,9 @@ else:
 # Mapping report                                                                                   #
 ####################################################################################################
 
-report_filename = f"{mapping_name.split('/')[-1]} @ {datetime.now().strftime('%Y-%m-%d %H-%M-%S')}"
+report_filename = (
+    f"{mapping_name.split('/')[-1]} @ {datetime.now().strftime('%Y-%m-%d %H-%M-%S')}"
+)
 
 save_mapping_report(
     filename=report_filename,

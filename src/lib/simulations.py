@@ -515,7 +515,7 @@ def curry_interpolated_molar_attenuation_coefficient(
     wl_min: float,
     wl_max: float,
     molecule: str,
-    database: Optional[str] = None,
+    database: "Optional[str]" = None,
     n_points: int = 3,
     points: "Optional[list[float]]" = None,
     **conditions,
