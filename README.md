@@ -1,4 +1,4 @@
-# Dual Comb Toolbox
+# Dual Comb Toolkit
 
 Useful scripts for processing dual comb data.
 
