@@ -25,7 +25,7 @@ from lib.shortcuts import fit_simulated_measurement_concentration
 
 molecule = "CH4"
 """Molecule to simulate."""
-database = "hitemp"  # HITRAN 2020 Database
+database = "hitemp"
 """Database to use for the simulation. Can be 'hitran', 'hitemp', 'exomol' or 'geisa'. Some may not
 be available for all molecules."""
 

@@ -12,7 +12,7 @@ from lib.shortcuts import fit_measurement_concentration
 
 molecule = "CH4"
 """Molecule to simulate."""
-database = "hitemp"  # HITRAN 2020 Database
+database = "hitemp"
 """Database to use for the simulation. Can be 'hitran', 'hitemp', 'exomol' or 'geisa'. Some may not
 be available for all molecules."""
 
@@ -88,6 +88,7 @@ sub_measurements = None
 """Number of sub-measurements to use for calculating the standard deviation of the teeth."""
 
 # Removing noisy teeth
+
 remove_teeth_indices = [11, 12]
 """List of tooth indices to be removed from the fitting."""
 
@@ -100,7 +101,11 @@ spectrum_plot_folder = "fit-measurement-output"
 
 # Use LaTeX for plotting.
 
-use_latex()
+latex = False
+"""If True, use LaTeX for plotting."""
+
+if latex:
+    use_latex()
 
 
 ####################################################################################################

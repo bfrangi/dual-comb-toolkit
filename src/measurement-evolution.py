@@ -10,39 +10,63 @@ from lib.measurements import Measurement
 from lib.plots import use_latex
 
 ####################################################################################################
-# Measurement parameters                                                                           #
+# Simulation parameters                                                                            #
 ####################################################################################################
 
-# Molecule and physical conditions.
+# Molecule and database.
 
 molecule = "CH4"
+"""Molecule to simulate."""
 database = "hitemp"
+"""Database to use for the simulation. Can be 'hitran', 'hitemp', 'exomol' or 'geisa'. Some may not
+be available for all molecules."""
+
+# Physical conditions.
+
 pressure = 101325  # Pa
+"""Pressure of the gas mixture."""
 temperature = 1180.235  # K
+"""Temperature of the gas mixture."""
 length = 0.07  # m
+"""Path length of the gas mixture."""
 
 # Simulation range.
 
-wl_min = 3426.8  # nm
-wl_max = 3428.1  # nm
+wl_min = 3427.0  # nm
+"""Minimum wavelength of the simulation range."""
+wl_max = 3427.9  # nm
+"""Maximum wavelength of the simulation range."""
+
+####################################################################################################
+# Measurement parameters                                                                           #
+####################################################################################################
 
 # Measurement name.
 
 measurement_name = "8a/Position-X1-Y10"
+"""Name of the measurement to process."""
 baseline_names = []
+"""List of baseline measurement names to use for processing."""
 
 # Radio frequency comb specifications.
 
 center_freq = 40000.0  # Hz
+"""Center frequency of the radio frequency comb."""
 freq_spacing = 200.0  # Hz
+"""Frequency spacing of the radio frequency comb."""
 acq_freq = 400000.0  # Hz
+"""Acquisition frequency of the radio frequency comb."""
+flip = False
+"""If True, the measured transmission spectrum will be flipped with respect to the center frequency."""
 
 # Optical comb specifications.
 
 number_of_teeth = 12
-laser_wavelength = (wl_max + wl_min) / 2 * 1e-9  # m
+"""Number of teeth in the optical frequency comb."""
 optical_comb_spacing = 1250e6  # Hz
-
+"""Optical frequency comb spacing."""
+laser_wavelength = (wl_max + wl_min) / 2 * 1e-9  # m
+"""Wavelength of the laser used to probe the gas mixture."""
 
 ####################################################################################################
 # Fitting parameters                                                                               #
@@ -51,29 +75,33 @@ optical_comb_spacing = 1250e6  # Hz
 # Fitter, initial guess and allowed concentration bounds.
 
 fitter = "normal_gpu"
+"""Fitting algorithm to use. Can be 'normal', 'interp' and 'normal_gpu'."""
 initial_guess = 0.0001  # VMR
-lower_bound = 0.0  # VMR
-upper_bound = 0.15  # VMR
-
-# Noise filtering.
-
-tooth_std_threshold = 10  # Teeth with a standard deviation above `tooth_std_threshold * mean_std` will be discarded.
-sub_measurements = (
-    0  # Number of sub-measurements used to obtain the standard deviation of the teeth.
-)
+"""Initial guess for the volume mixing ratio (VMR) of the molecule."""
+lower_bound = 0  # VMR
+"""Lower bound for the volume mixing ratio (VMR) of the molecule."""
+upper_bound = 0.05  # VMR
+"""Upper bound for the volume mixing ratio (VMR) of the molecule."""
 
 # Removing noisy teeth
 
-remove_teeth_indices = [1, 12]  # List of tooth indices to be removed from the fitting.
+remove_teeth_indices = [1, 12]
+"""List of tooth indices to be removed from the fitting."""
 
 # Output and plotting parameters.
 
 verbose = True
+"""If True, the fitting process will print detailed information."""
 spectrum_plot_folder = "fit-measurement-output"
+"""Folder to save the spectrum plots. If None, plots will not be saved."""
 
 # Use LaTeX for plotting.
 
-# use_latex()
+latex = False
+"""If True, use LaTeX for plotting."""
+
+if latex:
+    use_latex()
 
 ####################################################################################################
 # Fitting                                                                                          #
@@ -82,6 +110,9 @@ spectrum_plot_folder = "fit-measurement-output"
 integration_time = 0.1  # s
 time_between_measurements = 0.05  # s
 
+####################################################################################################
+# Animation                                                                                        #
+####################################################################################################
 
 m = Measurement(
     measurement_name=measurement_name,
@@ -95,13 +126,14 @@ m = Measurement(
     pressure=pressure,
     temperature=temperature,
     length=length,
+    flip=flip,
 )
 
 total_time = m.measurement_time
 
 intervals = [
     (i * time_between_measurements, i * time_between_measurements + integration_time)
-    for i in range(int(total_time / time_between_measurements))
+    for i in range(int(total_time / time_between_measurements) + 1)
 ]
 
 print(f"Total measurement time: {total_time:.2f} s")
