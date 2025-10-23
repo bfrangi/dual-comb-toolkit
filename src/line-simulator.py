@@ -1,4 +1,5 @@
 from lib.simulations import Simulator
+from lib.plots import use_latex
 
 # Define the molecule, VMR, pressure, temperature, and length.
 
@@ -13,6 +14,12 @@ length = 0.07  # m
 wl_min = 3427.1  # nm
 wl_max = 3427.8  # nm
 use_gpu = True
+
+# Latex for plotting.
+
+latex = False
+if latex:
+    use_latex()
 
 # Simulate the transmission spectrum.
 
