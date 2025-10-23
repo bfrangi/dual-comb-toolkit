@@ -5,7 +5,7 @@ if TYPE_CHECKING:
 
     import numpy as np
 
-    from lib.entities import MeasuredSpectrum, Measurement
+    from lib.entities import Measurement
     from lib.fitting.concentration import ConcentrationFitter
     from lib.mapping import Mapper
     from lib.simulations import Simulator
