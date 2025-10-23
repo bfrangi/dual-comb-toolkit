@@ -417,7 +417,7 @@ class Measurement:
             to_frequency(x_nm, y_nm)
         )
 
-    def _set_metadata(
+    def _apply_metadata_to(
         self, transmission_spectrum: "Optional[MeasuredSpectrum]" = None
     ) -> None:
         """
@@ -441,7 +441,7 @@ class Measurement:
         transmission_spectrum.concentration = self.concentration
 
     def compute_transmission(
-        self, start: "Optional[float]" = None, end: "Optional[float]" = None
+        self, start: "Optional[float]" = None, end: "Optional[float]" = None, save: bool = False
     ) -> "MeasuredSpectrum":
         """
         Compute the transmission spectrum for a specific range of the time series.
@@ -452,6 +452,8 @@ class Measurement:
             The start time of the range to compute the transmission spectrum for.
         end : float
             The end time of the range to compute the transmission spectrum for.
+        save : bool, optional
+            Whether to save the computed transmission spectrum to the object's property. Default is False.
 
         Returns
         -------
@@ -473,7 +475,10 @@ class Measurement:
             **self.kwargs,
         )
 
-        self._set_metadata(transmission_spectrum)
+        if save:
+            self._transmission_spectrum = transmission_spectrum
+
+        self._apply_metadata_to(transmission_spectrum)
 
         return transmission_spectrum
 
@@ -541,7 +546,7 @@ class Measurement:
             )
 
         self._transmission_spectrum = transmission_spectrum
-        self._set_metadata()
+        self._apply_metadata_to()
 
     # Plots
 
