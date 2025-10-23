@@ -9,8 +9,8 @@ Useful scripts for processing dual comb data.
 1. Clone the repository:
 
 ```bash
-git clone https://github.com/bfrangi/dual-comb-processing.git
-cd dual-comb-processing
+git clone https://github.com/bfrangi/dual-comb-toolkit.git
+cd dual-comb-toolkit
 ```
 
 2. Install `virtualenv` and create a virtual environment:
@@ -41,8 +41,8 @@ sudo apt-get install texlive-latex-extra texlive-fonts-extra dvipng
 1. Clone the repository:
 
 ```bash
-git clone https://github.com/bfrangi/dual-comb-processing.git
-cd dual-comb-processing
+git clone https://github.com/bfrangi/dual-comb-toolkit.git
+cd dual-comb-toolkit
 ```
 
 2. Install `Python3.10` from the Microsoft Store.
