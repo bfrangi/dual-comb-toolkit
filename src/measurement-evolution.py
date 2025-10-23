@@ -92,8 +92,6 @@ remove_teeth_indices = [1, 12]
 
 verbose = True
 """If True, the fitting process will print detailed information."""
-spectrum_plot_folder = "fit-measurement-output"
-"""Folder to save the spectrum plots. If None, plots will not be saved."""
 
 # Use LaTeX for plotting.
 

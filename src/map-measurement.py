@@ -5,67 +5,104 @@ from lib.plots import use_latex
 from lib.shortcuts import map_measurement_concentration
 
 ####################################################################################################
-# Measurement parameters                                                                           #
+# Simulation parameters                                                                            #
 ####################################################################################################
 
-# Molecule and physical conditions.
+# Molecule and database.
 
 molecule = "CH4"
+"""Molecule to simulate."""
+database = "hitemp"
+"""Database to use for the simulation. Can be 'hitran', 'hitemp', 'exomol' or 'geisa'. Some may not
+be available for all molecules."""
+
+# Physical conditions.
+
 pressure = 101325  # Pa
-temperature = 2100  # K
+"""Pressure of the gas mixture."""
+temperature = 1200  # K
+"""Temperature of the gas mixture."""
 length = 0.07  # m
+"""Path length of the gas mixture."""
 
 # Simulation range.
 
 wl_min = 3426.8  # nm
+"""Minimum wavelength of the simulation range."""
 wl_max = 3428.1  # nm
+"""Maximum wavelength of the simulation range."""
 
-# Measurement names.
+####################################################################################################
+# Measurement parameters                                                                           #
+####################################################################################################
+
+# Mapping name.
 
 mapping_name = "7a"
+"""Name of the mapping to process."""
 measurement_names = get_measurement_names(mapping_name)
+"""List of measurement names to process."""
 baseline_names = []
+"""List of baseline measurement names to use for processing."""
 
 # Radio frequency comb specifications.
 
 center_freq = 40000.0  # Hz
+"""Center frequency of the radio frequency comb."""
 freq_spacing = 200.0  # Hz
+"""Frequency spacing of the radio frequency comb."""
 acq_freq = 400000.0  # Hz
+"""Acquisition frequency of the radio frequency comb."""
+flip = False
+"""If True, the measured transmission spectrum will be flipped with respect to the center frequency."""
 
 # Optical comb specifications.
 
 number_of_teeth = 12
-laser_wavelength = (wl_max + wl_min) / 2 * 1e-9  # m
+"""Number of teeth in the optical frequency comb."""
 optical_comb_spacing = 1250e6  # Hz
-
+"""Optical frequency comb spacing."""
+laser_wavelength = (wl_max + wl_min) / 2 * 1e-9  # m
+"""Wavelength of the laser used to probe the gas mixture."""
 
 ####################################################################################################
 # Fitting parameters                                                                               #
 ####################################################################################################
 
-# Fitter, database, initial guess and allowed concentration bounds.
+# Fitter, initial guess and allowed concentration bounds.
 
 fitter = "normal_gpu"
-database = "hitemp"
+"""Fitting algorithm to use. Can be 'normal', 'interp' and 'normal_gpu'."""
 initial_guess = 0.0001  # VMR
-lower_bound = 0.0  # VMR
-upper_bound = 1.0  # VMR
+"""Initial guess for the volume mixing ratio (VMR) of the molecule."""
+lower_bound = 0  # VMR
+"""Lower bound for the volume mixing ratio (VMR) of the molecule."""
+upper_bound = 1  # VMR
+"""Upper bound for the volume mixing ratio (VMR) of the molecule."""
 
 # Noise filtering.
 
-tooth_std_threshold = 10  # Teeth with a standard deviation above `tooth_std_threshold * mean_std` will be discarded.
-sub_measurements = (
-    10  # Number of sub-measurements used to obtain the standard deviation of the teeth.
-)
+tooth_std_threshold = 1.5
+"""Threshold for the standard deviation of the comb teeth. If the standard deviation of a tooth is 
+larger than `tooth_std_threshold` times the mean standard deviation of all teeth, the tooth will be 
+discarded. Note this could give unexpected if combined with `remove_teeth_indices`."""
+sub_measurements = 10
+"""Number of sub-measurements to use for calculating the standard deviation of the teeth."""
 
 # Output and plotting parameters.
 
 verbose = True
-spectrum_plot_folder = mapping_name
+"""If True, the fitting process will print detailed information."""
+spectrum_plot_folder = "fit-measurement-output"
+"""Folder to save the spectrum plots. If None, plots will not be saved."""
 
 # Use LaTeX for plotting.
 
-use_latex()
+latex = False
+"""If True, use LaTeX for plotting."""
+
+if latex:
+    use_latex()
 
 
 ####################################################################################################
@@ -96,6 +133,7 @@ mapper = map_measurement_concentration(
     spectrum_plot_folder=spectrum_plot_folder,
     tooth_std_threshold=tooth_std_threshold,
     sub_measurements=sub_measurements,
+    flip=flip,
 )
 
 
