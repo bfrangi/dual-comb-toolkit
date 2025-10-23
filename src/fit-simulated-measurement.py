@@ -25,7 +25,7 @@ from lib.shortcuts import fit_simulated_measurement_concentration
 
 molecule = "CH4"
 """Molecule to simulate."""
-database = "hitran"  # HITRAN 2020 Database
+database = "hitemp"  # HITRAN 2020 Database
 """Database to use for the simulation. Can be 'hitran', 'hitemp', 'exomol' or 'geisa'. Some may not
 be available for all molecules."""
 
@@ -35,7 +35,7 @@ vmr = 0.01  # volume mixing ratio
 """Volume mixing ratio of the molecule in the gas mixture."""
 pressure = 101325  # Pa
 """Pressure of the gas mixture."""
-temperature = 298  # K
+temperature = 1200  # K
 """Temperature of the gas mixture."""
 length = 0.07  # m
 """Path length of the gas mixture."""
@@ -122,7 +122,7 @@ initial_guess = 0.001
 """Initial guess for the concentration to fit in VMR (volume mixing ratio)."""
 lower_bound = 0.0  # VMR
 """Lower bound for the concentration to fit in VMR (volume mixing ratio)."""
-upper_bound = 0.15  # VMR
+upper_bound = 0.05  # VMR
 """Upper bound for the concentration to fit in VMR (volume mixing ratio)."""
 fitter = "normal_gpu"
 """Fitter to use for the fitting process. Can be 'normal', 'normal_gpu' or 'interp'."""
