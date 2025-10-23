@@ -307,6 +307,8 @@ class Measurement:
         self.tooth_std_threshold: float = kwargs.get(
             "tooth_std_threshold", TOOTH_STD_THRESHOLD
         )
+        if self.tooth_std_threshold is None:
+            self.tooth_std_threshold = TOOTH_STD_THRESHOLD
 
         # Other parameters
         self.molecule: str = kwargs.get("molecule", None)
@@ -406,18 +408,31 @@ class Measurement:
 
         x_nm = np.delete(self._transmission_spectrum.x_nm, teeth_indices)
         y_nm = np.delete(self._transmission_spectrum.y_nm, teeth_indices)
+        y_sdv_nm = None
+        if self._transmission_spectrum.y_sdv_nm is not None:
+            y_sdv_nm = np.delete(self._transmission_spectrum.y_sdv_nm, teeth_indices)
 
         if normalize:
-            x_nm, y_nm = normalize_transmission(x_nm, y_nm, replace_outliers=False)
+            _, y_nm_norm = normalize_transmission(x_nm, y_nm, replace_outliers=False)
+            scaling_factor = y_nm_norm.mean() / y_nm.mean()
+            
+            y_nm = y_nm * scaling_factor
+            if y_sdv_nm is not None:
+                y_sdv_nm = y_sdv_nm * scaling_factor
 
         self.transmission_spectrum.x_nm = x_nm
         self.transmission_spectrum.y_nm = y_nm
+        self.transmission_spectrum.y_sdv_nm = y_sdv_nm
 
         self._transmission_spectrum.x_hz, self._transmission_spectrum.y_hz = (
             to_frequency(x_nm, y_nm)
         )
+        if y_sdv_nm is not None:
+            _, self.transmission_spectrum.y_sdv_hz = to_frequency(
+                x_nm, y_sdv_nm
+            ) 
 
-    def _apply_metadata_to(
+    def _apply_metadata(
         self, transmission_spectrum: "Optional[MeasuredSpectrum]" = None
     ) -> None:
         """
@@ -478,7 +493,7 @@ class Measurement:
         if save:
             self._transmission_spectrum = transmission_spectrum
 
-        self._apply_metadata_to(transmission_spectrum)
+        self._apply_metadata(transmission_spectrum)
 
         return transmission_spectrum
 
@@ -546,7 +561,7 @@ class Measurement:
             )
 
         self._transmission_spectrum = transmission_spectrum
-        self._apply_metadata_to()
+        self._apply_metadata()
 
     # Plots
 
