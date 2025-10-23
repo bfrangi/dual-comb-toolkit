@@ -81,3 +81,23 @@ just install `PyQt6`:
 ```bash
 pip install PyQt6
 ```
+
+## Issues with LaTeX (on Linux)
+
+If you encounter `FileNotFoundError: Matplotlib's TeX implementation searched for a file named 'cmr10.tfm' in your texmf tree, but could not find it.`, just run the [following command](https://stackoverflow.com/a/79243265/15159198):
+
+```bash
+sudo mv /usr/bin/luatex /usr/bin/luatex.bk 
+```
+
+If you encounter `LaTeX Error: File 'type1ec.sty' not found.`, install the `cm-super` package (see [here](https://github.com/matplotlib/matplotlib/issues/16911)):
+
+```bash
+sudo apt install cm-super
+```
+
+If you encounter `RuntimeError: Failed to process string with tex because dvipng could not be found`, install the `dvipng` package:
+
+```bash
+sudo apt install dvipng
+```
