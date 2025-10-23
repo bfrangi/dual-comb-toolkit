@@ -9,20 +9,22 @@ molecule = "CH4"
 wl_min = 3427.0  # nm
 wl_max = 3427.9  # nm
 
-database = "hitran"
+database = "hitemp"
 
 vmr = 0.01  # volume mixing ratio
-pressure = 53328.94736842  # Pa
-temperature = 298  # K
-length = 0.055  # m
+pressure = 101325  # Pa
+temperature = 1200  # K
+length = 0.07  # m
 laser_wavelength = 3427.41  # nm
 
-number_of_teeth = 30
-optical_comb_spacing = 500e6  # Hz
+number_of_teeth = 12
+optical_comb_spacing = 1250e6  # Hz
+modulation_intensity = 4.69  # rad
 
+noise_distribution = "bessel"
 transmission_std = 0.014  # unitless
 nr_teeth_for_transmission_std = 30  # teeth
-transmission_std_threshold = 0.01  # unitless
+transmission_std_threshold = 0.1  # unitless
 spectrum_shift_range = (-0.02, 0.02)  # nm
 scaling_range = (0.2, 1.5)  # unitless
 laser_wavelength_slack = (-0.05, 0.05)  # nm
@@ -46,8 +48,8 @@ x_sim, y_sim = simulate_measurement(
     scaling_range=scaling_range,
     spectrum_shift_range=spectrum_shift_range,
     laser_wavelength_slack=laser_wavelength_slack,
-    noise_distribution="bessel",
-    modulation_intensity=13.7,
+    noise_distribution=noise_distribution,
+    modulation_intensity=modulation_intensity,
 )
 
 
