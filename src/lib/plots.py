@@ -8,6 +8,9 @@ if TYPE_CHECKING:
     from numpy.typing import ArrayLike
 
 tight = {"pad": 0.1, "rect": (0.02, 0, 0.99, 0.99)}
+article_tight = {"pad": 0.1, "rect": (0.04, 0.07, 0.99, 0.99)}
+article_scale = 0.6
+article_figsize = (10 * article_scale, 6 * article_scale)
 
 
 def spectrum_plot(
@@ -294,3 +297,39 @@ def config_plot(
 def use_latex():
     """Use LaTeX for rendering text in plots."""
     plt.rcParams.update({"text.usetex": True, "font.family": "Computer Modern"})
+
+
+cmaps = {
+    "CMRmap": 2,
+    "brg": 2,
+    "winter": 1,
+    "twilight": 1,
+    "copper": 1,
+    "berlin": 1,
+    "coolwarm": 1,
+    "viridis": 3 / 2,
+    "autumn": 3 / 2,
+    "summer": 3 / 2,
+    "gnuplot": 4 / 3,
+}
+
+
+def get_cmap(name: str, n: int):
+    """Get a colormap with n distinct colors.
+
+    Parameters
+    ----------
+    name : str
+        The name of the colormap.
+    n : int
+        The number of distinct colors needed.
+
+    Returns
+    -------
+    matplotlib.colors.Colormap
+        The requested colormap with n distinct colors.
+    """
+    if name in cmaps:
+        factor = cmaps[name]
+        n = int(n * factor)
+    return plt.get_cmap(name, n)
