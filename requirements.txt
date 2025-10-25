@@ -59,6 +59,7 @@ locket==1.0.0
 lxml==6.0.0
 markdown-it-py==3.0.0
 matplotlib==3.10.3
+matplotlib-label-lines==0.8.1
 mdurl==0.1.2
 more-itertools==10.7.0
 mpldatacursor==0.7.1
