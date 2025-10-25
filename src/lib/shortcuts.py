@@ -404,6 +404,9 @@ def fit_simulated_measurement_concentration(
         `lib.defaults`).
     transmission_std : float, optional
         The standard deviation of the noise. Defaults to 0.005.
+    tooth_std_threshold : float, optional
+        Teeth with a standard deviation above `tooth_std_threshold * mean_std` will be discarded.
+        This is used only when `noise_distribution` is set to 'bessel'.
     spectrum_shift_range : float, optional
         The range of the horizontal spectrum shift. Defaults to (0, 0).
     scaling_range : float, optional

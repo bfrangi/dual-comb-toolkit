@@ -39,7 +39,7 @@ temperature = 1200  # K
 """Temperature of the gas mixture."""
 length = 0.07  # m
 """Path length of the gas mixture."""
-laser_wavelength = 3427.41  # nm
+laser_wavelength = 3427.43  # nm
 """Wavelength of the laser used to probe the gas mixture."""
 
 # Simulation range
@@ -61,9 +61,10 @@ transmission_std = 0.014  # unitless
 is 1). Used to calculate the standard deviation of the noise added to the transmission spectrum."""
 nr_teeth_for_transmission_std = 30  # teeth
 """Used to scale the `transmission_std` value for different numbers of teeth."""
-transmission_std_threshold = 0.05  # unitless
-"""Threshold for the standard deviation of the transmission spectrum. If the standard deviation is
-greater than this value, the tooth will be discarded from the fitting process."""
+tooth_std_threshold = 2.5  # unitless
+"""Threshold for the standard deviation of the comb teeth. If the standard deviation of a tooth is 
+larger than `tooth_std_threshold` times the mean standard deviation of all teeth, the tooth will be 
+discarded."""
 spectrum_shift_range = (-0.02, 0.02)  # nm
 """Range of the wavelength shift to apply to the final transmission spectrum."""
 scaling_range = (0.2, 1.5)  # unitless
@@ -156,11 +157,7 @@ parser.add_argument(
     help="Path to the file with configurations to simulate.",
 )
 parser.add_argument(
-    "-r",
-    "--report",
-    type=str,
-    default="",
-    help="Name of the output report."
+    "-r", "--report", type=str, default="", help="Name of the output report."
 )
 args = parser.parse_args()
 
@@ -338,7 +335,7 @@ for nr_teeth, spacing in zip(numbers_of_teeth, comb_spacings):
                 database=database,
                 transmission_std=transmission_std,
                 nr_teeth_for_transmission_std=nr_teeth_for_transmission_std,
-                transmission_std_threshold=transmission_std_threshold,
+                tooth_std_threshold=tooth_std_threshold,
                 spectrum_shift_range=spectrum_shift_range,
                 scaling_range=scaling_range,
                 laser_wavelength_slack=laser_wavelength_slack,
@@ -358,7 +355,7 @@ for nr_teeth, spacing in zip(numbers_of_teeth, comb_spacings):
 
         if detailed_report:
             append_to_csv_report(
-                f"simulations-{nr_teeth}-{spacing / 1e9:.2f}.csv",
+                f"simulations-{nr_teeth}-{spacing / 1e9:.2f}",
                 (f.concentration,),
             )
 
