@@ -6,15 +6,21 @@ if TYPE_CHECKING:
     from numpy import ndarray
 
 
-def approximate_high_frequency_spectrum(f: 'ndarray', a: 'ndarray', f0: float, fs: float, fS: float,
-                                        laser_wl: float = 1.645560e-6) -> 'tuple[ndarray, ndarray]':
+def approximate_high_frequency_spectrum(
+    f: "ndarray",
+    a: "ndarray",
+    f0: float,
+    fs: float,
+    fS: float,
+    laser_wl: float = 1.645560e-6,
+) -> "tuple[ndarray, ndarray]":
     """
     Performs an approximate transformation of the low frequency comb into the high frequency comb,
-    which contains the frequencies that actually interact with and are absorbed by the gas. This is 
+    which contains the frequencies that actually interact with and are absorbed by the gas. This is
     an approximation because it assumes a specific wavelength for the laser, which in real life can
-    vary slightly accross measurements due to temperature/current fluctuations and other 
-    perturbations. The real high frequency comb will be slightly shifted in frequency 
-    from the one obtained by this function; nevertheless, this function is useful for a first 
+    vary slightly accross measurements due to temperature/current fluctuations and other
+    perturbations. The real high frequency comb will be slightly shifted in frequency
+    from the one obtained by this function; nevertheless, this function is useful for a first
     approximation of the high frequency comb.
 
     Parameters
@@ -39,10 +45,10 @@ def approximate_high_frequency_spectrum(f: 'ndarray', a: 'ndarray', f0: float, f
         A tuple containing the frequency and amplitude arrays of the high-frequency comb.
     """
     laser_f = c / laser_wl
-    return laser_f + (f - f0)*fS/fs, a
+    return laser_f + (f - f0) * fS / fs, a
 
 
-def to_frequency(wl: 'ndarray', amplitude: 'ndarray') -> 'tuple[ndarray, ndarray]':
+def to_frequency(wl: "ndarray", amplitude: "ndarray") -> "tuple[ndarray, ndarray]":
     """
     Converts a wavelength spectrum to a frequency spectrum. The input wavelength array is assumed to
     be in nm.
@@ -60,10 +66,11 @@ def to_frequency(wl: 'ndarray', amplitude: 'ndarray') -> 'tuple[ndarray, ndarray
         A tuple containing the frequency and amplitude arrays.
     """
     import numpy as np
+
     return c * 1e9 / np.array(wl[::-1]), amplitude[::-1]
 
 
-def to_wavelength(f: 'ndarray', amplitude: 'ndarray') -> 'tuple[ndarray, ndarray]':
+def to_wavelength(f: "ndarray", amplitude: "ndarray") -> "tuple[ndarray, ndarray]":
     """
     Converts a frequency spectrum to a wavelength spectrum. The output wavelength array is in nm.
 
@@ -82,7 +89,7 @@ def to_wavelength(f: 'ndarray', amplitude: 'ndarray') -> 'tuple[ndarray, ndarray
     return to_frequency(f, amplitude)
 
 
-def nan_shift(a: 'ndarray', n: int) -> 'ndarray':
+def nan_shift(a: "ndarray", n: int) -> "ndarray":
     """
     Shifts the array elements by n positions, filling the empty positions with nan.
 
@@ -99,13 +106,15 @@ def nan_shift(a: 'ndarray', n: int) -> 'ndarray':
         Shifted array.
     """
     import numpy as np
+
     if n < 0:
         return np.concatenate([a[-n:], np.full(-n, np.nan)])
     return np.concatenate([np.full(n, np.nan), a[:-n]])
 
 
-def normalize_transmission(x: 'ndarray', a: 'ndarray',
-                           replace_outliers: bool = False) -> 'tuple[ndarray, ndarray]':
+def normalize_transmission(
+    x: "ndarray", a: "ndarray", replace_outliers: bool = False
+) -> "tuple[ndarray, ndarray]":
     """
     Normalizes the transmission spectrum by dividing it by the maximum value of its rolling mean
     Optionally replaces any outliers with the rolling mean.
@@ -151,7 +160,9 @@ def normalize_transmission(x: 'ndarray', a: 'ndarray',
     return x, a / max(rolling_avg)
 
 
-def get_comb_frequencies(center_freq: float, freq_spacing: float, number_of_teeth: int) -> 'ndarray':
+def get_comb_frequencies(
+    center_freq: float, freq_spacing: float, number_of_teeth: int
+) -> "ndarray":
     """
     Returns an array of the frequencies of the comb teeth.
 
@@ -174,5 +185,8 @@ def get_comb_frequencies(center_freq: float, freq_spacing: float, number_of_teet
     n_teeth_left = number_of_teeth // 2
     n_teeth_right = number_of_teeth - n_teeth_left
 
-    return np.arange(center_freq - n_teeth_left * freq_spacing,
-                     center_freq + n_teeth_right * freq_spacing, freq_spacing)
+    return np.arange(
+        center_freq - n_teeth_left * freq_spacing,
+        center_freq + n_teeth_right * freq_spacing,
+        freq_spacing,
+    )
