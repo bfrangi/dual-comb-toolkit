@@ -960,7 +960,7 @@ class Simulator:
             transmission,
             f"Transmittance spectrum for {self._molecule} at {self.temperature} K, "
             + f"{self.pressure} Pa, {self.length} cm and {self.vmr} VMR",
-            "Frequency [Hz]",
+            "Wavelength [nm]",
             "Transmittance [-]",
         )
 
