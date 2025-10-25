@@ -24,7 +24,7 @@ def absorption_spectrum(
     temperature: float,
     length: float,
     isotopes: str = "1",
-    wavelength_step: float = 0.001,
+    wavelength_step: "Optional[float]" = None,
     database: "Optional[str]" = None,
     return_spectrum: bool = False,
 ) -> tuple[np.ndarray, np.ndarray] | tuple[np.ndarray, np.ndarray, "Simulator"]:
@@ -101,7 +101,7 @@ def absorption_spectrum_gpu(
     temperature: float,
     length: float,
     isotopes: str = "1",
-    wavelength_step: float = 0.001,
+    wavelength_step: "Optional[float]" = None,
     database: "Optional[str]" = None,
     spectrum: "Optional[Spectrum]" = None,
     exit_gpu: bool = True,
@@ -173,7 +173,7 @@ def transmission_spectrum(
     temperature: float,
     length: float,
     isotopes: str = "1",
-    wavelength_step: float = 0.001,
+    wavelength_step: "Optional[float]" = None,
     database: "Optional[str]" = None,
     return_spectrum: bool = False,
     **kwargs,
@@ -224,10 +224,13 @@ def transmission_spectrum(
         wavelength_to_wavenumber,
         wavenumber_to_wavelength,
     )
-    from lib.defaults import DATABASE
+    from lib.defaults import DATABASE, WAVELENGTH_STEP
 
     if database is None:
         database = DATABASE
+
+    if wavelength_step is None:
+        wavelength_step = WAVELENGTH_STEP
 
     pressure = pa_to_bar(pressure)
     length = length * 100
@@ -267,7 +270,7 @@ def transmission_spectrum_gpu(
     temperature: float,
     length: float,
     isotopes: str = "1",
-    wavelength_step: float = 0.001,
+    wavelength_step: "Optional[float]" = None,
     database: "Optional[str]" = None,
     spectrum: "Optional[Spectrum]" = None,
     exit_gpu: bool = True,
@@ -320,10 +323,13 @@ def transmission_spectrum_gpu(
         wavelength_to_wavenumber,
         wavenumber_to_wavelength,
     )
-    from lib.defaults import DATABASE
+    from lib.defaults import DATABASE, WAVELENGTH_STEP
 
     if database is None:
         database = DATABASE
+
+    if wavelength_step is None:
+        wavelength_step = WAVELENGTH_STEP
 
     pressure = pa_to_bar(pressure)
     length = length * 100
@@ -763,7 +769,7 @@ class Simulator:
             The spectrum object to use when `use_gpu` is True. If None given and `use_gpu` is True,
             a new spectrum object will be created.
         """
-        from lib.defaults import DATABASE
+        from lib.defaults import DATABASE, WAVELENGTH_STEP
 
         required_kwargs = ["molecule", "vmr", "pressure", "temperature", "length"]
         for key in required_kwargs:
@@ -785,7 +791,7 @@ class Simulator:
         self._computed_length = None
         self._isotopes: str = kwargs.get("isotopes", "1")
         self._database: str = kwargs.get("database", DATABASE)
-        self._wavelength_step: float = kwargs.get("wavelength_step", 0.01)
+        self._wavelength_step: float = kwargs.get("wavelength_step", WAVELENGTH_STEP)
         self._use_gpu: bool = kwargs.get("use_gpu", False)
         self._spectrum: "Optional[Spectrum]" = None
 

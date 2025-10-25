@@ -8,3 +8,4 @@ SAMPLE_TAG: str = 'sample'
 REFERENCE_TAG: str = 'reference'
 TOOTH_STD_THRESHOLD: float = 0.1
 DATABASE: str = 'hitran'
+WAVELENGTH_STEP: float = 0.01
