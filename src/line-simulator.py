@@ -11,8 +11,9 @@ length = 0.07  # m
 
 # Simulation configuration.
 
-wl_min = 3427.1  # nm
-wl_max = 3427.8  # nm
+wl_min = 3390  # nm
+wl_max = 3440  # nm
+wl_step = (wl_max - wl_min) / 10000  # nm
 use_gpu = True
 
 # Latex for plotting.
@@ -30,6 +31,7 @@ s = Simulator(
     temperature=temperature,
     length=length,
     use_gpu=use_gpu,
+    wavelength_step=wl_step,
 )
 s.compute_transmission_spectrum(wl_min=wl_min, wl_max=wl_max)
 s.show_transmission_spectrum()
