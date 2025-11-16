@@ -352,10 +352,7 @@ def transmission_spectrum_gpu(
         )
 
         with contextlib.redirect_stdout(None):  # Remove to see what GPU is being used
-            sf.fetch_databank(
-                database,
-                memory_mapping_engine="pytables",  # TODO: remove when vaex supports numpy 2
-            )
+            sf.fetch_databank(database)
 
             spectrum = sf.eq_spectrum_gpu(
                 Tgas=temperature,
