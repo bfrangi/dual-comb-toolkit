@@ -158,7 +158,7 @@ class Baseline:
         from matplotlib import pyplot as plt
 
         from lib.combs import to_wavelength
-        from lib.plots import tight
+        from lib.plots import article_tight
 
         for name, amp in zip(self.measurement_names, self.baseline_amps):
             wl, baseline = to_wavelength(self.baseline_freq, amp)
@@ -168,7 +168,7 @@ class Baseline:
         plt.ylabel('Transmittance [-]')
         plt.title('Baselines spectrum')
         plt.legend()
-        plt.tight_layout(**tight)
+        plt.tight_layout(**article_tight)
         return plt
 
     def show_baselines_plot(self) -> None:

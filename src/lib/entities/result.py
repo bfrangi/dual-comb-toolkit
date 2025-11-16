@@ -1,6 +1,6 @@
 from typing import TYPE_CHECKING
 from matplotlib import pyplot as plt
-from lib.plots import tight
+from lib.plots import article_tight
 
 if TYPE_CHECKING:
     from lib.entities.spectrum import MeasuredSpectrum, SimulatedSpectrum
@@ -86,7 +86,7 @@ class Result:
             f"Measured and Simulated Transmission spectrum of {self.molecule}\nat {self.pressure:.2f} Pa "
             + f"and {self.temperature:.2f} K. {self.length:.3f} m path length, {self.concentration:.3f} VMR "
         )
-        plt.tight_layout(**tight)
+        plt.tight_layout(**article_tight)
         return plt
     
     def show_plot(self) -> None:

@@ -7,10 +7,11 @@ if TYPE_CHECKING:
 
     from numpy.typing import ArrayLike
 
-tight = {"pad": 0.1, "rect": (0.02, 0, 0.99, 0.99)}
 article_tight = {"pad": 0.1, "rect": (0.04, 0.07, 0.99, 0.99)}
 article_scale = 0.6
 article_figsize = (10 * article_scale, 6 * article_scale)
+article_dpi = 200
+article_text_size = 15
 
 
 def spectrum_plot(
@@ -51,7 +52,7 @@ def spectrum_plot(
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)
     plt.title(title)
-    plt.tight_layout(**tight)
+    plt.tight_layout(**article_tight)
     plt.yscale(kwargs.get("yscale", "linear"))
     return plt
 
@@ -224,10 +225,11 @@ def toggle_series_plot(
 
         series_list.append(series)
 
-    plt.title(title)
+    if title:
+        plt.title(title)
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)
-    plt.tight_layout(**tight)
+    plt.tight_layout(**article_tight)
 
     legend = plt.legend(prop={"size": 6.5})
     legends = legend.get_lines()
@@ -287,7 +289,7 @@ def config_plot(
     ax.set_title(title)
     ax.set_xlabel(xlabel)
     ax.set_ylabel(ylabel)
-    plt.tight_layout(**tight)
+    plt.tight_layout(**article_tight)
 
     if save_path:
         plt.savefig(save_path)
@@ -300,17 +302,18 @@ def use_latex():
 
 
 cmaps = {
-    "CMRmap": 2,
     "brg": 2,
-    "winter": 1,
-    "twilight": 1,
-    "copper": 1,
-    "berlin": 1,
+    "CMRmap": 2,
     "coolwarm": 1,
+    "copper": 1,
+    "twilight": 4 / 3,
     "viridis": 3 / 2,
+
     "autumn": 3 / 2,
-    "summer": 3 / 2,
+    "berlin": 1,
     "gnuplot": 4 / 3,
+    "summer": 3 / 2,
+    "winter": 1,
 }
 
 
