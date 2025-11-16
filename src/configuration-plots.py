@@ -1,11 +1,15 @@
-import matplotlib.cm as cm
 from matplotlib import pyplot as plt
 
 from lib.files import get_figures_path, read_csv_report
-from lib.plots import config_plot, toggle_series_plot, use_latex
+from lib.plots import (
+    article_figsize,
+    config_plot,
+    get_cmap,
+    toggle_series_plot,
+    use_latex,
+)
 
 use_latex()
-
 
 ####################################################################################################
 # Get data from the report                                                                         #
@@ -41,8 +45,8 @@ for n_teeth, d in data.items():
         d["spacings"],
         d["sdvs"],
         title=f"Standard deviation of the concentration as a function\nof the comb spacing for {n_teeth} teeth",
-        xlabel="Spacing (GHz)",
-        ylabel="Standard deviation (VMR)",
+        xlabel="Spacing [GHz]",
+        ylabel="Standard deviation [VMR]",
         save_path=f"{get_figures_path()}conf-sdv-{n_teeth}.svg",
     )
     plt.close()
@@ -51,78 +55,73 @@ for n_teeth, d in data.items():
         d["spacings"],
         d["concentrations"],
         title=f"Concentration as a function of the comb spacing for {n_teeth} teeth",
-        xlabel="Spacing (GHz)",
-        ylabel="Concentration (VMR)",
+        xlabel="Spacing [GHz]",
+        ylabel="Concentration [VMR]",
         save_path=f"{get_figures_path()}conf-conc-{n_teeth}.svg",
     )
     plt.close()
 
 
 ####################################################################################################
-# Plot standard deviation vs comb spacing for all number of teeth                                  #
+# Plot standard deviation and concentration vs comb spacing for all number of teeth                #
 ####################################################################################################
 
-cmap = cm.get_cmap("viridis", len(data))
-
+cmap = get_cmap("brg", len(data))
 
 fig, ax = toggle_series_plot(
     [(d["spacings"], d["sdvs"], f"{n_teeth} teeth") for n_teeth, d in data.items()],
-    title="Standard deviation of the concentration as a function\nof the comb configuration",
-    xlabel="Spacing (GHz)",
-    ylabel="Standard deviation (VMR)",
+    title="",
+    xlabel="Comb spacing [GHz]",
+    ylabel="Standard deviation [VMR]",
     cmap=cmap,
-    zoom=1.5,
-    figsize=(10, 6),
+    figsize=article_figsize,
     save_path=f"{get_figures_path()}conf-sdv.svg",
 )
 
-plt.show()
+plt.clf()
 
 fig, ax = toggle_series_plot(
     [
         (d["spacings"], d["concentrations"], f"{n_teeth} teeth")
         for n_teeth, d in data.items()
     ],
-    title="Concentration as a function of the comb configuration",
-    xlabel="Spacing (GHz)",
-    ylabel="Concentration (VMR)",
+    title="",
+    xlabel="Comb spacing [GHz]",
+    ylabel="Fitted concentration [VMR]",
     cmap=cmap,
-    zoom=1.5,
-    figsize=(10, 6),
+    figsize=article_figsize,
     save_path=f"{get_figures_path()}conf-conc.svg",
 )
 
-plt.show()
+plt.clf()
 
 ####################################################################################################
-# Plot standard deviation vs comb bandwidth for all number of teeth                                #
+# Plot standard deviation and concentration vs comb bandwidth for all number of teeth              #
 ####################################################################################################
 
 fig, ax = toggle_series_plot(
     [(d["bandwidths"], d["sdvs"], f"{n_teeth} teeth") for n_teeth, d in data.items()],
-    title="Standard deviation of the concentration as a function\nof the comb bandwidth",
-    xlabel="Bandwidth (GHz)",
-    ylabel="Standard deviation (VMR)",
+    title="",
+    xlabel="Bandwidth [GHz]",
+    ylabel="Standard deviation [VMR]",
     cmap=cmap,
-    zoom=1.5,
-    figsize=(10, 6),
-    save_path=f"{get_figures_path()}conf-sdv-bw.svg",
+    figsize=article_figsize,
+    save_path=f"{get_figures_path()}conf-sdv-bw.pdf",
 )
 
-plt.show()
+plt.clf()
 
 fig, ax = toggle_series_plot(
     [
         (d["bandwidths"], d["concentrations"], f"{n_teeth} teeth")
         for n_teeth, d in data.items()
     ],
-    title="Concentration as a function of the comb bandwidth",
-    xlabel="Bandwidth (GHz)",
-    ylabel="Concentration (VMR)",
+    title="",
+    xlabel="Bandwidth [GHz]",
+    ylabel="Concentration [VMR]",
     cmap=cmap,
-    zoom=1.5,
-    figsize=(10, 6),
-    save_path=f"{get_figures_path()}conf-conc-bw.svg",
+    figsize=article_figsize,
+    save_path=f"{get_figures_path()}conf-conc-bw.pdf",
 )
 
-plt.show()
+plt.clf()
