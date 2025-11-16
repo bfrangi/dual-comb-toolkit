@@ -1,6 +1,6 @@
 from matplotlib import pyplot as plt
 
-from lib.plots import tight
+from lib.plots import article_tight
 from lib.shortcuts import get_measurement_spectrum
 
 # Define the molecule, VMR, pressure, temperature, and length.
@@ -14,5 +14,5 @@ plt.plot(wl, transmission, color='red')
 plt.xlabel('Wavelength (nm)')
 plt.ylabel('Transmission [-]')
 plt.title(f'Measured spectrum of\n"{meas_name}".')
-plt.tight_layout(**tight)
+plt.tight_layout(**article_tight)
 plt.show()

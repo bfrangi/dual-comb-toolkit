@@ -1,6 +1,6 @@
 from matplotlib import pyplot as plt
 
-from lib.plots import tight
+from lib.plots import article_tight
 from lib.simulations import simulate_measurement
 
 # Define the parameters for simulating the measurement
@@ -62,5 +62,5 @@ plt.title(
     f"Transmission spectrum of {molecule} at {pressure:.2f} Pa "
     + f"and {temperature:.2f} K.\n{length:.3f} m path length, {vmr:.3f} VMR."
 )
-plt.tight_layout(**tight)
+plt.tight_layout(**article_tight)
 plt.show()

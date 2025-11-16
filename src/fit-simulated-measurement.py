@@ -13,7 +13,7 @@ from lib.files import (
     initialize_figures_folder,
     read_configurations,
 )
-from lib.plots import tight
+from lib.plots import article_tight
 from lib.plots import use_latex as latex
 from lib.shortcuts import fit_simulated_measurement_concentration
 
@@ -61,10 +61,14 @@ transmission_std = 0.014  # unitless
 is 1). Used to calculate the standard deviation of the noise added to the transmission spectrum."""
 nr_teeth_for_transmission_std = 30  # teeth
 """Used to scale the `transmission_std` value for different numbers of teeth."""
-tooth_std_threshold = 2.5  # unitless
+tooth_std_threshold_start = 2.5  # unitless
+teeth_start = 5
+tooth_std_threshold_end = 1.5  # unitless
+teeth_end = 30
 """Threshold for the standard deviation of the comb teeth. If the standard deviation of a tooth is 
 larger than `tooth_std_threshold` times the mean standard deviation of all teeth, the tooth will be 
-discarded."""
+discarded. Here, we specify a start and end value to linearly decrease the threshold as the number 
+of teeth increases."""
 spectrum_shift_range = (-0.02, 0.02)  # nm
 """Range of the wavelength shift to apply to the final transmission spectrum."""
 scaling_range = (0.2, 1.5)  # unitless
@@ -109,7 +113,7 @@ use_latex = False
 
 # Reports
 
-detailed_report = False
+detailed_report = True
 """If True, a detailed report containing the fitted concentrations of each configuration will be 
 generated in CSV files."""
 
@@ -318,6 +322,10 @@ for nr_teeth, spacing in zip(numbers_of_teeth, comb_spacings):
     for i in range(nr_simulations_per_config):
         # Perform the simulation and fitting ###################################################
 
+        tooth_std_threshold = tooth_std_threshold_start + (
+            tooth_std_threshold_end - tooth_std_threshold_start
+        ) * (nr_teeth - teeth_start) / (teeth_end - teeth_start)
+
         with Time(
             f"{i + 1}. Simulating for {nr_teeth} teeth and {spacing / 1e9:.2f} GHz"
         ):
@@ -404,7 +412,7 @@ for nr_teeth, spacing in zip(numbers_of_teeth, comb_spacings):
                 + f"and {temperature:.2f} K.\n{length:.3f} m path length, {vmr:.3f} VMR "
                 + f"(fitted as {f.concentration:.3f} VMR)."
             )
-            plt.tight_layout(**tight)
+            plt.tight_layout(**article_tight)
             plt.savefig(f"{folder_path}/fit-simulated-measurement-{i}.svg")
             plt.clf()
 
