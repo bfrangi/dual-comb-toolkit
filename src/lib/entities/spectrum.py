@@ -64,6 +64,30 @@ class Spectrum:
 
         self.xu = xu
 
+    def data(self, xu: str = "nm") -> "tuple[ndarray, ndarray]":
+        """
+        Get the x and y values in the specified units.
+
+        Parameters
+        ----------
+        xu : str, optional
+            Units of the x values. Defaults to 'nm'. Can be 'nm' or 'Hz'.
+
+        Returns
+        -------
+        x : ndarray
+            X values of the spectrum in `xu` units.
+        y : ndarray
+            Transmission values.
+        """
+        xu_lower = xu.lower()
+        if xu_lower not in ["nm", "hz"]:
+            raise ValueError(f'Waveunit {xu} not recognized. Use "nm" or "Hz.')
+
+        if xu_lower == "hz":
+            return self.x_hz, self.y_hz
+        return self.x_nm, self.y_nm
+
     def generate_plot(self, xu: str = "nm") -> "plt":
         """
         Plot the spectrum in the specified units.
@@ -73,16 +97,13 @@ class Spectrum:
         xu : str, optional
             Units of the x values. Defaults to 'nm'. Can be 'nm' or 'Hz'.
         """
-        if xu not in ["nm", "Hz"]:
-            raise ValueError(f'Waveunit {xu} not recognized. Use "nm" or "Hz.')
-
         from lib.plots import spectrum_plot
 
+        x, y = self.data(xu)
+
         if xu == "Hz":
-            x, y = self.x_hz, self.y_hz
             xlabel = "Frequency [Hz]"
         else:
-            x, y = self.x_nm, self.y_nm
             xlabel = "Wavelength [nm]"
 
         return spectrum_plot(x, y, "Spectrum", xlabel=xlabel)
