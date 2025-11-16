@@ -4,6 +4,9 @@ Useful scripts for processing dual comb data.
 
 ## Setup
 
+Before starting, if you are going to be using the HITRAN/HITEMP databases, create a Hitran
+login [here](https://hitran.org/login/). Other databases may require their own credentials.
+
 ### Linux
 
 1. Clone the repository:
@@ -26,7 +29,6 @@ source .venv/bin/activate
 
 ```bash
 pip install -r requirements.txt
-python radis-patch/apply.py # Optional, to suppress vaex output
 ```
 
 4. [Optional] If you want to use LaTeX for plotting, install the `texlive` package:
@@ -45,12 +47,12 @@ git clone https://github.com/bfrangi/dual-comb-toolkit.git
 cd dual-comb-toolkit
 ```
 
-2. Install `Python3.10` from the Microsoft Store.
+2. Install `python3.12` from the Microsoft Store.
 
 3. Create a virtual environment:
 
 ```bash
-python3.10 -m venv .venv
+python3.12 -m venv .venv
 .\.venv\Scripts\activate.bat
 ```
 
@@ -58,13 +60,22 @@ python3.10 -m venv .venv
 
 ```bash
 pip install -r requirements-win.txt
-python radis-patch\apply.py # Optional, to suppress vaex output
 ```
 
 5. [Optional] If you want to use LaTeX for plotting, install the `texlive` package by downloading
    the installer from [here](https://www.tug.org/texlive/windows.html) or the ISO from 
    [here](https://www.tug.org/texlive/acquire-iso.html) and following the installation
    instructions.
+
+## Usage
+
+If using HITRAN/HITEMP, you will need to log in with your HITRAN credentials the first time you
+simulate an absorption spectrum. Other databases may require their own credentials.
+
+**Note**: The first time you run the simulator, the database will be downloaded, and this could
+take some time. Please be patient!
+
+**Add usage instructions here**
 
 ## Using GPU Acceleration
 
