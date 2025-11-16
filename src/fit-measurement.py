@@ -83,7 +83,7 @@ upper_bound = 0.05  # VMR
 tooth_std_threshold = 1.5
 """Threshold for the standard deviation of the comb teeth. If the standard deviation of a tooth is 
 larger than `tooth_std_threshold` times the mean standard deviation of all teeth, the tooth will be 
-discarded. Note this could give unexpected if combined with `remove_teeth_indices`."""
+discarded. Note this could give unexpected results if combined with `remove_teeth_indices`."""
 sub_measurements = None
 """Number of sub-measurements to use for calculating the standard deviation of the teeth."""
 
