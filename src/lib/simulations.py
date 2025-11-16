@@ -10,7 +10,7 @@ if TYPE_CHECKING:
 import matplotlib.pyplot as plt
 import numpy as np
 
-from lib.gpu import DEVICE_ID
+from lib.defaults import GPU_DEVICE_ID
 
 # Spectrum simulation ##############################################################################
 
@@ -360,7 +360,7 @@ def transmission_spectrum_gpu(
                 mole_fraction=vmr,
                 path_length=length,
                 exit_gpu=False,
-                device_id=DEVICE_ID,
+                device_id=GPU_DEVICE_ID,
             )
     else:
         spectrum.recalc_gpu(
@@ -1242,7 +1242,9 @@ def simulate_measurement(
         transmission_std_k = transmission_std * J2_inv / J2_inv_avg
 
         tooth_std_threshold = kwargs.get("tooth_std_threshold", np.inf)
-        noise_threshold_mask = transmission_std_k > tooth_std_threshold * transmission_std_k.mean()
+        noise_threshold_mask = (
+            transmission_std_k > tooth_std_threshold * transmission_std_k.mean()
+        )
 
         if all(noise_threshold_mask):
             raise ValueError(

@@ -17,10 +17,10 @@ from vulkan import (
     vkGetPhysicalDeviceProperties,
 )
 
+from lib.defaults import GPU_DEVICE_ID
+
 if TYPE_CHECKING:
     from typing import Optional
-
-DEVICE_ID = "nvidia"
 
 
 def get_available_gpu_devices():
@@ -71,7 +71,8 @@ def get_available_gpu_devices():
 
 
 def get_selected_gpu_device(
-    devices_data: "Optional[list[dict[str, str]]]", device_id: str | int = DEVICE_ID
+    devices_data: "Optional[list[dict[str, str]]]",
+    device_id: str | int = GPU_DEVICE_ID,
 ) -> "Optional[dict[str, str]]":
     if not devices_data:
         devices_data = get_available_gpu_devices()
