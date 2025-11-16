@@ -56,7 +56,7 @@ flip = False
 
 # Optical comb specifications.
 
-number_of_teeth = 12
+number_of_teeth = 13
 """Number of teeth in the optical frequency comb."""
 optical_comb_spacing = 1250e6  # Hz
 """Optical frequency comb spacing."""
@@ -89,7 +89,7 @@ sub_measurements = None
 
 # Removing noisy teeth
 
-remove_teeth_indices = [11, 12]
+remove_teeth_indices = [12, 13]
 """List of tooth indices to be removed from the fitting."""
 
 # Output and plotting parameters.
