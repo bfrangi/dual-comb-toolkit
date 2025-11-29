@@ -59,6 +59,19 @@ def get_configurations_path() -> str:
     return os.path.join(root_path, "configurations/")
 
 
+def get_evolutions_path() -> str:
+    """
+    Get the evolutions folder path.
+
+    Returns
+    -------
+    str
+        The evolutions folder path.
+    """
+    root_path = get_root_path()
+    return os.path.join(root_path, "evolutions/")
+
+
 def get_measurement_paths(directory: str) -> list[str]:
     """
     Get the measurement paths from the directory.
