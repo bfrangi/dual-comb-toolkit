@@ -1,4 +1,6 @@
 # Ignore everything in this directory
 *
-# Except this file
+
+# Exceptions
 !.gitignore
+!flame_bottom_5s_phi0.7_2025-06-19-11-41-09_it0.025s_tbm0.025s.gif
