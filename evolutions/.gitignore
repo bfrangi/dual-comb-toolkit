@@ -1,0 +1,6 @@
+# Ignore everything in this directory
+*
+# Exceptions
+!.gitignore
+!it0.025_tbm0.025_phi0.7_flame_bottom_2025-06-19-11-41-09.csv
+!it0.025_tbm0.025_phi0.7_flame_bottom_2025-06-19-11-41-09.pdf
