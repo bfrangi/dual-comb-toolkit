@@ -15,7 +15,7 @@ use_latex()
 # Get data from the report                                                                         #
 ####################################################################################################
 
-report_name = "report-final-simulations"
+report_name = "report-20251025-123911"
 
 csv_data = read_csv_report(report_name, mapping=["int", "float", "float", "float"])
 
