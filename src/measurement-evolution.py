@@ -1,10 +1,11 @@
 import os
 
+import numpy as np
 from matplotlib import animation
 from matplotlib import pyplot as plt
 
 from lib.entities import MeasuredSpectrum
-from lib.files import get_animations_path
+from lib.files import get_animations_path, get_evolutions_path
 from lib.fitting import ConcentrationFitter
 from lib.measurements import Measurement
 from lib.plots import use_latex
@@ -25,7 +26,7 @@ be available for all molecules."""
 
 pressure = 101325  # Pa
 """Pressure of the gas mixture."""
-temperature = 1180.235  # K
+temperature = 1227  # K
 """Temperature of the gas mixture."""
 length = 0.07  # m
 """Path length of the gas mixture."""
@@ -43,7 +44,7 @@ wl_max = 3427.9  # nm
 
 # Measurement name.
 
-measurement_name = "8a/Position-X1-Y10"
+measurement_name = "flame_bottom_5s_phi0.7_2025-06-19-11-41-09"
 """Name of the measurement to process."""
 baseline_names = []
 """List of baseline measurement names to use for processing."""
@@ -61,7 +62,7 @@ flip = False
 
 # Optical comb specifications.
 
-number_of_teeth = 12
+number_of_teeth = 13
 """Number of teeth in the optical frequency comb."""
 optical_comb_spacing = 1250e6  # Hz
 """Optical frequency comb spacing."""
@@ -85,7 +86,7 @@ upper_bound = 0.05  # VMR
 
 # Removing noisy teeth
 
-remove_teeth_indices = [1, 12]
+remove_teeth_indices = [1, 2, 12, 13]
 """List of tooth indices to be removed from the fitting."""
 
 # Output and plotting parameters.
@@ -105,8 +106,8 @@ if latex:
 # Fitting                                                                                          #
 ####################################################################################################
 
-integration_time = 0.1  # s
-time_between_measurements = 0.05  # s
+integration_time = 0.025  # s
+time_between_measurements = 0.025  # s
 
 ####################################################################################################
 # Animation                                                                                        #
@@ -203,8 +204,9 @@ def update(frame):
     return meas
 
 
-animation_name = f"{measurement_name.replace('/', '-')} - it{integration_time}s tbm{time_between_measurements}s.gif"
-animation_path = os.path.join(get_animations_path(), animation_name)
+output_name = f"{measurement_name.replace('/', '-')}_it{integration_time}s_tbm{time_between_measurements}s"
+animation_path = os.path.join(get_animations_path(), output_name + ".gif")
+evolution_path = os.path.join(get_evolutions_path(), output_name + ".csv")
 
 ani = animation.FuncAnimation(
     fig=fig,
@@ -214,3 +216,12 @@ ani = animation.FuncAnimation(
 )
 ani.save(filename=animation_path, writer="pillow")
 plt.show()
+
+time_arr = [inter[0] for inter in intervals]
+np.savetxt(
+    fname=evolution_path,
+    X=np.array([time_arr, concentrations]).T,
+    delimiter=",",
+    header="Time [s],Concentration [VMR]",
+    comments="",
+)
