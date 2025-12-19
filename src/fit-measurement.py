@@ -1,5 +1,7 @@
 import os
 
+from numpy import inf
+
 from lib.files import get_figures_path, initialize_figures_folder
 from lib.plots import use_latex
 from lib.shortcuts import fit_measurement_concentration
@@ -12,17 +14,17 @@ from lib.shortcuts import fit_measurement_concentration
 
 molecule = "CH4"
 """Molecule to simulate."""
-database = "hitemp"
+database = "hitran"
 """Database to use for the simulation. Can be 'hitran', 'hitemp', 'exomol' or 'geisa'. Some may not
 be available for all molecules."""
 
 # Physical conditions.
 
-pressure = 101325  # Pa
+pressure = 53328.94736842  # Pa
 """Pressure of the gas mixture."""
-temperature = 1277.46  # K
+temperature = 298  # K
 """Temperature of the gas mixture."""
-length = 0.07  # m
+length = 0.055  # m
 """Path length of the gas mixture."""
 
 # Simulation range.
@@ -38,9 +40,16 @@ wl_max = 3427.9  # nm
 
 # Measurement name.
 
-measurement_name = "7b/Position-X1-Y1"
+measurement_name = "cell-sweep-10-34-17-03-2025/Position-X1-Y1"
 """Name of the measurement to process."""
-baseline_names = []
+baseline_names = [
+    "cell-sweep-10-34-17-03-2025/Position-X11-Y1",
+    "cell-sweep-10-34-17-03-2025/Position-X12-Y1",
+    "cell-sweep-10-34-17-03-2025/Position-X13-Y1",
+    "cell-sweep-10-34-17-03-2025/Position-X14-Y1",
+    "cell-sweep-10-34-17-03-2025/Position-X15-Y1",
+    "cell-sweep-10-34-17-03-2025/Position-X16-Y1",
+]
 """List of baseline measurement names to use for processing."""
 
 # Radio frequency comb specifications.
@@ -56,9 +65,9 @@ flip = False
 
 # Optical comb specifications.
 
-number_of_teeth = 13
+number_of_teeth = 38
 """Number of teeth in the optical frequency comb."""
-optical_comb_spacing = 1250e6  # Hz
+optical_comb_spacing = 500e6  # Hz
 """Optical frequency comb spacing."""
 laser_wavelength = 3427.41e-9  # m
 """Wavelength of the laser used to probe the gas mixture."""
@@ -80,11 +89,14 @@ upper_bound = 0.05  # VMR
 
 # Noise filtering.
 
-tooth_std_threshold = 1.5
+tooth_std_threshold = inf
 """Threshold for the standard deviation of the comb teeth. If the standard deviation of a tooth is 
 larger than `tooth_std_threshold` times the mean standard deviation of all teeth, the tooth will be 
-discarded. Note this could give unexpected results if combined with `remove_teeth_indices`."""
-sub_measurements = None
+discarded. Note this could give unexpected results if combined with `remove_teeth_indices`. If using
+`remove_teeth_indices`, set this to `inf` to avoid conflicts. This may also conflict with the use
+of `baseline_names`, since filtering based on standard deviation will not be applied to the baseline
+teeth."""
+sub_measurements = 10
 """Number of sub-measurements to use for calculating the standard deviation of the teeth."""
 
 # Removing noisy teeth

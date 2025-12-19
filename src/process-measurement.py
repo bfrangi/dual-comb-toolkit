@@ -1,12 +1,12 @@
 import os
 
 from matplotlib import pyplot as plt
+from numpy import inf
 
 from lib.entities import Result, SimulatedSpectrum
 from lib.files import get_figures_path, initialize_figures_folder
 from lib.plots import use_latex
 from lib.shortcuts import get_measurement, simulate_line
-from numpy import inf
 
 ####################################################################################################
 #  Simulation parameters                                                                           #
@@ -16,7 +16,7 @@ from numpy import inf
 
 molecule = "CH4"
 """Molecule to simulate."""
-database = "hitemp"
+database = "hitran"
 """Database to use for the simulation. Can be 'hitran', 'hitemp', 'exomol' or 'geisa'. Some may not
 be available for all molecules."""
 
@@ -109,7 +109,7 @@ spectrum_plot_folder = "process-measurement-output"
 
 # Use LaTeX for plotting.
 
-latex = False
+latex = True
 """If True, use LaTeX for plotting."""
 
 if latex:
@@ -180,7 +180,7 @@ result = Result(
     measured_spectrum=measured_spectrum, simulated_spectrum=simulated_spectrum
 )
 
-result.generate_plot()
+result.generate_plot(show_residual=True)
 
 if spectrum_plot_folder:
     initialize_figures_folder(spectrum_plot_folder)

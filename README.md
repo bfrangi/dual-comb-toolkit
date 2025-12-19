@@ -106,7 +106,7 @@ python line-simulator.py
 </details>
 
 <details>
-<summary><b>Manual Measurement processing</b></summary>
+<summary><b>Manual measurement processing</b></summary>
 
 You can manually process dual-comb measurements using the `src/process-measurement.py` script. You
 can define the measurement parameters directly in the script, including the path to the measurement 
@@ -118,8 +118,36 @@ useful to remove etalon effects and other systematic noise from the measurement.
 python process-measurement.py
 ```
 
+To characterize the baseline, there is also the `src/process-baseline.py` script. You can run it as
+follows:
+
+```bash
+python process-baseline.py
+```
+
+Here is an example of the output plot:
+
+![Example processed plot](assets/process-measurement-example.svg)
+
 </details>
 
+<details>
+<summary><b>Concentration fitting</b></summary>
+
+You can fit processed dual-comb measurements to retrieve gas concentration using the
+`src/fit-measurement.py` script. You can define the fitting parameters directly in the script,
+very similarly to the `src/process-measurement.py` script. Navigate to the `src` directory and run
+the script as follows:
+
+```bash
+python fit-measurement.py
+```
+
+Here is an example of the output plot:
+
+![Example fit plot](assets/fit-measurement-example.svg)
+
+</details>
 
 ## Using GPU Acceleration
 
