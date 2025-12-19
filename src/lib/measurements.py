@@ -540,7 +540,7 @@ class Measurement:
                 sub_measurements.append(sub_measurement.y_nm)
 
             stacked = np.stack(sub_measurements)
-            tooth_std = stacked.std(axis=0)
+            tooth_std = stacked.std(axis=0) / len(sub_measurements)**0.5
 
             mask = tooth_std <= np.mean(tooth_std) * self.tooth_std_threshold
 
