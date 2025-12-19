@@ -96,7 +96,7 @@ verbose = True
 
 # Use LaTeX for plotting.
 
-latex = False
+latex = True
 """If True, use LaTeX for plotting."""
 
 if latex:

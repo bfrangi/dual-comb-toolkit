@@ -84,6 +84,11 @@ operating system.
 
 </details>
 
+<br>
+
+**Note**: Using LaTeX for plotting is optional, and slows down the plotting process significantly.
+It is recommended only for generating publication-quality figures.
+
 ## Usage
 
 If using HITRAN/HITEMP, you will need to log in with your HITRAN credentials the first time you
@@ -230,6 +235,36 @@ cell-sweep-10-34-17-03-2025/Position-X16-Y1	0.000409 VMR
 End of report.
 ---------------------------------------
 ```
+
+</details>
+
+<details>
+<summary><b>Time evolution of concentration</b></summary>
+
+You can analyze the temporal evolution of concentration within measurements using the
+`src/measurement-evolution.py` script. You can define the analysis parameters directly in the
+script. Navigate to the `src` directory and run the script as follows:
+
+```bash
+python measurement-evolution.py
+```
+
+Here is an example of the output `.csv` file and animation:
+
+```csv
+Time [s],Concentration [VMR]
+0.000000000000000000e+00,6.840625000000015964e-03
+2.500000000000000139e-02,7.136250000000015845e-03
+5.000000000000000278e-02,7.959375000000018519e-03
+7.500000000000001110e-02,8.620000000000020007e-03
+1.000000000000000056e-01,7.585000000000017076e-03
+1.250000000000000000e-01,7.333125000000017581e-03
+1.500000000000000222e-01,7.904375000000015555e-03
+1.750000000000000167e-01,9.492500000000021754e-03
+...
+```
+
+![Evolution animation](assets/evolution-example.gif)
 
 </details>
 
