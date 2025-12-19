@@ -316,9 +316,11 @@ def save_mapping_report(
         - "upper_bound": The upper bound for the concentration in VMR.
         - "sub_measurements": The number of sub-measurements used to obtain the standard deviation of the teeth.
         - "tooth_std_threshold": The threshold for the standard deviation of the teeth.
+        - "remove_teeth_indices": The list of tooth indices that were removed.
         - "wl_min": The minimum wavelength in nm.
         - "wl_max": The maximum wavelength in nm.
         - "center_frequency": The RF central frequency in Hz.
+        - "baseline_names": The list of baseline measurement names used.
     - "results": A list of Result objects containing the measured spectra and their concentrations.
     verbose : bool, optional
         Whether to print additional information during the saving process. Defaults to False.
@@ -346,12 +348,21 @@ def save_mapping_report(
         f"Acquisition frequency: {data['acquisition_frequency']} Hz\n",
         f"Fitter: {data['fitter']}",
         f"Initial guess: {data['initial_guess']} VMR",
-        f"Lower bound: {data['lower_bound']} VMR",
-        f"Upper bound: {data['upper_bound']} VMR",
-        f"Number of sub-measurements: {data['sub_measurements']}",
-        f"Tooth standard deviation threshold: {data['tooth_std_threshold']}",
-        "---------------------------------------",
+        f"Lower bound: {data.get('lower_bound', 0)} VMR",
+        f"Upper bound: {data.get('upper_bound', 1)} VMR",
+        f"Number of sub-measurements: {data.get('sub_measurements', 0)}",
+        f"Tooth standard deviation threshold: {data.get('tooth_std_threshold', float('inf'))}",
+        f"Removed tooth indices: {data.get('remove_teeth_indices', [])}",
     ]
+
+    if (baseline_names := data.get("baseline_names", [])):
+        metadata.append(f"Baseline measurements used: {len(baseline_names)}")
+        for name in baseline_names:
+            metadata.append(f" - {name}")
+
+    metadata.append(
+        "---------------------------------------",
+    )
 
     def get_y_position(result: "Result") -> float:
         """

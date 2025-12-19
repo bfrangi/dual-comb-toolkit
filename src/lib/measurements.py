@@ -415,7 +415,7 @@ class Measurement:
         if normalize:
             _, y_nm_norm = normalize_transmission(x_nm, y_nm, replace_outliers=False)
             scaling_factor = y_nm_norm.mean() / y_nm.mean()
-            
+
             y_nm = y_nm * scaling_factor
             if y_sdv_nm is not None:
                 y_sdv_nm = y_sdv_nm * scaling_factor
@@ -428,9 +428,7 @@ class Measurement:
             to_frequency(x_nm, y_nm)
         )
         if y_sdv_nm is not None:
-            _, self.transmission_spectrum.y_sdv_hz = to_frequency(
-                x_nm, y_sdv_nm
-            ) 
+            _, self.transmission_spectrum.y_sdv_hz = to_frequency(x_nm, y_sdv_nm)
 
     def _apply_metadata(
         self, transmission_spectrum: "Optional[MeasuredSpectrum]" = None
@@ -456,7 +454,10 @@ class Measurement:
         transmission_spectrum.concentration = self.concentration
 
     def compute_transmission(
-        self, start: "Optional[float]" = None, end: "Optional[float]" = None, save: bool = False
+        self,
+        start: "Optional[float]" = None,
+        end: "Optional[float]" = None,
+        save: bool = False,
     ) -> "MeasuredSpectrum":
         """
         Compute the transmission spectrum for a specific range of the time series.
@@ -540,9 +541,13 @@ class Measurement:
                 sub_measurements.append(sub_measurement.y_nm)
 
             stacked = np.stack(sub_measurements)
-            tooth_std = stacked.std(axis=0) / len(sub_measurements)**0.5
+            tooth_std = stacked.std(axis=0) / len(sub_measurements) ** 0.5
 
-            mask = tooth_std <= np.mean(tooth_std) * self.tooth_std_threshold
+            mean_std = np.mean(tooth_std)
+            if mean_std == 0:
+                mean_std = np.inf
+
+            mask = tooth_std <= mean_std * self.tooth_std_threshold
 
             if all(~mask):
                 raise ValueError(

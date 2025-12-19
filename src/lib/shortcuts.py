@@ -331,7 +331,9 @@ def map_measurement_concentration(meas_names: list[str], **specifications) -> "M
     if not baseline and baseline_names:
         from lib.entities import Baseline
 
-        baseline = Baseline(measurement_names=baseline_names, **specifications)
+        baseline_specifications = specifications.copy()
+        baseline_specifications.pop("remove_teeth_indices", None)
+        baseline = Baseline(measurement_names=baseline_names, **baseline_specifications)
         specifications["baseline"] = baseline
 
     meas_transmissions = []

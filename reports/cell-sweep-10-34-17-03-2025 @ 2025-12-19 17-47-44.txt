@@ -1,0 +1,54 @@
+Mapping Report
+---------------------------------------
+Generated on 2025-12-19 17:47:44
+
+Molecule: CH4
+Pressure: 53328.94736842 Pa
+Temperature: 298 K
+Path length: 0.055 m
+
+Optical Comb spacing: 0.5 GHz
+Number of teeth: 38
+Laser wavelength: 3427.4500000000003 m
+Minimum wavelength: 3427.0 nm
+Maximum wavelength: 3427.9 nm
+
+RF central frequency: 40000.0 Hz
+RF comb spacing: 200.0 Hz
+Acquisition frequency: 400000.0 Hz
+
+Fitter: normal_gpu
+Initial guess: 0.0001 VMR
+Lower bound: 0 VMR
+Upper bound: 1 VMR
+Number of sub-measurements: 10
+Tooth standard deviation threshold: inf
+Removed tooth indices: [9, 12, 13]
+Baseline measurements used: 6
+ - cell-sweep-10-34-17-03-2025/Position-X11-Y1
+ - cell-sweep-10-34-17-03-2025/Position-X12-Y1
+ - cell-sweep-10-34-17-03-2025/Position-X13-Y1
+ - cell-sweep-10-34-17-03-2025/Position-X14-Y1
+ - cell-sweep-10-34-17-03-2025/Position-X15-Y1
+ - cell-sweep-10-34-17-03-2025/Position-X16-Y1
+---------------------------------------
+
+cell-sweep-10-34-17-03-2025/Position-X1-Y1	0.009261 VMR
+cell-sweep-10-34-17-03-2025/Position-X2-Y1	0.009597 VMR
+cell-sweep-10-34-17-03-2025/Position-X3-Y1	0.009233 VMR
+cell-sweep-10-34-17-03-2025/Position-X4-Y1	0.009390 VMR
+cell-sweep-10-34-17-03-2025/Position-X5-Y1	0.009983 VMR
+cell-sweep-10-34-17-03-2025/Position-X6-Y1	0.010781 VMR
+cell-sweep-10-34-17-03-2025/Position-X7-Y1	0.000000 VMR
+cell-sweep-10-34-17-03-2025/Position-X8-Y1	0.000000 VMR
+cell-sweep-10-34-17-03-2025/Position-X9-Y1	0.000000 VMR
+cell-sweep-10-34-17-03-2025/Position-X10-Y1	0.002576 VMR
+cell-sweep-10-34-17-03-2025/Position-X11-Y1	0.000494 VMR
+cell-sweep-10-34-17-03-2025/Position-X12-Y1	0.000385 VMR
+cell-sweep-10-34-17-03-2025/Position-X13-Y1	0.000090 VMR
+cell-sweep-10-34-17-03-2025/Position-X14-Y1	0.000162 VMR
+cell-sweep-10-34-17-03-2025/Position-X15-Y1	0.000228 VMR
+cell-sweep-10-34-17-03-2025/Position-X16-Y1	0.000409 VMR
+
+End of report.
+---------------------------------------
