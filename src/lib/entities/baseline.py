@@ -37,6 +37,8 @@ class Baseline:
         The tag of the sample file.
     reference_tag : str
         The tag of the reference file.
+    remove_teeth_indices : list[int], optional
+        List of indices of teeth to remove from the transmission spectrum.
     """
 
     def __init__(self, measurement_names: list[str], **kwargs) -> None:

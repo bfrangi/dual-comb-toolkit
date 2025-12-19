@@ -19,7 +19,7 @@ Once you have your credentials, you can proceed with the setup below, depending 
 operating system.
 
 <details>
-<summary>Linux</summary>
+<summary><b>Linux</b></summary>
 
 1. Clone the repository:
 
@@ -53,7 +53,7 @@ operating system.
 </details>
 
 <details>
-<summary>Windows</summary>
+<summary><b>Windows</b></summary>
 
 1. Clone the repository:
 
@@ -92,7 +92,8 @@ simulate an absorption spectrum. Other databases may require their own credentia
 **Note**: The first time you run the simulator, the database will be downloaded, and this could
 take some time. Please be patient!
 
-### Line simulation
+<details>
+<summary><b>Line simulation</b></summary>
 
 You can simulate absorption spectra using the `src/line-simulator.py` script. You can define the
 simulation parameters directly in the script. Navigate to the `src` directory and run the script
@@ -102,7 +103,23 @@ as follows:
 python line-simulator.py
 ```
 
-**Add usage instructions here**
+</details>
+
+<details>
+<summary><b>Manual Measurement processing</b></summary>
+
+You can manually process dual-comb measurements using the `src/process-measurement.py` script. You
+can define the measurement parameters directly in the script, including the path to the measurement 
+to process and the path to the set of measurements to use for baseline correction. This last part is
+useful to remove etalon effects and other systematic noise from the measurement. Navigate to the 
+`src` directory and run the script as follows:
+
+```bash
+python process-measurement.py
+```
+
+</details>
+
 
 ## Using GPU Acceleration
 

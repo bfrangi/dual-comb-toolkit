@@ -1,14 +1,5 @@
 from lib.entities import Baseline
 
-# Define the molecule, VMR, pressure, temperature, and length.
-molecule = 'CH4'
-vmr = 0.01  # volume mixing ratio
-pressure = 53328.94736842  # Pa
-temperature = 298  # K
-length = 0.055  # m
-wl_min = 3427.1  # nm
-wl_max = 3427.8  # nm
-
 # Specify the name and specifications of the measurement.
 meas_baseline = [
     'cell-sweep-10-34-17-03-2025/Position-X11-Y1',
