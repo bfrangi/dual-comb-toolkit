@@ -1,6 +1,14 @@
-# Dual Comb Toolkit
+# Dual-Comb Toolkit
 
-Useful scripts for processing dual comb data.
+Useful scripts for working with dual-comb spectroscopy (DCS), including:
+- Fast simulation of absorption spectra using the [Radis](https://github.com/radis/radis) library,
+  compatible with GPU.
+- Processing of dual-comb sample/reference measurements (baseline correction, normalization, 
+  RF-to-optical mapping, noisy tooth filtering, etc).
+- Fitting of processed dual-comb spectra to retrieve gas concentration.
+- Mapping of concentration across multiple measurement positions to create 2D maps.
+- Analysis of temporal concentration evolution within measurements. 
+- Simulation of real, noisy measurements, for optimization of experimental configurations.
 
 ## Setup
 
@@ -121,3 +129,8 @@ If you encounter `RuntimeError: Failed to process string with tex because dvipng
 ```bash
 sudo apt install dvipng
 ```
+
+## Acknowledgements
+
+This project uses the [RADIS](https://github.com/radis/radis) library for
+high-resolution molecular spectroscopy calculations.
