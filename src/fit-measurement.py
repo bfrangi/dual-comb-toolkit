@@ -101,7 +101,7 @@ spectrum_plot_folder = "fit-measurement-output"
 
 # Use LaTeX for plotting.
 
-latex = False
+latex = True
 """If True, use LaTeX for plotting."""
 
 if latex:
@@ -144,7 +144,7 @@ f = fit_measurement_concentration(
 # Results plots                                                                                    #
 ####################################################################################################
 
-plt = f.result.generate_plot()
+plt = f.result.generate_plot(show_residual=True)
 
 if spectrum_plot_folder:
     initialize_figures_folder(spectrum_plot_folder)
