@@ -118,6 +118,10 @@ useful to remove etalon effects and other systematic noise from the measurement.
 python process-measurement.py
 ```
 
+Here is an example of the output plot:
+
+![Example processed plot](assets/process-measurement-example.svg)
+
 To characterize the baseline, there is also the `src/process-baseline.py` script. You can run it as
 follows:
 
@@ -125,9 +129,15 @@ follows:
 python process-baseline.py
 ```
 
-Here is an example of the output plot:
+And there is also a simple script to view the raw spectrum of any measurement, `src/measurement-spectrum.py`:
 
-![Example processed plot](assets/process-measurement-example.svg)
+```bash
+python measurement-spectrum.py
+```
+
+An example of the output plot from this script is shown below:
+
+![Spectrum](assets/measurement-spectrum-example.svg)
 
 </details>
 
@@ -146,6 +156,11 @@ python fit-measurement.py
 Here is an example of the output plot:
 
 ![Example fit plot](assets/fit-measurement-example.svg)
+
+</details>
+
+<details>
+<summary><b>Concentration fitting</b></summary>
 
 </details>
 
