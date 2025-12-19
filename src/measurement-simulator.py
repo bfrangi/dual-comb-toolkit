@@ -1,6 +1,6 @@
 from matplotlib import pyplot as plt
 
-from lib.plots import article_tight
+from lib.plots import article_tight, use_latex
 from lib.simulations import simulate_measurement
 
 # Define the parameters for simulating the measurement
@@ -17,8 +17,8 @@ temperature = 1200  # K
 length = 0.07  # m
 laser_wavelength = 3427.41  # nm
 
-number_of_teeth = 12
-optical_comb_spacing = 1250e6  # Hz
+number_of_teeth = 30
+optical_comb_spacing = 500e6  # Hz
 modulation_intensity = 4.69  # rad
 
 noise_distribution = "bessel"
@@ -28,6 +28,11 @@ transmission_std_threshold = 0.1  # unitless
 spectrum_shift_range = (-0.02, 0.02)  # nm
 scaling_range = (0.2, 1.5)  # unitless
 laser_wavelength_slack = (-0.05, 0.05)  # nm
+
+latex = True
+
+if latex:
+    use_latex()
 
 # Simulate the transmission spectrum.
 x_sim, y_sim = simulate_measurement(

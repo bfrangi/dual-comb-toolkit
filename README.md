@@ -268,6 +268,78 @@ Time [s],Concentration [VMR]
 
 </details>
 
+<details>
+<summary><b>Simulation of measurements</b></summary>
+
+You can simulate realistic, noisy dual-comb measurements using the `src/measurement-simulator.py`
+script. You can define the simulation parameters, including the amount of noise and the noise model,
+directly in the script. Navigate to the `src` directory and run the script as follows:
+
+```bash
+python measurement-simulator.py
+```
+
+Here is an example of the output plot:
+
+![Example simulated measurement plot](assets/simulated-measurement-example.svg)
+
+</details>
+
+<details>
+<summary><b>Optimization of comb parameters</b></summary>
+
+The `src/fit-simulated-measurements.py` script allows you to generate synthetic dual-comb
+measurements with varying comb parameters (number of teeth and comb spacing) and fit them to
+retrieve gas concentration. This helps in optimizing the comb parameters for specific experimental
+setups, by studying their effect on the fitting accuracy. You can define the optimization parameters 
+directly in the script. Navigate to the `src` directory and run the script as follows:
+
+```bash
+python fit-simulated-measurements.py
+```
+
+The script generates a report in the `reports/` directory, containing the fitting results for each set of
+comb parameters. Here is an example of the report:
+
+```txt
+Number of teeth,Comb spacing (Hz),Mean concentration (VMR),Standard deviation (VMR)
+5,1000000000.0,0.008118531250000026,0.0015218513420581644
+5,1100000000.0,0.008479265625000027,0.0014387855767247013
+5,1200000000.0,0.007970718750000027,0.0015506988937514755
+5,1300000000.0,0.008278750000000027,0.001380888514102033
+5,1400000000.0,0.008655304687500026,0.0006965584456108906
+5,1500000000.0,0.00885082812500003,0.0008205821120921131
+5,1600000000.0,0.008879328125000028,0.0007775362153379832
+5,1700000000.0,0.008766578125000028,0.0010174894999794189
+5,1800000000.0,0.00907967187500003,0.000766652188654768
+5,1900000000.0,0.008935507812500031,0.0011732676952238023
+5,2000000000.0,0.00903296093750003,0.0009908021498187501
+5,2100000000.0,0.00914619531250003,0.0013056479607271966
+5,2200000000.0,0.008427351562500027,0.0013634225145963083
+5,2300000000.0,0.008553406250000029,0.0013969829923649918
+5,2400000000.0,0.008159531250000025,0.001660422555846814
+5,2500000000.0,0.007942726562500026,0.0019770452989126648
+5,2600000000.0,0.007925281250000023,0.0019076125334136248
+5,2700000000.0,0.007906195312500025,0.001968696081401424
+...
+```
+
+The script `src/configuration-plots.py` can be used to generate plots from the report data, to 
+help visualize the optimization results and choose the best comb parameters. Run it as follows (make
+sure you change the path to the report file in the script if needed):
+
+```bash
+python configuration-plots.py
+```
+
+Here is an example of the output plots:
+
+![Example optimization plots concentration](assets/conf-conc-example.svg) 
+
+![Example optimization plots std](assets/conf-sdv-example.svg)
+
+</details>
+
 ## Using GPU Acceleration
 
 Check out the `GPU_DEVICE_ID` setting in `src/lib/defaults.py`. By default, it is set to `"nvidia"`
