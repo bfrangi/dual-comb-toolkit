@@ -7,65 +7,74 @@ Useful scripts for processing dual comb data.
 Before starting, if you are going to be using the HITRAN/HITEMP databases, create a Hitran
 login [here](https://hitran.org/login/). Other databases may require their own credentials.
 
-### Linux
+Once you have your credentials, you can proceed with the setup below, depending on your
+operating system.
+
+<details>
+<summary>Linux</summary>
 
 1. Clone the repository:
 
-```bash
-git clone https://github.com/bfrangi/dual-comb-toolkit.git
-cd dual-comb-toolkit
-```
+   ```bash
+   git clone https://github.com/bfrangi/dual-comb-toolkit.git
+   cd dual-comb-toolkit
+   ```
 
 2. Install `virtualenv` and create a virtual environment:
 
-```bash
-sudo apt-get update
-sudo apt-get install python3-venv
-python3.10 -m venv .venv
-source .venv/bin/activate
-```
+   ```bash
+   sudo apt-get update
+   sudo apt-get install python3-venv
+   python3.10 -m venv .venv
+   source .venv/bin/activate
+   ```
 
 3. Install dependencies and apply the radis patch (this second part is optional):
 
-```bash
-pip install -r requirements.txt
-```
+   ```bash
+   pip install -r requirements.txt
+   ```
 
 4. [Optional] If you want to use LaTeX for plotting, install the `texlive` package:
 
-```bash
-sudo apt-get update
-sudo apt-get install texlive-latex-extra texlive-fonts-extra dvipng
-```
+   ```bash
+   sudo apt-get update
+   sudo apt-get install texlive-latex-extra texlive-fonts-extra dvipng
+   ```
 
-### Windows
+</details>
+
+<details>
+<summary>Windows</summary>
 
 1. Clone the repository:
 
-```bash
-git clone https://github.com/bfrangi/dual-comb-toolkit.git
-cd dual-comb-toolkit
-```
+   ```bash
+   git clone https://github.com/bfrangi/dual-comb-toolkit.git
+   cd dual-comb-toolkit
+   ```
 
 2. Install `python3.12` from the Microsoft Store.
 
 3. Create a virtual environment:
 
-```bash
-python3.12 -m venv .venv
-.\.venv\Scripts\activate.bat
-```
+   ```bash
+   python3.12 -m venv .venv
+   .\.venv\Scripts\activate.bat
+   ```
 
 4. Install dependencies and apply the radis patch (this second part is optional):
 
-```bash
-pip install -r requirements-win.txt
-```
+   ```bash
+   pip install -r requirements-win.txt
+   ```
 
 5. [Optional] If you want to use LaTeX for plotting, install the `texlive` package by downloading
    the installer from [here](https://www.tug.org/texlive/windows.html) or the ISO from 
    [here](https://www.tug.org/texlive/acquire-iso.html) and following the installation
    instructions.
+
+</details>
 
 ## Usage
 
