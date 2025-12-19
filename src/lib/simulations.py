@@ -1,6 +1,8 @@
 import warnings
 from typing import TYPE_CHECKING
 
+from lib.fitting.interpolation import closest_value_indices
+
 if TYPE_CHECKING:
     from typing import Callable, Optional
 
@@ -984,10 +986,6 @@ class Simulator:
 
 
 # Measurement simulation ###########################################################################
-
-
-def closest_value_indices(array: "ndarray", values: "ndarray") -> "ndarray":
-    return np.abs(array - values[:, np.newaxis]).argmin(axis=1)
 
 
 def bessel_sideband_amplitudes(

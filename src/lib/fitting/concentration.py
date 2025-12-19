@@ -246,7 +246,7 @@ def fit_concentration(
     import numpy as np
     from scipy.optimize import minimize
 
-    from lib.simulations import closest_value_indices
+    from lib.fitting.interpolation import closest_value_indices
 
     # Assemble the simulator
     if fitter == "interp":

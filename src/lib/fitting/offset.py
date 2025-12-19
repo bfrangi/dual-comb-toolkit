@@ -2,7 +2,7 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
-from lib.simulations import closest_value_indices
+from lib.fitting.interpolation import closest_value_indices
 
 if TYPE_CHECKING:
     from numpy import ndarray
