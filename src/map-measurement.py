@@ -1,5 +1,7 @@
 from datetime import datetime
 
+import matplotlib
+
 from lib.files import get_figures_path, get_measurement_names, save_mapping_report
 from lib.plots import use_latex
 from lib.shortcuts import map_measurement_concentration
@@ -89,6 +91,10 @@ discarded. Note this could give unexpected results if combined with `remove_teet
 sub_measurements = 10
 """Number of sub-measurements to use for calculating the standard deviation of the teeth."""
 
+# Removing noisy teeth
+remove_teeth_indices = [1]
+"""List of tooth indices to be removed from the fitting."""
+
 # Output and plotting parameters.
 
 verbose = True
@@ -133,6 +139,7 @@ mapper = map_measurement_concentration(
     spectrum_plot_folder=spectrum_plot_folder,
     tooth_std_threshold=tooth_std_threshold,
     sub_measurements=sub_measurements,
+    remove_teeth_indices=remove_teeth_indices,
     flip=flip,
 )
 
@@ -142,6 +149,8 @@ mapper = map_measurement_concentration(
 ####################################################################################################
 
 if spectrum_plot_folder:
+    matplotlib.use("Agg")
+
     folder_path = f"{get_figures_path()}{spectrum_plot_folder}"
     heatmap_path = f"{folder_path}/heatmap.pdf"
     plot_path = f"{folder_path}/plot.pdf"

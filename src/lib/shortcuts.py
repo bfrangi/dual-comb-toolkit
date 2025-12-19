@@ -314,6 +314,8 @@ def map_measurement_concentration(meas_names: list[str], **specifications) -> "M
     tooth_std_threshold : float, optional
         Teeth with a standard deviation above `tooth_std_threshold * mean_std` will be discarded if
         `sub_measurements` is given and is greater than 1.
+    remove_teeth_indices : list[int], optional
+        List of tooth indices to be removed from the fitting.
 
     Returns
     -------
@@ -324,6 +326,7 @@ def map_measurement_concentration(meas_names: list[str], **specifications) -> "M
 
     baseline_names = specifications.pop("baseline_names", None)
     baseline = specifications.pop("baseline", None)
+    remove_teeth_indices = specifications.get("remove_teeth_indices", [])
 
     if not baseline and baseline_names:
         from lib.entities import Baseline
@@ -335,6 +338,8 @@ def map_measurement_concentration(meas_names: list[str], **specifications) -> "M
 
     for meas_name in meas_names:
         meas = get_measurement(meas_name, **specifications)
+        meas._compute_transmission()
+        meas.remove_teeth(remove_teeth_indices)
         meas_transmissions.append(meas.transmission_spectrum)
 
     return Mapper(meas_transmissions, **specifications)

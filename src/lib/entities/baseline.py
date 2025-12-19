@@ -94,9 +94,12 @@ class Baseline:
         spectra of the given measurements.
         """
         baseline_amp = 0
+        remove_teeth_indices = self.kwargs.get("remove_teeth_indices", [])
 
         for measurment in self.measurement_names:
             m = Measurement(measurment, **self.kwargs)
+            m._compute_transmission()
+            m.remove_teeth(remove_teeth_indices)
             self._baseline_amps.append(m.transmission_spectrum.y_hz)
             baseline_amp += m.transmission_spectrum.y_hz
 
