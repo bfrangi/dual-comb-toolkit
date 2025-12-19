@@ -92,6 +92,16 @@ simulate an absorption spectrum. Other databases may require their own credentia
 **Note**: The first time you run the simulator, the database will be downloaded, and this could
 take some time. Please be patient!
 
+### Line simulation
+
+You can simulate absorption spectra using the `src/line-simulator.py` script. You can define the
+simulation parameters directly in the script. Navigate to the `src` directory and run the script
+as follows:
+
+```bash
+python line-simulator.py
+```
+
 **Add usage instructions here**
 
 ## Using GPU Acceleration
