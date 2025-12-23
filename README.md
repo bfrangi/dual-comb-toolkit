@@ -378,7 +378,7 @@ sudo apt install dvipng
 
 ## Cite this repository
 
-```
+```bib
 @misc{bernat_frangi_2025_18040669,
   author       = {Frangi, Bernat},
   title        = {Dual-{C}omb {T}oolkit [software]},
