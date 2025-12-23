@@ -376,7 +376,7 @@ If you encounter `RuntimeError: Failed to process string with tex because dvipng
 sudo apt install dvipng
 ```
 
-## Acknowledgements
+## Acknowledgments
 
 This project uses the [RADIS](https://github.com/radis/radis) library for
 high-resolution molecular spectroscopy calculations.
