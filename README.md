@@ -376,6 +376,18 @@ If you encounter `RuntimeError: Failed to process string with tex because dvipng
 sudo apt install dvipng
 ```
 
+## Cite this repository
+
+```
+@misc{bernat_frangi_2025_18040669,
+  author       = {Frangi, Bernat},
+  title        = {Dual-{C}omb {T}oolkit [software]},
+  month        = 12,
+  year         = 2025,
+  howpublished = {{Z}enodo},
+  doi          = {10.5281/zenodo.18040669},
+}
+```
 ## Acknowledgments
 
 This project uses the [RADIS](https://github.com/radis/radis) library for
