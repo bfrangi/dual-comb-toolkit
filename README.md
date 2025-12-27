@@ -1,5 +1,7 @@
 # Dual-Comb Toolkit
 
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.18040669.svg)](https://doi.org/10.5281/zenodo.18040669)
+
 Useful scripts for working with dual-comb spectroscopy (DCS), including:
 - Fast simulation of absorption spectra using the [Radis](https://github.com/radis/radis) library,
   compatible with GPU.
