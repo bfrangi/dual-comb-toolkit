@@ -411,7 +411,7 @@ The script can also generate plots such as this one:
 
 Check out the `GPU_DEVICE_ID` setting in `src/lib/defaults.py`. By default, it is set to `"nvidia"`
 which will use the NVIDIA GPU if available. If you want to use a different GPU, run the
-`src/identify-gpu.py` script to list available GPUs and set the `GPU_DEVICE_ID` accordingly (it can 
+`src/setup--identify-gpu.py` script to list available GPUs and set the `GPU_DEVICE_ID` accordingly (it can 
 be the number of the GPU in the output list or a string contained in the name of the device).
 
 ## Issues with plots
