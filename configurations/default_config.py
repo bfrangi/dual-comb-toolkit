@@ -82,7 +82,7 @@ modulation_intensities = {
 #  Optional outputs (global defaults; switch on per condition for just the ones you want)          #
 ####################################################################################################
 
-generate_plots = True  # per-fit spectra plots
+generate_plots = False  # per-fit spectra plots
 plot_every = 10  # if generate_plots, plot every Nth simulation
 use_latex = False
 detailed_report = False  # per-config CSV of every individual fit
