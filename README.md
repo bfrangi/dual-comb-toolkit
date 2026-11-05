@@ -336,6 +336,9 @@ holding all of that condition's outputs together:
 The run folder also contains `run.log` (the full detailed log) and `config.snapshot.py` (a copy of
 the exact config used, for reproducibility).
 
+An example run is included in `simulations/run-20260616-151858/` (only `config.snapshot.py` and
+each condition's `results.csv` are committed; plots and logs are left out to keep the repo small).
+
 Here is an example of a results report:
 
 ```txt

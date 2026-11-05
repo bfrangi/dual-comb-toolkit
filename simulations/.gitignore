@@ -1,0 +1,9 @@
+# Ignore everything in this directory
+*
+
+# Exceptions: one example run, inputs and results only (no per-fit plots, summary plots or logs)
+!.gitignore
+!run-20260616-151858/
+!run-20260616-151858/config.snapshot.py
+!run-20260616-151858/*/
+!run-20260616-151858/*/results.csv
