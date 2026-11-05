@@ -366,6 +366,18 @@ the companion script, which reads the same config file:
 python configs--simulated-fittings-perform.py --condition <id>   # defaults to the first condition
 ```
 
+To re-plot an existing run with some configurations highlighted (e.g. the ones chosen for an
+experiment), set `RUN_ID` and `SELECTED_CONFIGS` at the top of
+`src/configs--simulated-fittings-plot.py` and run:
+
+```bash
+python configs--simulated-fittings-plot.py
+```
+
+This writes `paper-conc.{svg,pdf,png}` and `paper-sdv.{svg,pdf,png}` next to each condition's
+`results.csv`, alongside the auto-generated `summary-*` figures. It works out of the box on the
+example run.
+
 </details>
 
 <details>
